@@ -281,8 +281,9 @@ capstone/
 │   ├── plan.md                    ← this file (v2)
 │   ├── rag_failure_modes_review.md ← research foundation
 │   └── decisions.md               ← experiment decision log (gates)
+├── main.py                        # CKPT-0 entry point — orchestrates the modules below
 ├── config.py                      # shared config + experiment flags
-├── utils.py                       # arXiv indexing + vector store(s)
+├── utils.py                       # arXiv indexing + vector store(s) (library, no script logic)
 ├── app.py                         # traced RAG pipeline (rewrite/retrieve/rerank/generate)
 ├── build_golden_dataset.py        # sliced golden set construction
 ├── evaluators.py                  # evaluator catalog
@@ -319,7 +320,7 @@ capstone/
 ## 9. Run Order
 
 ```
-CKPT-0:  python utils.py && python app.py && python build_golden_dataset.py
+CKPT-0:  python main.py   (orchestrates utils.py → app.py → build_golden_dataset.py)
          python experiments/run_experiment.py --exp EXP-0
 CKPT-1…5: python experiments/run_experiment.py --exp EXP-N   (record to decisions.md)
 CKPT-6:  python prompt_management.py

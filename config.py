@@ -1,12 +1,3 @@
-"""Shared configuration and experiment flags for the arXiv Research Copilot.
-
-Every `RunConfig` field is logged as run metadata on every trace (docs/plan.md §3),
-which is what lets any metric later be sliced by any configuration axis. Each
-checkpoint (docs/plan.md §5) produces a new `RunConfig` variant by overriding
-fields on `BASELINE` — it never edits `BASELINE` itself, so EXP-0 stays the
-fixed reference point for every decision gate.
-"""
-
 from __future__ import annotations
 
 import os
