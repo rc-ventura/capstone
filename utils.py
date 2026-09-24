@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import itertools
 import logging
 from pathlib import Path
 
@@ -25,12 +27,25 @@ def fetch_arxiv_corpus(
     §1 sizes the corpus assuming ~250-300 abstracts yield ~800-1200 chunks).
     `published` is kept on every chunk's metadata; it's what the `stale` golden-set
     slice (docs/plan.md §2) filters on.
+
+    The corpus is pinned at config.CORPUS_SNAPSHOT_DATE (docs/plan/ckpt-0.5-plan.md
+    §4.2): arXiv returns newest-first, so we scan target+snapshot-skip-budget raw
+    results and drop anything published after the pin, keeping the corpus frozen
+    across embedding/chunk cache rebuilds.
     """
     client = arxiv.Client()
     search = arxiv.Search(
         query=f"cat:{category}",
-        max_results=max_results,
+        max_results=max_results + config.CORPUS_SNAPSHOT_SKIP_BUDGET,
         sort_by=arxiv.SortCriterion.SubmittedDate,
+    )
+    snapshot_results = itertools.islice(
+        (
+            result
+            for result in client.results(search)
+            if result.published.date() <= config.CORPUS_SNAPSHOT_DATE
+        ),
+        max_results,
     )
     docs = [
         Document(
@@ -44,10 +59,32 @@ def fetch_arxiv_corpus(
                 "source": result.entry_id,
             },
         )
-        for result in client.results(search)
+        for result in snapshot_results
     ]
-    logger.info("Fetched %d papers from arXiv (category=%s)", len(docs), category)
+    if len(docs) < max_results:
+        raise RuntimeError(
+            f"Only {len(docs)} of {max_results} papers fell on/before the snapshot "
+            f"date {config.CORPUS_SNAPSHOT_DATE} — raise CORPUS_SNAPSHOT_SKIP_BUDGET"
+        )
+    logger.info(
+        "Fetched %d papers from arXiv (category=%s, snapshot<=%s)",
+        len(docs),
+        category,
+        config.CORPUS_SNAPSHOT_DATE,
+    )
     return docs
+
+
+def chunk_id(doc: Document) -> str:
+    """Deterministic chunk identity — the single source of truth for retrieval gold
+    labels (docs/plan/ckpt-0.5-plan.md §4.1).
+
+    Derived from persisted fields, so the dataset builder (CKPT-0.5) and the
+    retrieval evaluators (CKPT-0.6) compute identical labels from any cache without
+    a rebuild. The vector store's own UUIDs are random per build and can't be used.
+    """
+    digest = hashlib.sha1(doc.page_content.encode()).hexdigest()[:12]
+    return f"{doc.metadata['arxiv_id']}:{digest}"
 
 
 def chunk_documents(

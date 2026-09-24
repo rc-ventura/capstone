@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -29,6 +30,18 @@ RESULTS_DIR = BASE_DIR / "results"  # per-checkpoint result reports
 # --- Corpus (docs/plan.md §1) ---
 ARXIV_CATEGORY = "cs.AI"
 CORPUS_TARGET_SIZE = 250  # min papers; below this, retrieval recall ~100% and FP2 never manifests
+# Snapshot pin (docs/plan/ckpt-0.5-plan.md §4.2): freeze the corpus at this date so the
+# `stale` golden slice keeps meaning "papers published after the corpus" across every
+# experiment's cache rebuilds. Equals the baseline cache's max published date, so the
+# existing parquet stays valid. The CKPT-8 refresh drill bumps this date and re-indexes.
+CORPUS_SNAPSHOT_DATE = datetime.date.fromisoformat(
+    os.getenv("CORPUS_SNAPSHOT_DATE", "2026-09-17")
+)
+# Additive discard budget (not multiplicative): as of 2026-09-24 there are ~766
+# cs.AI papers published after the snapshot pin, and ~128 more arrive per day. The
+# filter needs target+budget raw results to fill the corpus; fetch_arxiv_corpus
+# raises with a clear message if the budget ever runs short — bump it here.
+CORPUS_SNAPSHOT_SKIP_BUDGET = 2000
 
 # --- Golden dataset (docs/plan.md §2) ---
 GOLDEN_DATASET_NAME = "arxiv-copilot-golden"
