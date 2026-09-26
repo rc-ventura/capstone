@@ -106,5 +106,21 @@ Contrato do §2: checar `client.has_dataset(...)` antes de escrever. Implementa�
 |---|---|
 | Perguntas sintéticas fáceis demais ("too easy", §8) | amostragem com máx. 1–2/paper + spot-check; diversidade medida no EXP-0 |
 | Perguntas `multi-doc`/`stale` hand-written com viés meu | provenance no metadata; você revisa no spot-check |
-| Pin de data mudar o corpus de futuros configs | oversampling 2× garante 250 papers ≤ snapshot; documentado em `config.py` |
+| Pin de data mudar o corpus de futuros configs | skip-budget aditivo (≥ ~1 semana de margem) garante 250 papers ≤ snapshot; guarda explode explícito se encurtar — ver `config.py` |
 | `chunk_id` por hash divergir do que o avaliador computa | única função em `utils.py` é a fonte de verdade (dataset builder + 0.6 avaliadores importam dela) |
+
+## 8. Adendo — adjudicação humana e calibração de juízes (pesquisa 2026-09-24)
+
+Fundamentação completa com citações auditáveis:
+`docs/learning-lessons/golden_dataset_construction_and_human_calibration.md`. Decisões derivadas:
+
+1. **Mini-pooling no EXP-0 (CKPT-0.8)**: para cada pergunta golden, rodar retrieval top-k, listar
+   candidatos fora do gold para adjudicação humana; docs julgados relevantes entram em
+   `gold_arxiv_ids`. TREC-pooling em miniatura — golds por construção não são revisados exaustivamente.
+2. **Semântica das métricas de retrieval (vale para o 0.6)**: em `answerable`/`multi-doc`, docs
+   recuperados fora do gold são **não-julgados**, nunca contados como irrelevantes (viés de pooling
+   documentado na literatura); recall/hit/MRR contam apenas gold. `precision@k` plena só em
+   `unanswerable`/`stale`, cujo gold é "nada deve casar".
+3. **Spot-check humano (§5 item 4) passa a ter dupla função**: validação de qualidade do dataset E
+   semente do calibration set dos juízes LLM (ARES/RAGAS-Align/TruLens: ~100–200 labels humanas
+   alinham o juiz — não o dataset inteiro).
