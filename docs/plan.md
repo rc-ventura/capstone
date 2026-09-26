@@ -1,6 +1,6 @@
 # Capstone v2: arXiv Research Copilot — RAG Failure-Mode Battleground
 
-> A **product** — a cited Q&A assistant over ~250 arXiv cs.AI papers — engineered so that every documented RAG failure point (see `rag_failure_modes_review.md`) can be **detected** (golden set + evaluators), **measured** (monitoring), and **mitigated** (experiments). Planning is organized by experiments; each experiment is a **checkpoint** with a decision gate.
+> A **product** — a cited Q&A assistant over ~250 arXiv cs.AI papers — engineered so that every documented RAG failure point (see `research/rag_failure_modes_review.md`) can be **detected** (golden set + evaluators), **measured** (monitoring), and **mitigated** (experiments). Planning is organized by experiments; each experiment is a **checkpoint** with a decision gate.
 
 ---
 
@@ -279,7 +279,7 @@ Metrics per slice: `abstention_quality` on `unanswerable`, `faithfulness` + `cit
 capstone/
 ├── docs/
 │   ├── plan.md                    ← this file (v2)
-│   ├── rag_failure_modes_review.md ← research foundation
+│   ├── research/rag_failure_modes_review.md ← research foundation
 │   └── decisions.md               ← experiment decision log (gates)
 ├── main.py                        # CKPT-0 entry point — orchestrates the modules below
 ├── config.py                      # shared config + experiment flags
@@ -328,4 +328,4 @@ CKPT-7:  python experiments/pairwise.py
 CKPT-8:  uvicorn server:app  +  python monitor.py --window 1h
 ```
 
-**Definition of done**: every FP in §2 of `rag_failure_modes_review.md` has (a) a measuring evaluator, (b) a golden-set slice, (c) a mitigation experiment with a logged decision, and (d) a production metric watching it.
+**Definition of done**: every FP in §2 of `research/rag_failure_modes_review.md` has (a) a measuring evaluator, (b) a golden-set slice, (c) a mitigation experiment with a logged decision, and (d) a production metric watching it.

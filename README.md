@@ -12,7 +12,7 @@ documented RAG failure point can be **detected** (golden set + evaluators),
 | File | Purpose |
 |---|---|
 | [`docs/plan.md`](./docs/plan.md) | Full product + experiment plan, organized as checkpoints (CKPT-0 → CKPT-8) with decision gates |
-| [`docs/rag_failure_modes_review.md`](./docs/rag_failure_modes_review.md) | Bibliographic review — the research foundation the plan is built on |
+| [`docs/research/rag_failure_modes_review.md`](./docs/research/rag_failure_modes_review.md) | Bibliographic review — the research foundation the plan is built on |
 | [`docs/decisions.md`](./docs/decisions.md) | Experiment decision log (one row per gate: metric before/after, verdict) |
 
 ## Setup

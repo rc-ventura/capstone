@@ -33,7 +33,7 @@ Após este lote o split core terá 100 exemplos — número que fecha com o "~10
 
 ## 3. Por quê (fundamentação)
 
-- **Contrato do plano**: CKPT-0 exige o golden set visível no LangSmith com todas as slices antes do EXP-0 (`docs/plan.md` §5, verificação). As slices existem porque cada FP do `rag_failure_modes_review.md` precisa de (a) um avaliador, (b) uma slice, (c) um experimento — este lote entrega (b).
+- **Contrato do plano**: CKPT-0 exige o golden set visível no LangSmith com todas as slices antes do EXP-0 (`docs/plan.md` §5, verificação). As slices existem porque cada FP do `docs/research/rag_failure_modes_review.md` precisa de (a) um avaliador, (b) uma slice, (c) um experimento — este lote entrega (b).
 - **`deep-hit` adiado, propositalmente**: a tabela do §2 define-o como "found empirically: questions whose answer doc ranks low in baseline". Construí-lo agora seria chute. Ele nasce do EXP-0 (lote 0.8), preservando a honestidade do rótulo.
 - **Split extended adiado**: §2/§8 reservam-no ao CKPT-7; gastar ~200 gerações LLM agora anteciparia custo sem consumidor.
 - **Ground-truth map já definido** (`docs/plan.md` §2b): este lote só precisa materializar os rótulos que a tabela exige — nada além.
