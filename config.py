@@ -47,6 +47,16 @@ CORPUS_SNAPSHOT_SKIP_BUDGET = 2000
 GOLDEN_DATASET_NAME = "arxiv-copilot-golden"
 CORE_SPLIT = "core"
 EXTENDED_SPLIT = "extended"
+# Target counts per slice for the core split (docs/plan.md §2 table).
+GOLDEN_SLICE_TARGETS = {
+    "answerable": 40,
+    "unanswerable": 15,
+    "deep-hit": 15,  # identified empirically from EXP-0 (CKPT-0.8)
+    "multi-doc": 15,
+    "format": 10,
+    "persona": 10,
+    "stale": 10,
+}
 
 # --- Models ---
 GENERATION_MODEL = os.getenv("GENERATION_MODEL", "gpt-4o-mini")
