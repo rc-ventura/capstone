@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import itertools
+import json
 import logging
 from pathlib import Path
 
@@ -141,3 +142,27 @@ def get_vector_store(run_config: config.RunConfig = config.BASELINE) -> SKLearnV
 def get_retriever(run_config: config.RunConfig = config.BASELINE) -> VectorStoreRetriever:
     """Return a retriever configured with `run_config.k` (docs/plan.md CKPT-1)."""
     return get_vector_store(run_config).as_retriever(search_kwargs={"k": run_config.k})
+
+
+def load_cached_chunks(run_config: config.RunConfig = config.BASELINE) -> list[Document]:
+    """Reconstruct every chunk from the cached parquet store, as Documents.
+
+    Used by the golden-dataset builder (CKPT-0.5) to sample source chunks for
+    synthetic question generation without triggering a corpus rebuild.
+    """
+    import pandas as pd
+
+    persist_path = _persist_path(run_config.embedding_model, run_config.chunk_strategy)
+    if not persist_path.exists():
+        raise RuntimeError(f"No cached store at {persist_path} — build it via get_vector_store first")
+    df = pd.read_parquet(persist_path)
+    docs = []
+    for _, row in df.iterrows():
+        meta = row["metadatas"]
+        docs.append(
+            Document(
+                page_content=row["texts"],
+                metadata=json.loads(meta) if isinstance(meta, str) else meta,
+            )
+        )
+    return docs

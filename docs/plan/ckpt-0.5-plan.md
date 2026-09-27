@@ -75,7 +75,7 @@ Alternativas rejeitadas: adiar o slice ao CKPT-8 (deixaria CKPT-0 sem cobertura 
 **Schema de exemplo (kv, uniforme)**:
 - `inputs`: `{"question": str}` (+ `"audience": "pm"|"phd"` só em `persona`);
 - `outputs`: `{"answer": str, "gold_chunk_ids": list[str], "gold_arxiv_ids": list[str], "should_abstain": bool}`;
-- `metadata`: `{"slice": str, "provenance": "synthetic"|"hand-written"|"derived", "base_id"?: str}`;
+- `metadata`: `{"slice": str, "provenance": "synthetic"|"curated", "base_id"?: str}` — correção 2026-09-27: os slices "hand-written" do plano são na verdade redigidos por IA e **aprovados por humano** (spot-check/aprovação de lote); a âncora humana entra via revisão, adjudicação do mini-pooling e calibração de juízes, não via autoria. Renomeado para `"curated"` por honestidade de proveniência;
 - `split=["core"]`.
 
 Schema uniforme (campos sempre presentes, vazios quando N/A) evita branching nos avaliadores do lote 0.6.

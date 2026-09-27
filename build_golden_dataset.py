@@ -1,9 +1,9 @@
 """Build the `arxiv-copilot-golden` dataset, core split (docs/plan.md §2).
 
-Mini-checkpoint 0.5.2a scope (docs/plan/ckpt-0.5-plan.md §4.3): the hand-written
-slices that need no corpus cross-referencing — `unanswerable`, `format`, `stale`.
-`multi-doc` (grounded synthesis, 0.5.2b), `answerable`/`persona` (synthetic, 0.5.3)
-and `deep-hit` (empirical, found during EXP-0) land in later mini-checkpoints.
+Slices: hand-written `unanswerable`/`format`/`stale` (0.5.2a), hybrid `multi-doc`
+(0.5.2b/c), synthetic `answerable`/`persona` (0.5.3) generated from sampled corpus
+chunks — synthetic-by-construction, so the source chunk IS the retrieval gold label.
+`deep-hit` lands in CKPT-0.8 (found empirically during EXP-0).
 
 Sync is idempotent per slice: a slice at its target count is skipped, an empty
 slice is created in bulk, and a partially-populated slice hard-fails — partial
@@ -12,13 +12,19 @@ state means a human changed the dataset by hand and should resolve it.
 
 from __future__ import annotations
 
+import json
 import logging
+import random
+import re
 from collections import Counter
 from typing import Any, Callable
 
+from langchain_core.documents import Document
 from langsmith import Client
+from openai import OpenAI
 
 import config
+import utils
 
 logger = logging.getLogger(__name__)
 
@@ -33,14 +39,15 @@ def _example(
     *,
     answer: str,
     slice_name: str,
-    provenance: str,
+    method: str,
     gold_chunk_ids: list[str] | None = None,
     gold_arxiv_ids: list[str] | None = None,
     should_abstain: bool = False,
     **extra_metadata: Any,
 ) -> Example:
-    """Uniform example schema (docs/plan/ckpt-0.5-plan.md §4.3): every field is
-    always present so evaluators never branch on slice."""
+    """Uniform example schema (docs/plan/ckpt-0.5-review-plan.md §3.1): every field
+    is always present so evaluators never branch on slice. Provenance is a
+    two-axis model: authoring (origin × method) vs review state — never mixed."""
     return {
         "inputs": {"question": question},
         "outputs": {
@@ -49,7 +56,12 @@ def _example(
             "gold_arxiv_ids": gold_arxiv_ids or [],
             "should_abstain": should_abstain,
         },
-        "metadata": {"slice": slice_name, "provenance": provenance, **extra_metadata},
+        "metadata": {
+            "slice": slice_name,
+            "authoring": {"origin": "llm", "method": method},
+            "review": {"state": "draft"},
+            **extra_metadata,
+        },
     }
 
 
@@ -82,7 +94,7 @@ def unanswerable_examples() -> list[Example]:
             q,
             answer=ABSTAIN_ANSWER,
             slice_name="unanswerable",
-            provenance="hand-written",
+            method="topic-authored",
             should_abstain=True,
         )
         for q in _UNANSWERABLE_QUESTIONS
@@ -191,7 +203,7 @@ _FORMAT_EXAMPLES: list[tuple[str, str]] = [
 
 def format_examples() -> list[Example]:
     return [
-        _example(q, answer=a, slice_name="format", provenance="hand-written")
+        _example(q, answer=a, slice_name="format", method="topic-authored")
         for q, a in _FORMAT_EXAMPLES
     ]
 
@@ -221,7 +233,7 @@ def stale_examples() -> list[Example]:
             q,
             answer=STALE_ANSWER,
             slice_name="stale",
-            provenance="hand-written",
+            method="topic-authored",
             should_abstain=True,
             corpus_snapshot=config.CORPUS_SNAPSHOT_DATE.isoformat(),
         )
@@ -404,7 +416,7 @@ def multidoc_examples() -> list[Example]:
             q,
             answer=a,
             slice_name="multi-doc",
-            provenance="hand-written",
+            method="topic-authored",
             gold_arxiv_ids=ids,
             **(_MULTIDOC_OPEN_META if ids is None else {}),
         )
@@ -412,12 +424,217 @@ def multidoc_examples() -> list[Example]:
     ]
 
 
+# --- answerable (n=40) & persona (n=10), synthetic-by-construction (§2) ------
+# A question is generated FROM a sampled chunk, so that chunk is trivially the
+# gold retrieval label. Sampling is seed-fixed, stratified (max 2 chunks/paper)
+# to avoid topic collapse. Persona twins share the source chunk and differ only
+# in the audience instruction — FP6 calibration, not persona theater (§1 C).
+#
+# Deviation note: persona bases are sampled from the corpus with their own seed
+# instead of reusing answerable rows — the slices stay independently rebuildable
+# (a failed answerable run never blocks persona, and vice-versa).
+
+_QA_GEN_PROMPT = """A research-copilot answers user questions from arXiv cs.AI paper abstracts.
+Given ONE excerpt of a paper, produce:
+1. "question": a specific user question answerable ONLY from THIS excerpt and not
+   from other papers in the area. It MUST target a concrete detail present in the
+   excerpt: a reported number, a named mechanism, a stated limitation, an
+   evaluation setup, or an explicit comparison. Include the distinctive technical
+   terms from the excerpt so the question is uniquely identifiable.
+   BANNED: definitional or topic-level questions such as "What is the main
+   focus/purpose of ...?", "What is the X framework?", "What is the proposed
+   method/measure ...?", "What does X do?". GOOD example: instead of "What is the
+   proposed measure of robustness?", ask "How does the α-robustness definition
+   extend standard social laws for stochastic multi-agent settings?".
+   Do not mention "the paper", "this excerpt", or the arXiv ID.
+2. "answer": a concise gold reference answer (max 3 sentences), fully supported by
+   the excerpt, ending with the citation [{arxiv_id}].
+
+Excerpt (arXiv {arxiv_id}):
+\"\"\"{text}\"\"\"
+
+Respond with JSON only: {{"question": "...", "answer": "..."}}"""
+
+_PERSONA_GEN_PROMPT = """Given an excerpt of an arXiv paper and a question, write a reference
+answer calibrated for a specific audience.
+
+Excerpt (arXiv {arxiv_id}):
+\"\"\"{text}\"\"\"
+
+Question: {question}
+Audience: {audience_label} — {audience_guideline}
+
+Rules: max 3 sentences, fully supported by the excerpt, cite [{arxiv_id}] for claims.
+Respond with JSON only: {{"answer": "..."}}"""
+
+
+def _llm_json(client: OpenAI, prompt: str, temperature: float = 0.0) -> dict[str, str]:
+    """One generation call parsed as JSON; one retry on parse failure."""
+    for attempt in range(2):
+        resp = client.chat.completions.create(
+            model=config.GENERATION_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=temperature,
+            response_format={"type": "json_object"},
+        )
+        try:
+            return json.loads(resp.choices[0].message.content)
+        except json.JSONDecodeError:
+            if attempt == 1:
+                raise
+    raise AssertionError("unreachable")
+
+
+def _sample_chunks(chunks: list[Document], n: int, seed: int) -> list[Document]:
+    """Stratified sample: shuffle papers, take up to 2 chunks each until n."""
+    by_paper: dict[str, list[Document]] = {}
+    for c in chunks:
+        by_paper.setdefault(c.metadata["arxiv_id"], []).append(c)
+    rng = random.Random(seed)
+    paper_ids = sorted(by_paper)
+    rng.shuffle(paper_ids)
+    picked: list[Document] = []
+    taken = Counter()
+    for take in (2, 1):  # pass 1 takes 2/paper; pass 2 tops up with 1/paper if short
+        for pid in paper_ids:
+            if len(picked) >= n:
+                return picked
+            room = min(take, len(by_paper[pid]) - taken[pid], n - len(picked))
+            picked.extend(by_paper[pid][taken[pid] : taken[pid] + room])
+            taken[pid] += room
+    return picked
+
+
+def answerable_examples(client: OpenAI | None = None) -> list[Example]:
+    client = client or OpenAI()
+    chunks = _sample_chunks(utils.load_cached_chunks(), config.GOLDEN_SLICE_TARGETS["answerable"], seed=42)
+    examples = []
+    for c in chunks:
+        qa = _llm_json(client, _QA_GEN_PROMPT.format(arxiv_id=c.metadata["arxiv_id"], text=c.page_content))
+        q, a = qa["question"].strip(), qa["answer"].strip()
+        cid = c.metadata["arxiv_id"]
+        if f"[{cid}]" not in a:
+            a = f"{a} [{cid}]"
+        examples.append(
+            _example(
+                q,
+                answer=a,
+                slice_name="answerable",
+                method="from-chunk",
+                gold_chunk_ids=[utils.chunk_id(c)],
+                source_arxiv_id=cid,
+            )
+        )
+    return examples
+
+
+_AUDIENCES = {
+    "pm": ("product manager", "focus on impact, use-cases and trade-offs; no formalism or math"),
+    "phd": ("PhD researcher", "include the method/mechanism and its caveats; keep technical terms"),
+}
+
+
+def persona_examples(client: OpenAI | None = None) -> list[Example]:
+    client = client or OpenAI()
+    chunks = _sample_chunks(utils.load_cached_chunks(), config.GOLDEN_SLICE_TARGETS["persona"] // 2, seed=43)
+    examples = []
+    for i, c in enumerate(chunks):
+        cid = c.metadata["arxiv_id"]
+        # one base question per chunk, answered at both audience levels
+        qa = _llm_json(client, _QA_GEN_PROMPT.format(arxiv_id=cid, text=c.page_content))
+        base_q = qa["question"].strip()
+        for aud in ("pm", "phd"):
+            label, guideline = _AUDIENCES[aud]
+            out = _llm_json(
+                client,
+                _PERSONA_GEN_PROMPT.format(
+                    arxiv_id=cid, text=c.page_content, question=base_q,
+                    audience_label=label, audience_guideline=guideline,
+                ),
+            )
+            answer = out["answer"].strip()
+            if f"[{cid}]" not in answer:
+                answer = f"{answer} [{cid}]"
+            examples.append(
+                {
+                    "inputs": {"question": f"{base_q} (Answer as if explaining to a {label}.)", "audience": aud},
+                    "outputs": {
+                        "answer": answer,
+                        "gold_chunk_ids": [utils.chunk_id(c)],
+                        "gold_arxiv_ids": [],
+                        "should_abstain": False,
+                    },
+                    "metadata": {
+                        "slice": "persona",
+                        "authoring": {"origin": "llm", "method": "from-chunk"},
+                        "review": {"state": "draft"},
+                        "audience": aud,
+                        "base_id": f"persona-{i:02d}",
+                        "source_arxiv_id": cid,
+                    },
+                }
+            )
+    return examples
+
+
 SLICE_BUILDERS: dict[str, Callable[[], list[Example]]] = {
+    "answerable": answerable_examples,
     "unanswerable": unanswerable_examples,
     "multi-doc": multidoc_examples,
     "format": format_examples,
+    "persona": persona_examples,
     "stale": stale_examples,
 }
+
+
+# Provenance honesty → two-axis data model (ADR-001, docs/adrs/): drafts are
+# LLM-authored; humans REVIEW, they don't author. So origin=llm for everything
+# today; what the human adds is tracked in review.state, not in authorship.
+# The old single-field "provenance" mixed origin and review state and allowed
+# impossible states ("curated" without review) — removed, not renamed.
+
+_GENERIC_Q_PAT = re.compile(
+    r"what is the (main|primary) (focus|purpose|goal|aim)|what is the .* framework|"
+    r"^what (is|are|does|do)\b.{0,40}\?$|what (is|are) the proposed",
+    re.IGNORECASE,
+)
+
+
+def regenerate_vague_answerable(ls_client: Client, llm_client: OpenAI | None = None) -> int:
+    """Regenerate answerable examples whose question matches the generic-question
+    heuristic (same source chunk — gold_chunk_id stays valid), updating in-place."""
+    llm_client = llm_client or OpenAI()
+    ds = ls_client.read_dataset(dataset_name=config.GOLDEN_DATASET_NAME)
+    examples = [
+        e
+        for e in ls_client.list_examples(dataset_id=ds.id, splits=[config.CORE_SPLIT])
+        if (e.metadata or {}).get("slice") == "answerable"
+        and _GENERIC_Q_PAT.search(e.inputs["question"].lower())
+    ]
+    chunks = {utils.chunk_id(d): d for d in utils.load_cached_chunks()}
+    for e in examples:
+        src = chunks[e.outputs["gold_chunk_ids"][0]]
+        cid = src.metadata["arxiv_id"]
+        # temperature > 0 so repeated attempts actually vary (temp=0 repeats the
+        # same banned phrasing); up to 3 attempts before giving up on the example
+        for _ in range(3):
+            qa = _llm_json(
+                llm_client, _QA_GEN_PROMPT.format(arxiv_id=cid, text=src.page_content), temperature=0.8
+            )
+            q, a = qa["question"].strip(), qa["answer"].strip()
+            if not _GENERIC_Q_PAT.search(q.lower()):
+                break
+        else:
+            raise RuntimeError(f"3 regenerations still generic for {cid} — refine prompt")
+        if f"[{cid}]" not in a:
+            a = f"{a} [{cid}]"
+        ls_client.update_example(
+            e.id,
+            inputs={"question": q},
+            outputs=e.outputs | {"answer": a},
+            metadata=e.metadata | {"regenerated": "v2-specific-question"},
+        )
+    return len(examples)
 
 
 def build_golden_dataset(client: Client | None = None) -> dict[str, int]:
