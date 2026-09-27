@@ -229,12 +229,17 @@ def stale_examples() -> list[Example]:
     ]
 
 
-# --- multi-doc (n=15, FP3/FP7): each question requires joint synthesis over ---
-# 2-3 specific corpus papers (docs/plan.md §2). Gold retrieval label is the list
-# of required paper IDs; gold answer is a synthesis listing the expected points
-# from every required doc (the reference for completeness_judge, §2b).
+# --- multi-doc (n=15, FP3/FP7): hybrid composition (decision 2026-09-26, ---
+# docs/plan/ckpt-0.5-plan.md §8): 10 known-item questions name the required
+# paper IDs (mirrors product Features B/D, mechanical retrieval gold) and 5
+# open-topic questions name no IDs (realistic production queries; their retrieval
+# gold stays PENDING until the EXP-0 mini-pooling adjudication, and their
+# gold answer doubles as the completeness reference, §2b).
+# ids=None marks an open-topic example.
 
-_MULTIDOC_EXAMPLES: list[tuple[str, list[str], str]] = [
+_MULTIDOC_OPEN_META = {"open_topic": True, "retrieval_gold": "pending-adjudication"}
+
+_MULTIDOC_EXAMPLES: list[tuple[str, list[str] | None, str]] = [
     (
         "How do the harness studies 2609.20804v1 and 2609.20474v1 each isolate which "
         "harness components actually matter, and what exactly does each vary?",
@@ -266,7 +271,7 @@ _MULTIDOC_EXAMPLES: list[tuple[str, list[str], str]] = [
     (
         "Which indexed papers argue that flat retrieval over raw or document-level sources is "
         "insufficient, and what structured alternative does each propose?",
-        ["2609.19897v1", "2609.20754v1", "2609.19615v1"],
+        None,
         "RAFT argues support cases are not static documents and structures each closed case as a "
         "directed chain of timeline entries for entry-level retrieval [2609.20754v1]. TRACE argues flat "
         "retrieval fails on OCR-degraded archives and proposes training-free agentic retrieval with "
@@ -293,9 +298,9 @@ _MULTIDOC_EXAMPLES: list[tuple[str, list[str], str]] = [
         "a dual-process agent [2609.19128v1].",
     ),
     (
-        "What do 2609.20130v1 and 2609.20820v1 together show about the cost-versus-quality trade-off "
-        "of conditioning agents on history?",
-        ["2609.20130v1", "2609.20820v1"],
+        "When agents condition on long interaction histories, what cost-versus-quality trade-offs "
+        "do indexed papers report, and how do they resolve them?",
+        None,
         "Both reject naive full-history conditioning: 2609.20130v1 shows more memory does not "
         "monotonically raise repair success, so retrieval quality beats volume [2609.20130v1]; "
         "2609.20820v1 shows full histories induce spurious correlations while in-the-loop VLM "
@@ -334,9 +339,10 @@ _MULTIDOC_EXAMPLES: list[tuple[str, list[str], str]] = [
         "is sensitive to how participation and final states are operationalized [2609.20543v1].",
     ),
     (
-        "2609.19759v1 argues that for multi-agent LLM collaboration 'more is less'. Does the "
-        "epidemic account of 2609.18460v1 supply a mechanism consistent with that claim?",
-        ["2609.19759v1", "2609.18460v1"],
+        "Some research claims that adding more LLM agents brings diminishing returns ('more is "
+        "less'). Do any indexed papers offer a concrete mechanism for why extra agents can "
+        "increase collective risk rather than capability?",
+        None,
         "2609.19759v1 shows that as single-agent capability scales, adding agents yields diminishing "
         "returns plus growing context overhead, and it delineates the capability boundary where "
         "collaboration pays off [2609.19759v1]. 2609.18460v1 supplies a consistent mechanism: extra "
@@ -365,9 +371,10 @@ _MULTIDOC_EXAMPLES: list[tuple[str, list[str], str]] = [
         "[2609.18909v1].",
     ),
     (
-        "From combining RAFT (2609.20754v1) and AdaRepair-Mem (2609.20130v1), what design principle "
-        "follows for retrieval over agent histories?",
-        ["2609.20754v1", "2609.20130v1"],
+        "What design principles for retrieval over agent interaction histories emerge from indexed "
+        "work — for instance on enterprise troubleshooting cases and on repair-experience memory "
+        "for coding agents?",
+        None,
         "Both papers structure history before retrieval rather than retrieving over raw logs: RAFT "
         "abstracts closed cases into stateful directed chains of timeline entries [2609.20754v1], and "
         "AdaRepair-Mem orchestrates curated episodic memory because unfiltered memory volume hurts "
@@ -377,7 +384,7 @@ _MULTIDOC_EXAMPLES: list[tuple[str, list[str], str]] = [
     (
         "Which indexed papers show risks that emerge from LLM agent collectives rather than single "
         "agents, and what distinct mechanism does each identify?",
-        ["2609.18460v1", "2609.19789v1"],
+        None,
         "2609.18460v1 identifies epidemic contagion: a local seeded deviation is adopted and "
         "retransmitted through agent communication until the collective loses control [2609.18460v1]. "
         "2609.19789v1 identifies adversarial poisoning of the communication fabric: black-box attacks "
@@ -389,6 +396,9 @@ _MULTIDOC_EXAMPLES: list[tuple[str, list[str], str]] = [
 
 
 def multidoc_examples() -> list[Example]:
+    """ids=None marks an open-topic question: no mechanical retrieval gold — the
+    label is filled by human adjudication during the EXP-0 mini-pooling
+    (docs/plan/ckpt-0.5-plan.md §8)."""
     return [
         _example(
             q,
@@ -396,6 +406,7 @@ def multidoc_examples() -> list[Example]:
             slice_name="multi-doc",
             provenance="hand-written",
             gold_arxiv_ids=ids,
+            **(_MULTIDOC_OPEN_META if ids is None else {}),
         )
         for q, ids, a in _MULTIDOC_EXAMPLES
     ]

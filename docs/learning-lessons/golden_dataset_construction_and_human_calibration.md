@@ -155,7 +155,8 @@ flywheel — the "human annotation of some examples" intuition is architected in
 
 | Literature layer | Where it lives here |
 |---|---|
-| L1 synthetic-by-construction | `answerable` (40, questions generated from chunks), `persona` (10), `multi-doc` construction golds — `build_golden_dataset.py` |
+| L1 synthetic-by-construction | `answerable` (40, questions generated from chunks), `persona` (10), `multi-doc` known-item (10 — `build_golden_dataset.py`) |
+| L1+L2 hybrid | `multi-doc` open-topic (5 questions without named IDs): retrieval gold intentionally **empty until adjudicated** in the EXP-0 mini-pooling |
 | L2 pooled adjudication | **Planned for EXP-0 (CKPT-0.8):** for each golden question, run retrieval top-k, list unjudged candidates, human adjudicates relevant/not, promote judged-relevant docs into `gold_arxiv_ids`. A 250-paper TREC-pooling in miniature |
 | L3 judge calibration set | The per-slice human spot-check (`docs/plan.md` §8) formalized as the judge-alignment set when `evaluators.py` lands (CKPT-0.6) |
 | Production flywheel | CKPT-8 annotation queue + online evals (`docs/plan.md` §5) |
