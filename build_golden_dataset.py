@@ -464,7 +464,11 @@ Excerpt (arXiv {arxiv_id}):
 Question: {question}
 Audience: {audience_label} — {audience_guideline}
 
-Rules: max 3 sentences, fully supported by the excerpt, cite [{arxiv_id}] for claims.
+Rules:
+- max 3 sentences, every sentence directly supported by the excerpt (never infer
+  benefits, generalization, or results not stated there)
+- cite [{arxiv_id}] for claims
+- answer in English
 Respond with JSON only: {{"answer": "..."}}"""
 
 
@@ -528,9 +532,13 @@ def answerable_examples(client: OpenAI | None = None) -> list[Example]:
     return examples
 
 
+# ADR-004: the audience axis is a STARK contrast — technical researcher vs
+# non-technical stakeholder. A pm/phd pair is two technical-adjacent profiles and
+# produced too little calibration gap (observed in review R3); "lay" forces the
+# gold to collapse jargon to zero on one side and densify mechanism on the other.
 _AUDIENCES = {
-    "pm": ("product manager", "focus on impact, use-cases and trade-offs; no formalism or math"),
-    "phd": ("PhD researcher", "include the method/mechanism and its caveats; keep technical terms"),
+    "lay": ("non-technical stakeholder", "zero jargon; plain language plus an everyday analogy; focus on impact and why it matters; no math or technical terms"),
+    "phd": ("domain researcher", "include the method/mechanism, technical terms, caveats, and quantitative detail"),
 }
 
 
@@ -543,7 +551,7 @@ def persona_examples(client: OpenAI | None = None) -> list[Example]:
         # one base question per chunk, answered at both audience levels
         qa = _llm_json(client, _QA_GEN_PROMPT.format(arxiv_id=cid, text=c.page_content))
         base_q = qa["question"].strip()
-        for aud in ("pm", "phd"):
+        for aud in ("lay", "phd"):
             label, guideline = _AUDIENCES[aud]
             out = _llm_json(
                 client,
