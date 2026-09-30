@@ -443,9 +443,11 @@ Given ONE excerpt of a paper, produce:
    terms from the excerpt so the question is uniquely identifiable.
    BANNED: definitional or topic-level questions such as "What is the main
    focus/purpose of ...?", "What is the X framework?", "What is the proposed
-   method/measure ...?", "What does X do?". GOOD example: instead of "What is the
-   proposed measure of robustness?", ask "How does the α-robustness definition
-   extend standard social laws for stochastic multi-agent settings?".
+   method/measure ...?", "What does X do?", "What is X designed to do?",
+   "What is the purpose of X?", "How does X improve/help ...?". GOOD example:
+   instead of "What is the proposed measure of robustness?", ask "How does the
+   α-robustness definition extend standard social laws for stochastic
+   multi-agent settings?".
    Do not mention "the paper", "this excerpt", or the arXiv ID.
 2. "answer": a concise gold reference answer (max 3 sentences), fully supported by
    the excerpt, ending with the citation [{arxiv_id}].
@@ -602,7 +604,9 @@ SLICE_BUILDERS: dict[str, Callable[[], list[Example]]] = {
 # impossible states ("curated" without review) — removed, not renamed.
 
 _GENERIC_Q_PAT = re.compile(
-    r"what is the (main|primary) (focus|purpose|goal|aim)|what is the .* framework|"
+    r"what is the (main|primary) (focus|purpose|goal|aim)|what is the purpose of|"
+    r"what is .* designed to do|how does .* (improve|help)|what does .* do in relation|"
+    r"what is the .* framework|what is the main (function|role) of|"
     r"^what (is|are|does|do)\b.{0,40}\?$|what (is|are) the proposed",
     re.IGNORECASE,
 )
