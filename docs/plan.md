@@ -20,7 +20,7 @@
 |---|---|---|---|
 | **A. Cited Q&A** | Answer + paper citation per claim | FP4, hallucination-with-source | Core RAG capability; citation is where Magesh et al. misgrounding manifests |
 | **B. Structured comparisons** | "Compare methods of papers A, B, C" → table | FP5, FP3, FP7 | Multi-doc retrieval + format constraint in one feature |
-| **C. Audience-adaptive answers** | "Explain like a PM" vs "like a PhD" | FP6 | **Reframed as specificity tuning**: same question, different granularity → tests whether the model over-summarizes (too vague) or over-specifies (too dense) for the requested level. FP6 is about calibration, not persona. |
+| **C. Audience-adaptive answers** | "Explain to a non-technical stakeholder" vs "a domain researcher" | FP6 | **Reframed as specificity tuning**: same question, different granularity → tests whether the model over-summarizes (too vague) or over-specifies (too dense) for the requested level. FP6 is about calibration, not persona. (Audience axis changed pm→lay per ADR-004.) |
 | **D. Multi-part synthesis** | "Techniques AND limitations of A, B, C?" | FP7, FP3 | Natural multi-doc scenario where completeness and consolidation fail |
 | **E. Honest abstention** | Out-of-corpus → "I don't know" | FP1 | Most critical failure mode in high-stakes domains; abstention quality is a release-blocking metric |
 | **F. Multi-turn threads** | Follow-ups with conversation memory | FP2, FP3 (at turn N>1) | **Reframed as thread context degradation**: later turns lose retrieval context as conversation history grows → retrieval quality degrades across the thread. Thread-level online evals (M1 L4) measure per-turn retrieval drift. |
@@ -47,7 +47,7 @@ Slices of n=6–12 have no statistical power: one example flipping = 8–17% met
 | `deep-hit` | ~15 | FP2, R5 | Found empirically: questions whose answer doc ranks low in baseline | Answer doc ID (identified during EXP-0) | Answer extracted from the low-ranking doc |
 | `multi-doc` | ~15 | FP3, FP7 | Hand-written: requires 2–3 specific papers jointly | List of 2–3 gold doc IDs | Synthesis answer listing all expected points from all required docs |
 | `format` | ~10 | FP5 | Table / JSON-schema / list instructions | N/A (format is the test, not retrieval) | Correctly formatted output matching the requested schema |
-| `persona` | ~10 | FP6 | Same question, PM vs PhD audience | Same as `answerable` source | Two gold answers: one calibrated for PM, one for PhD |
+| `persona` | ~10 | FP6 | Same question, `lay` vs `phd` audience (ADR-004) | Same as `answerable` source | Two gold answers: one calibrated for a non-technical stakeholder, one for a domain researcher |
 | `stale` | ~10 | FP1′ / R3 | "What's new in \<recent month\>?" — fails until re-index | None (pre-refresh); new docs (post-refresh) | `"No papers found in this period"` (pre-refresh); summary of new papers (post-refresh) |
 
 ### Extended set (~200 examples)
@@ -61,7 +61,7 @@ Same 7 slices, expanded to statistical power. Used only for CKPT-7 (final pairwi
 | `deep-hit` | 15 | 25 | Primary target of CKPT-4/5; 25 gives ±4% granularity |
 | `multi-doc` | 15 | 25 | Primary target of CKPT-5; 25 gives ±4% granularity |
 | `format` | 10 | 20 | Code-based evaluator (no judge noise); 20 is sufficient |
-| `persona` | 10 | 15 | LLM-judge but binary-ish (PM vs PhD); 15 gives ±6.7% |
+| `persona` | 10 | 15 | LLM-judge but binary-ish (lay vs phd); 15 gives ±6.7% |
 | `stale` | 10 | 15 | Time-sensitive; 15 gives ±6.7% |
 | **Total** | **115** | **205** | |
 
@@ -88,7 +88,7 @@ Every slice now has explicit gold labels. The map below defines which evaluators
 | `deep-hit` | Answer doc ID (from EXP-0) | Answer from low-ranking doc | recall@k, hit@k, MRR | `compare_semantic_similarity` | `faithfulness_judge`, `citation_accuracy` |
 | `multi-doc` | List of 2–3 gold doc IDs | Synthesis listing all expected points | recall@k, hit@k (all gold docs in top-k?) | `completeness_judge` (checks all points from gold answer present) | `faithfulness_judge`, `citation_accuracy` |
 | `format` | N/A | Correctly formatted output | N/A | `format_validator` (code: checks output matches schema) | N/A |
-| `persona` | Same as `answerable` source | Two gold answers (PM + PhD) | recall@k (same as answerable) | `specificity_judge` (checks output matches requested audience's gold) | `faithfulness_judge` |
+| `persona` | Same as `answerable` source | Two gold answers (lay + phd) | recall@k (same as answerable) | `specificity_judge` (checks output matches requested audience's gold) | `faithfulness_judge` |
 | `stale` | None (pre-refresh) / new docs (post-refresh) | `"No papers found"` (pre) / new paper summary (post) | precision@k (pre-refresh: should be ~0) | `abstention_quality` (pre-refresh: should abstain) | `faithfulness_judge` (post-refresh: should be grounded in new docs) |
 
 **Key design decisions**:
