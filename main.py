@@ -4,6 +4,7 @@ import logging
 import uuid
 
 import app
+import build_golden_dataset
 import config
 import utils
 
@@ -31,7 +32,8 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO)
     build_corpus()
     run_pipeline()
-    # build_golden_dataset() joins this flow in the next checkpoint (docs/plan.md CKPT-0)
+    # idempotent: reports counts, creates only missing slices (docs/plan.md §2)
+    build_golden_dataset.build_golden_dataset()
 
 
 if __name__ == "__main__":
