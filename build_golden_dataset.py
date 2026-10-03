@@ -1,15 +1,3 @@
-"""Build the `arxiv-copilot-golden` dataset, core split (docs/plan.md §2).
-
-Slices: hand-written `unanswerable`/`format`/`stale` (0.5.2a), hybrid `multi-doc`
-(0.5.2b/c), synthetic `answerable`/`persona` (0.5.3) generated from sampled corpus
-chunks — synthetic-by-construction, so the source chunk IS the retrieval gold label.
-`deep-hit` lands in CKPT-0.8 (found empirically during EXP-0).
-
-Sync is idempotent per slice: a slice at its target count is skipped, an empty
-slice is created in bulk, and a partially-populated slice hard-fails — partial
-state means a human changed the dataset by hand and should resolve it.
-"""
-
 from __future__ import annotations
 
 import json
