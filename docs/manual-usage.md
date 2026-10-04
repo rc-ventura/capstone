@@ -10,8 +10,8 @@ understand what the golden set will measure. Every command was tested in CKPT-0.
 uv run python -c "import config; print('OK')"
 ```
 
-The corpus is loaded from the parquet cache in `resources/` (built on demand the 1st time;
-with the snapshot pin it does not re-download new papers — ADR-002).
+The corpus is rebuilt on the first use **by arXiv id** from `resources/corpus_manifest.json` (verified against
+the recorded abstract digests; ADR-002, ADR-005) and cached as parquet in `resources/` (git-ignored).
 
 ## 1. Full pipeline (corpus → retriever → traced answer)
 

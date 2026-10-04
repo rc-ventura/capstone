@@ -15,7 +15,7 @@
 | P4 `f1_summary_evaluator` with invalid format | ✅ done, **not committed** | signature + return `{"results": [...]}` |
 | P5 hit@k ≡ recall@k with 1 gold | ✅ **implemented, not committed** | paper as the default level (D-1), `k`, `hit_at_ks`, `primary_retrieval_metrics` (D-2) |
 | P6 `precision_at_k` with a 1-chunk gold | 🟡 **postponed at your request** | the whole-abstract baseline eliminates sibling chunks: reassess the scope (note in §6) |
-| **D-7 baseline = one record per abstract** | 🟡 **approved**, implementation pending | next slice: `utils`/`config`, new cache, derived gold; see §5 |
+| **D-7 baseline = one record per abstract** | ✅ **implemented** (2026-10-04, ADR-005) | `config.BASELINE`/`CHUNKED_500_0`, `utils.chunk_documents(…, 0, 0)`, new cache; golden builder pinned to the 500/0 arm |
 | P7 abstention detection via `startswith` | 🟡 **proposal rewritten** (§6) | awaiting D-5 |
 | P8 abstention as accuracy | 🟡 **proposal rewritten** (§6) | awaiting D-6 |
 | P9–P11 | 🟠 draft, **updated with the reading notes (fichamentos)** (§7) | discuss after P5–P8 |
@@ -122,7 +122,7 @@ section/table · limitations · **reflections anchored in our plan** · confiden
 | D-4 | — | `precision_at_k` only with complete gold + `distinct_papers@k` separately? | P6 | Proposal |
 | D-5 | — | Abstention: LLM judge as ground truth + heuristic as a cheap baseline; structured marker only in CKPT-6? | P7 | Proposal |
 | D-6 | — | Abstention: gate = recall **with** a mandatory over-refusal guardrail, per slice, with CI? | P8 | Proposal |
-| D-7 | 2026-10-03 | **Baseline = one record per abstract**; 500/0 chunking becomes an EXP-3 arm. Measured: retrieval ≈ equal (same hit@5; 5 distinct papers vs 3.8), 2.6× input tokens, 2.2× cost, +8% latency. **Contingency:** if the golden set's bias (generated from chunks) harms the metrics, regenerate `answerable`/`persona` from the whole abstract | [lesson](../learning-lessons/retrieval_unit_and_gold_granularity.md) | ✅ **Approved**; implementation pending (next slice); recorded in [ADR-005](../adrs/0005-retrieval-unit-whole-abstract.md) |
+| D-7 | 2026-10-03 | **Baseline = one record per abstract**; 500/0 chunking becomes an EXP-3 arm. Measured: retrieval ≈ equal (same hit@5; 5 distinct papers vs 3.8), 2.6× input tokens, 2.2× cost, +8% latency. **Contingency:** if the golden set's bias (generated from chunks) harms the metrics, regenerate `answerable`/`persona` from the whole abstract | [lesson](../learning-lessons/retrieval_unit_and_gold_granularity.md) | ✅ **Approved and implemented** (2026-10-04); recorded in [ADR-005](../adrs/0005-retrieval-unit-whole-abstract.md) |
 
 **L-3 note (empirical test done in a throwaway environment, without touching the project):**
 

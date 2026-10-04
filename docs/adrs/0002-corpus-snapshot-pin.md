@@ -32,3 +32,10 @@ if the budget runs short. Skip budget is **additive** (2000), not multiplicative
 
 Evidence: on 2026-09-24 there were 766 cs.AI papers published after the pin; the
 first eligible paper sat at position 766 in the newest-first listing.
+
+## Update 2026-10-04
+
+Rebuilding the frozen corpus by scanning arXiv by date stopped working: the additive skip budget was exhausted ~10 days after it was
+sized (~128 newer papers per day). The corpus is now also pinned by `resources/corpus_manifest.json` (ids + abstract digests,
+versioned in git) and rebuilt by id; see ADR-005 and `docs/decisions.md` (Observations, 2026-10-04). The date pin keeps its meaning
+for the `stale` slice and for a cold start.

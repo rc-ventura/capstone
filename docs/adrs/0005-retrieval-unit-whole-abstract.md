@@ -1,6 +1,6 @@
 # ADR-005: Retrieval unit for the baseline index: one record per whole abstract
 
-**Status**: Accepted (implementation pending)
+**Status**: Accepted (implemented 2026-10-04)
 **Date**: 2026-10-03
 **Related**: [Lesson: Retrieval Unit and Gold Granularity](../learning-lessons/retrieval_unit_and_gold_granularity.md) · [Roadmap decision D-7](../roadmap/ckpt-0.6.1b-metrics-roadmap.md) · [ADR-006](./0006-retrieval-gold-granularity-and-metrics.md)
 
@@ -68,8 +68,22 @@ The baseline index holds **one record per paper, containing the whole abstract**
 - Quotations in answers (citing "paper Y says Z") do not depend on chunks: the generator can return a literal sentence of the
   abstract next to the `arxiv_id`, and the citation evaluator checks that it exists in the abstract.
 
-Implementation (pending, next slice): an "abstract" indexing strategy in `utils.py`/`config.py` with its own cache, gold derived
-from the `arxiv_id`, and updated baseline definitions in `docs/plan.md` (CKPT-0 and §1).
+Implemented (2026-10-04):
+
+- `config.RunConfig.chunk_size = 0` means "whole abstract" (`chunk_strategy == "abstract"`); `config.BASELINE` uses it, and
+  `config.CHUNKED_500_0` is the experimental arm (and the unit the golden set was generated from).
+- `utils.chunk_documents(..., 0, 0)` returns one record per paper; each strategy has its own cache
+  (`arxiv_text-embedding-3-small_abstract.parquet`, 250 records, same 250 papers as the 500/0 cache).
+- The golden-set builder pins `config.CHUNKED_500_0` so its source-chunk ids keep resolving; the dataset itself was not touched
+  (paper-level gold is derived at evaluation time, ADR-006).
+- Real retrieval check with the new baseline reproduces the earlier comparison: `answerable` hit@1 0.90, MRR 0.934; `multi-doc`
+  recall@5 0.617, MRR 0.750; 5 distinct papers in every top-5.
+- **Finding during implementation:** rebuilding the frozen corpus by scanning arXiv by date no longer works (the snapshot pin must
+  skip every newer paper, and the skip budget is exhausted). The corpus is now described by `resources/corpus_manifest.json`
+  (versioned in git: 250 arxiv ids plus the digest of each abstract) and rebuilt **by id**, with verification
+  (`utils.load_frozen_corpus`, `papers_from_manifest`); the parquet cache is only an offline fallback. All 250 ids and digests were
+  verified against arXiv, and the index was rebuilt from the original texts (10 abstracts contain line breaks). See
+  `docs/decisions.md`, Observations 2026-10-04.
 
 ## Alternatives considered
 

@@ -175,7 +175,7 @@ After this analysis the user approved:
 
 Why decide **before** EXP-0: once the baseline is recorded, switching the unit costs far more. The accepted risks: ×2.2 cost per query (cents), answer quality still **not measured**, and the CKPT-3 design changes.
 
-**Implemented so far:** the evaluators (paper as the default level, `k`, `hit_at_ks`, `primary_retrieval_metrics`). **Pending (next slice):** "whole abstract" strategy in `utils`/`config`, new cache, gold derived from the `arxiv_id`.
+**Implemented:** the evaluators (paper as the default level, `k`, `hit_at_ks`, `primary_retrieval_metrics`) and, on 2026-10-04, the whole-abstract index (`config.BASELINE`; the 500/0 arm is `config.CHUNKED_500_0`; new cache with the same 250 papers; paper-level gold derived at evaluation time). **Finding while implementing:** the frozen corpus can no longer be rebuilt from arXiv (the snapshot-pin skip budget is exhausted), so the corpus is now described by a git-versioned manifest (`resources/corpus_manifest.json`: ids + abstract digests) and rebuilt by arXiv id with verification; see ADR-005 and `docs/decisions.md` (Observations, 2026-10-04).
 
 ---
 

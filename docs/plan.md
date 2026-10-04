@@ -10,7 +10,7 @@
 
 **Job-to-be-done**: *"Answer my questions about recent AI papers with real citations — and tell me when you don't know."*
 
-**Corpus**: ~250–300 arXiv cs.AI abstracts (~800–1200 chunks @ 500 chars), parquet-cached, publication-dated (enables the `stale` slice).
+**Corpus**: ~250–300 arXiv cs.AI abstracts (baseline: one index record per whole abstract, ADR-005; the 500-character chunking, ~800–1200 chunks, is an experimental arm), parquet-cached, publication-dated (enables the `stale` slice).
 
 **Corpus size rationale**: with a tiny corpus, retrieval recalls ~100% and FP2 never manifests. 250+ papers make retrieval realistic enough for experiments to discriminate.
 
@@ -187,7 +187,7 @@ The **decision gate** promotes or rejects a configuration. All gates also requir
 
 **Build**: `config.py`, `utils.py` (arXiv load → chunks → embeddings → parquet), `app.py` (all 3 tracing methods: `@traceable`, `wrap_openai`, `trace` context manager; run types chain/llm/retriever; metadata; threads), `build_golden_dataset.py`, `evaluators.py`.
 
-**EXP-0 (baseline measurement)**: core golden set × baseline config (`k=5, text-embedding-3-small, chunk 500/0, prompt v1, no rewrite, no rerank`). **Run twice** to measure LLM-judge inter-run variance — this establishes the noise floor for all later decision gates.
+**EXP-0 (baseline measurement)**: core golden set × baseline config (`k=5, text-embedding-3-small, one record per whole abstract (ADR-005), prompt v1, no rewrite, no rerank`). **Run twice** to measure LLM-judge inter-run variance — this establishes the noise floor for all later decision gates.
 
 **Gate**: none — produces the baseline metrics table per FP/slice + judge variance report.
 **Verification**: `python app.py` traces to project `capstone-arxiv-copilot`; dataset visible with all slices; EXP-0 results table printed with per-slice breakdown; judge variance ≤ 10% (if higher, increase `num_repetitions` in evaluator runs).
@@ -209,7 +209,7 @@ The **decision gate** promotes or rejects a configuration. All gates also requir
 
 ### CKPT-3 — Chunking strategy (FP3, R4, FP4)
 
-> **Decision (2026-10-03, pending implementation):** the baseline becomes **one index record per abstract** (D-7); the 500/0 chunking becomes an **experimental arm**, so EXP-3 now compares *whole abstract × 500/0 chunks* (and, if it makes sense, 1000/200), always at **paper level** — the `chunk_id` is `sha1(text)` and changes with the chunking. The baseline definitions in CKPT-0/§1 will be updated when the index is swapped. See [`docs/learning-lessons/retrieval_unit_and_gold_granularity.md`](./learning-lessons/retrieval_unit_and_gold_granularity.md) and `docs/roadmap/ckpt-0.6.1b-metrics-roadmap.md` (D-1, D-2, D-7).
+> **Decision (2026-10-03, implemented 2026-10-04):** the baseline becomes **one index record per abstract** (D-7); the 500/0 chunking becomes an **experimental arm**, so EXP-3 now compares *whole abstract × 500/0 chunks* (and, if it makes sense, 1000/200), always at **paper level** — the `chunk_id` is `sha1(text)` and changes with the chunking. The baseline definitions in CKPT-0/§1 will be updated when the index is swapped. See [`docs/learning-lessons/retrieval_unit_and_gold_granularity.md`](./learning-lessons/retrieval_unit_and_gold_granularity.md) and `docs/roadmap/ckpt-0.6.1b-metrics-roadmap.md` (D-1, D-2, D-7). `config.BASELINE` is the whole-abstract index; `config.CHUNKED_500_0` is the experimental arm (and the unit the golden set was generated from).
 
 **EXP-3**: chunk 500/overlap 0 vs 1000/overlap 200 on the *winning* embedding. Watch precision@k drop (noise) vs recall@k gain (coverage) — the Redis-documented tradeoff — and faithfulness on the `answerable` slice.
 

@@ -501,7 +501,7 @@ def _sample_chunks(chunks: list[Document], n: int, seed: int) -> list[Document]:
 
 def answerable_examples(client: OpenAI | None = None) -> list[Example]:
     client = client or OpenAI()
-    chunks = _sample_chunks(utils.load_cached_chunks(), config.GOLDEN_SLICE_TARGETS["answerable"], seed=42)
+    chunks = _sample_chunks(utils.load_cached_chunks(config.CHUNKED_500_0), config.GOLDEN_SLICE_TARGETS["answerable"], seed=42)
     examples = []
     for c in chunks:
         qa = _llm_json(client, _QA_GEN_PROMPT.format(arxiv_id=c.metadata["arxiv_id"], text=c.page_content))
@@ -534,7 +534,7 @@ _AUDIENCES = {
 
 def persona_examples(client: OpenAI | None = None) -> list[Example]:
     client = client or OpenAI()
-    chunks = _sample_chunks(utils.load_cached_chunks(), config.GOLDEN_SLICE_TARGETS["persona"] // 2, seed=43)
+    chunks = _sample_chunks(utils.load_cached_chunks(config.CHUNKED_500_0), config.GOLDEN_SLICE_TARGETS["persona"] // 2, seed=43)
     examples = []
     for i, c in enumerate(chunks):
         cid = c.metadata["arxiv_id"]
@@ -611,7 +611,7 @@ def regenerate_vague_answerable(ls_client: Client, llm_client: OpenAI | None = N
         if (e.metadata or {}).get("slice") == "answerable"
         and _GENERIC_Q_PAT.search(e.inputs["question"].lower())
     ]
-    chunks = {utils.chunk_id(d): d for d in utils.load_cached_chunks()}
+    chunks = {utils.chunk_id(d): d for d in utils.load_cached_chunks(config.CHUNKED_500_0)}
     for e in examples:
         src = chunks[e.outputs["gold_chunk_ids"][0]]
         cid = src.metadata["arxiv_id"]

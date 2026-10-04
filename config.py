@@ -27,9 +27,14 @@ BASE_DIR = Path(__file__).resolve().parent
 RESOURCES_DIR = BASE_DIR / "resources"  # parquet caches per embedding/chunk config
 RESULTS_DIR = BASE_DIR / "results"  # per-checkpoint result reports
 
+# Frozen-corpus manifest (ADR-002/ADR-005): arxiv ids + a digest of each abstract, versioned in git.
+# Unlike the git-ignored parquet caches it lets any clone rebuild the exact same corpus by id.
+CORPUS_MANIFEST_PATH = RESOURCES_DIR / "corpus_manifest.json"
+
 # --- Corpus (docs/plan.md §1) ---
 ARXIV_CATEGORY = "cs.AI"
 CORPUS_TARGET_SIZE = 250  # min papers; below this, retrieval recall ~100% and FP2 never manifests
+
 # Snapshot pin (docs/plan/ckpt-0.5-plan.md §4.2): freeze the corpus at this date so the
 # `stale` golden slice keeps meaning "papers published after the corpus" across every
 # experiment's cache rebuilds. Equals the baseline cache's max published date, so the
@@ -70,7 +75,7 @@ class RunConfig:
     app_version: str
     embedding_model: str = "text-embedding-3-small"
     k: int = 5
-    chunk_size: int = 500
+    chunk_size: int = 0  # 0 = no chunking: one record per whole abstract (ADR-005)
     chunk_overlap: int = 0
     prompt_version: str = "v1"
     query_rewrite: bool = False
@@ -78,11 +83,23 @@ class RunConfig:
     rerank: bool = False
     rerank_top_n: int = 20  # candidates fetched pre-rerank before cutting to k (CKPT-4)
 
+    def __post_init__(self) -> None:
+        if self.chunk_size == 0 and self.chunk_overlap != 0:
+            raise ValueError("chunk_overlap requires chunk_size > 0 (chunk_size=0 means whole abstract)")
+
     @property
     def chunk_strategy(self) -> str:
+        if self.chunk_size == 0:
+            return "abstract"
         return f"{self.chunk_size}/{self.chunk_overlap}"
 
 
-# EXP-0 baseline (docs/plan.md CKPT-0): k=5, text-embedding-3-small, chunk 500/0,
-# prompt v1, no rewrite, no rerank. Every later checkpoint's gate compares against this.
+# EXP-0 baseline (docs/plan.md CKPT-0, ADR-005): k=5, text-embedding-3-small, ONE RECORD PER WHOLE
+# ABSTRACT (chunk_size=0), prompt v1, no rewrite, no rerank. Every later checkpoint's gate compares
+# against this. The unit was changed from 500-character chunks to the whole abstract BEFORE EXP-0 was run.
 BASELINE = RunConfig(app_version="baseline-ckpt0")
+
+# Experimental arm of CKPT-3 (chunking) and the unit the golden set's answerable/persona questions were
+# generated from (docs/learning-lessons/retrieval_unit_and_gold_granularity.md). The golden-set builder
+# pins this config so its source-chunk ids keep resolving.
+CHUNKED_500_0 = RunConfig(app_version="arm-chunked-500-0", chunk_size=500, chunk_overlap=0)

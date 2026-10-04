@@ -10,18 +10,20 @@ docs/
 ├── README.md            ← this index
 ├── plan.md              ← MASTER PLAN: product, golden set, evaluators, checkpoints
 ├── decisions.md         ← decision log for the gates + observations (non-gates)
+├── manual-usage.md      ← inspecting the system by hand
 ├── research/            ← bibliographic grounding
-│   └── rag_failure_modes_review.md
-├── roadmap/             ← detailed plans per checkpoint (one file per CKPT)
-│   ├── ckpt-0.5-plan.md
-│   └── ckpt-0.5-review-plan.md
+│   ├── rag_failure_modes_review.md
+│   └── fichamentos/     ← 15 reading notes on the papers behind the evaluation design
+├── roadmap/             ← detailed plans per checkpoint
+│   ├── ckpt-0.5-plan.md, ckpt-0.5-review-plan.md
+│   ├── ckpt-0.6-plan.md                      (evaluator catalog)
+│   └── ckpt-0.6.1b-metrics-roadmap.md        (living roadmap: metrics hardening, decisions D-/L-)
 ├── adrs/                ← architectural decisions (one per ADR)
-│   ├── 0001-golden-set-provenance-data-model.md
-│   ├── 0002-corpus-snapshot-pin.md
-│   ├── 0003-hybrid-multidoc-slice.md
-│   └── 0004-persona-audience-axis.md
-└── learning-lessons/    ← technical learnings with auditable citations
-    └── golden_dataset_construction_and_human_calibration.md
+│   └── 0001 … 0006      (provenance, corpus pin, multi-doc slice, persona axis, retrieval unit, gold granularity)
+├── learning-lessons/    ← technical learnings with auditable evidence
+│   ├── golden_dataset_construction_and_human_calibration.md
+│   └── retrieval_unit_and_gold_granularity.md
+└── ui/                  ← plan for the Gradio web interface (not implemented)
 ```
 
 ## How to read (suggested order)
@@ -32,6 +34,7 @@ docs/
    checkpoints with gates (§5).
 3. [`roadmap/`](./roadmap/) — implementation plan for the checkpoint in progress
    (mini-checkpoints approved before each batch).
+3b. [`research/fichamentos/`](./research/fichamentos/) — reading notes on the papers behind the evaluators and metrics.
 4. [`adrs/`](./adrs/) — architectural decisions with context, rejected alternatives,
    and consequences.
 5. [`decisions.md`](./decisions.md) — what each experiment decided (PROMOTE/REJECT).
