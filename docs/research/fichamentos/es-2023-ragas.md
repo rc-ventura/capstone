@@ -1,119 +1,119 @@
-# Es et al. 2023 — RAGAS (avaliação de RAG sem gabarito)
+# Es et al. 2023 — RAGAS (RAG evaluation without reference answers)
 
-- **Referência completa:** Shahul Es, Jithin James, Luis Espinosa-Anke, Steven Schockaert. *Ragas: Automated Evaluation of Retrieval Augmented Generation.* arXiv:2309.15217 (versão lida: v2, 28/04/2025). <https://arxiv.org/abs/2309.15217> · Código: <https://github.com/explodinggradients/ragas> · Dataset: <https://huggingface.co/datasets/explodinggradients/WikiEval>
-  *(O paper é um artigo curto de demonstração; o venue de publicação — EACL 2024, demos — vem do meu conhecimento prévio e **não foi verificado** nesta leitura.)*
-- **Confiança da leitura:** **integral.** Li o texto bruto completo da versão HTML do arXiv (v2): resumo, Seções 1–6, Tabela 1 e Apêndice A (Tabelas 2–4 de exemplos). O artigo é curto (≈ 34 mil caracteres). **Não vi:** figuras (não há figuras relevantes no texto extraído). O PDF não pôde ser decodificado pela ferramenta de leitura; usei o HTML.
+- **Full reference:** Shahul Es, Jithin James, Luis Espinosa-Anke, Steven Schockaert. *Ragas: Automated Evaluation of Retrieval Augmented Generation.* arXiv:2309.15217 (version read: v2, 2025-04-28). <https://arxiv.org/abs/2309.15217> · Code: <https://github.com/explodinggradients/ragas> · Dataset: <https://huggingface.co/datasets/explodinggradients/WikiEval>
+  *(The paper is a short demo paper; the publication venue — EACL 2024, demos — comes from my prior knowledge and was **not verified** in this reading.)*
+- **Reading confidence:** **full.** I read the complete raw text of the arXiv HTML version (v2): abstract, Sections 1–6, Table 1 and Appendix A (Tables 2–4 with examples). The paper is short (≈ 34 thousand characters). **I did not see:** figures (there are no relevant figures in the extracted text). The reading tool could not decode the PDF; I used the HTML.
 
-> Convenção: **[Artigo]** = afirmado no texto; **[Minha leitura]** = interpretação minha.
+> Convention: **[Paper]** = stated in the text; **[My reading]** = my interpretation.
 
 ---
 
-## 1. Problema que o artigo ataca
+## 1. Problem the paper addresses
 
-**[Artigo]** Avaliar RAG exige olhar várias dimensões: a capacidade do retriever de achar passagens relevantes *e focadas*, a capacidade do LLM de usá-las *fielmente*, e a qualidade da geração em si (Resumo). Avaliações comuns têm limites: perplexidade nem sempre prevê desempenho downstream e exige probabilidades que modelos fechados não expõem; QA costuma usar datasets de resposta curta/extrativa, pouco representativos (Seção 1). Objetivo: um conjunto de métricas **reference-free** — "sem depender de anotações humanas de verdade" — para acelerar ciclos de avaliação (Resumo, Seção 3: "we focus on metrics that are fully self-contained and reference-free").
+**[Paper]** Evaluating RAG requires looking at several dimensions: the retriever's ability to find relevant *and focused* passages, the LLM's ability to use them *faithfully*, and the quality of the generation itself (Abstract). Common evaluations have limits: perplexity does not always predict downstream performance and requires probabilities that closed models do not expose; QA tends to use short-answer/extractive datasets, which are not very representative (Section 1). Goal: a set of **reference-free** metrics — "without having to rely on ground truth human annotations" — to speed up evaluation cycles (Abstract, Section 3: "we focus on metrics that are fully self-contained and reference-free").
 
-## 2. Método (passo a passo, fórmulas exatas)
+## 2. Method (step by step, exact formulas)
 
-Setting (Seção 3): dada uma pergunta *q*, o sistema recupera contexto *c(q)* e gera resposta *a_s(q)*. Três aspectos de qualidade, todos medidos **por prompting de LLM** (gpt-3.5-turbo-16k; embeddings: text-embedding-ada-002). Não há uso de gabarito.
+Setting (Section 3): given a question *q*, the system retrieves context *c(q)* and generates answer *a_s(q)*. Three quality aspects, all measured **by LLM prompting** (gpt-3.5-turbo-16k; embeddings: text-embedding-ada-002). No reference answer is used.
 
-### 2.1 Faithfulness (fidelidade) — Seção 3
+### 2.1 Faithfulness — Section 3
 
-*(mede se tudo o que a resposta afirma pode ser deduzido do contexto recuperado; é o antídoto contra alucinação)*
+*(measures whether everything the answer claims can be deduced from the retrieved context; it is the antidote to hallucination)*
 
-1. LLM decompõe a resposta em um conjunto de **statements** *S(a_s(q))* (prompt: "Given a question and answer, create one or more statements from each sentence in the given answer").
-2. Para cada statement *sᵢ*, o LLM verifica se pode ser inferido do contexto (função *v(sᵢ, c(q))*; prompt de verificação com veredito Yes/No e explicação breve por statement).
-3. **F = |V| / |S|**, em que |V| = nº de statements suportados e |S| = total de statements.
+1. An LLM decomposes the answer into a set of **statements** *S(a_s(q))* (prompt: "Given a question and answer, create one or more statements from each sentence in the given answer").
+2. For each statement *sᵢ*, the LLM checks whether it can be inferred from the context (function *v(sᵢ, c(q))*; verification prompt with a Yes/No verdict and a brief explanation per statement).
+3. **F = |V| / |S|**, where |V| = number of supported statements and |S| = total number of statements.
 
-### 2.2 Answer relevance (relevância da resposta) — Seção 3, Eq. (1)
+### 2.2 Answer relevance — Section 3, Eq. (1)
 
-*(mede se a resposta trata exatamente da pergunta feita, sem ser incompleta nem redundante; **não** avalia se é verdadeira)*
+*(measures whether the answer addresses exactly the question asked, without being incomplete or redundant; it does **not** assess whether it is true)*
 
-1. Dado *a_s(q)*, o LLM gera **n perguntas** *qᵢ* plausíveis para aquela resposta (prompt: "Generate a question for the given answer").
-2. Embeddings (ada-002) de todas as perguntas; **sim(q, qᵢ)** = cosseno entre a pergunta original e cada pergunta gerada.
+1. Given *a_s(q)*, the LLM generates **n questions** *qᵢ* that are plausible for that answer (prompt: "Generate a question for the given answer").
+2. Embeddings (ada-002) of all the questions; **sim(q, qᵢ)** = cosine between the original question and each generated question.
 3. **AR = (1/n) · Σᵢ sim(q, qᵢ)**.
 
-O artigo diz explicitamente que essa avaliação "não leva em conta factualidade, mas penaliza respostas incompletas ou com informação redundante".
+The paper explicitly says that this assessment "does not take into account factuality, but penalises cases where the answer is incomplete or where it contains redundant information".
 
-### 2.3 Context relevance (relevância do contexto) — Seção 3, Eq. (2)
+### 2.3 Context relevance — Section 3, Eq. (2)
 
-*(mede o quanto o contexto recuperado é **focado**: quanta fração dele é realmente necessária para responder; penaliza contexto com informação redundante/irrelevante)*
+*(measures how **focused** the retrieved context is: what fraction of it is actually needed to answer; penalizes context with redundant/irrelevant information)*
 
-1. O LLM extrai de *c(q)* o subconjunto de sentenças **S_ext** "cruciais" para responder *q* (prompt pede sentenças relevantes sem alterá-las; se não houver, retorna "Insufficient Information").
-2. **CR = nº de sentenças extraídas / nº total de sentenças em c(q)**.
+1. The LLM extracts from *c(q)* the subset of "crucial" sentences **S_ext** for answering *q* (the prompt asks for relevant sentences without altering them; if there are none, it returns "Insufficient Information").
+2. **CR = number of extracted sentences / total number of sentences in c(q)**.
 
-**[Minha leitura]** Isto **não** é recall nem precision de retrieval no sentido de IR: não compara com documentos-gold, não considera a posição no ranking e não mede se *toda* a informação necessária está presente — mede só a *proporção do contexto entregue que o LLM julga útil*. Um contexto que contém uma única sentença útil e nada mais teria CR = 1,0 mesmo faltando o resto da resposta.
+**[My reading]** This is **not** retrieval recall or precision in the IR sense: it does not compare against gold documents, does not consider rank position, and does not measure whether *all* the necessary information is present — it only measures the *proportion of the delivered context that the LLM judges useful*. A context that contains a single useful sentence and nothing else would have CR = 1.0 even if the rest of the answer were missing.
 
-### 2.4 Validação: WikiEval (Seção 4)
+### 2.4 Validation: WikiEval (Section 4)
 
-- **Construção:** 50 páginas da Wikipedia sobre eventos desde o início de 2022 (além do corte do modelo), priorizando páginas com edições recentes. Para cada página, o ChatGPT sugere uma pergunta respondível pela seção introdutória e a responde com essa seção como contexto.
-- **Anotação:** duas pessoas anotaram as três dimensões; concordância ~**95%** (faithfulness e context relevance) e ~**90%** (answer relevance); divergências resolvidas por discussão.
-- **Tarefas construídas (pareadas):**
-  - *Faithfulness:* comparar a resposta padrão com a que o ChatGPT gerou **sem** contexto; o humano diz qual é mais fiel à página.
-  - *Answer relevance:* comparar a resposta padrão com uma resposta deliberadamente **incompleta** (ChatGPT instruído a responder de forma incompleta).
-  - *Context relevance:* comparar o contexto original com um contexto **ampliado** com sentenças de backlinks da Wikipedia (ou completado pelo ChatGPT, nas páginas sem backlinks).
+- **Construction:** 50 Wikipedia pages about events since early 2022 (beyond the model's cutoff), prioritizing pages with recent edits. For each page, ChatGPT suggests a question answerable from the introductory section and answers it using that section as context.
+- **Annotation:** two people annotated the three dimensions; agreement ~**95%** (faithfulness and context relevance) and ~**90%** (answer relevance); disagreements resolved by discussion.
+- **Tasks constructed (paired):**
+  - *Faithfulness:* compare the standard answer with the one ChatGPT generated **without** context; the human says which is more faithful to the page.
+  - *Answer relevance:* compare the standard answer with a deliberately **incomplete** answer (ChatGPT instructed to answer incompletely).
+  - *Context relevance:* compare the original context with a context **expanded** with sentences from Wikipedia backlinks (or completed by ChatGPT, for pages without backlinks).
 
-### 2.5 Baselines (Seção 5)
+### 2.5 Baselines (Section 5)
 
-- **GPT Score:** pede ao ChatGPT uma nota de 0 a 10 por dimensão (prompt com a definição); empates desfeitos aleatoriamente.
-- **GPT Ranking:** pede ao ChatGPT para escolher a resposta/contexto preferido, com a definição no prompt.
+- **GPT Score:** asks ChatGPT for a score from 0 to 10 per dimension (prompt with the definition); ties broken randomly.
+- **GPT Ranking:** asks ChatGPT to choose the preferred answer/context, with the definition in the prompt.
 
-Métrica de concordância: **acurácia** = fração de instâncias em que o candidato preferido pela métrica coincide com o preferido pelos anotadores.
+Agreement metric: **accuracy** = fraction of instances in which the candidate preferred by the metric coincides with the one preferred by the annotators.
 
-## 3. Principais contribuições
+## 3. Main contributions
 
-1. Três métricas **reference-free** definidas operacionalmente (F=|V|/|S|; AR por perguntas geradas + cosseno; CR por extração de sentenças) — Seção 3.
-2. **WikiEval**, dataset público com julgamentos humanos nas três dimensões — Seção 4.
-3. Integração com llama-index e LangChain (Seção 1), que explica a adoção prática da biblioteca.
-4. Evidência de que, no WikiEval, as métricas concordam mais com humanos que dois baselines de LLM-judge (Tabela 1).
+1. Three **reference-free** metrics defined operationally (F=|V|/|S|; AR via generated questions + cosine; CR via sentence extraction) — Section 3.
+2. **WikiEval**, a public dataset with human judgments on the three dimensions — Section 4.
+3. Integration with llama-index and LangChain (Section 1), which explains the library's practical adoption.
+4. Evidence that, on WikiEval, the metrics agree more with humans than two LLM-judge baselines (Table 1).
 
-## 4. Resultados-chave
+## 4. Key results
 
-**Tabela 1 (Seção 5)** — acurácia de concordância com humanos em comparações pareadas, WikiEval:
+**Table 1 (Section 5)** — accuracy of agreement with humans in paired comparisons, WikiEval:
 
-| Método | Faithfulness | Answer Relevance | Context Relevance |
+| Method | Faithfulness | Answer Relevance | Context Relevance |
 |---|---|---|---|
 | **Ragas** | **0.95** | **0.78** | **0.70** |
 | GPT Score | 0.72 | 0.52 | 0.63 |
 | GPT Ranking | 0.54 | 0.40 | 0.52 |
 
-Texto da Seção 5: para faithfulness a concordância é "em geral altamente precisa"; para answer relevance é menor, "em grande parte porque as diferenças entre as duas respostas candidatas são muitas vezes muito sutis"; context relevance foi "a dimensão mais difícil" — o ChatGPT "often struggles" ao selecionar as sentenças cruciais, "especialmente para contextos mais longos".
+Text of Section 5: for faithfulness the Ragas predictions are "in general highly accurate"; for answer relevance it is lower, "largely due to the fact that the differences between the two candidate answers are often very subtle"; context relevance was "the hardest quality dimension to evaluate" — ChatGPT "often struggles" when selecting the crucial sentences, "especially for longer contexts".
 
-**Apêndice A (Tabelas 2–4):** exemplos. Em particular, a Tabela 3 mostra como "baixa answer relevance" uma resposta que diz que data/hora "não foram fornecidas" e depois acrescenta conteúdo genérico.
+**Appendix A (Tables 2–4):** examples. In particular, Table 3 shows as "low answer relevance" an answer that says the date/time "have not been provided" and then adds generic content.
 
-**Corroboração externa (outro artigo, para contexto):** no RAGChecker (Tabela 5 do apêndice), métricas do RAGAS correlacionam fraco com preferência humana de correção/completude: Faithfulness Pearson 8.22 / 4.90 / 7.83 e Answer Relevance 11.59 / 9.39 / 10.27 (correctness / completeness / overall). **Ressalva:** o alvo humano ali (correção/completude vs gabarito) é diferente do que essas métricas pretendem medir.
+**External corroboration (another paper, for context):** in RAGChecker (Table 5 of the appendix), RAGAS metrics correlate weakly with human preference for correctness/completeness: Faithfulness Pearson 8.22 / 4.90 / 7.83 and Answer Relevance 11.59 / 9.39 / 10.27 (correctness / completeness / overall). **Caveat:** the human target there (correctness/completeness vs. reference answer) is different from what these metrics are meant to measure.
 
-## 5. Limitações
+## 5. Limitations
 
-**[Artigo]** As da Seção 5: answer relevance tem concordância menor por diferenças sutis; context relevance é a mais difícil (erro de seleção de sentenças em contextos longos). Não há seção de limitações formal.
+**[Paper]** Those in Section 5: answer relevance has lower agreement due to subtle differences; context relevance is the hardest (sentence-selection errors in long contexts). There is no formal limitations section.
 
-**[Minha leitura]**
-- **Amostra pequena e tarefa fácil:** n = 50 perguntas, todas geradas e respondidas pelo ChatGPT, com **contrastes construídos** (resposta com × sem contexto; completa × incompleta; contexto limpo × contexto poluído). A acurácia de 0.95 em faithfulness é em uma escolha binária pareada com contraste grande — não equivale à acurácia de um juiz *absoluto* sobre respostas reais, que são quase todas "parcialmente fiéis".
-- **Mesma família gerando e julgando:** respostas do ChatGPT, julgadas por gpt-3.5-turbo; o artigo não discute autopreferência (self-enhancement). Relevante para P11.
-- **Sem validação do uso real:** nenhuma análise de variância entre rodadas, sensibilidade ao prompt ou custo.
-- **Answer relevance e abstenção:** pela definição (gerar perguntas a partir da resposta), uma resposta "não sei" gera perguntas genéricas e pontua baixo; o exemplo "low answer relevance" da Tabela 3 contém exatamente "have not been provided". O artigo não discute abstenção.
-- **Context relevance e conteúdo ausente:** como CR é razão de sentenças úteis sobre total, não detecta *falta* de informação — o oposto de um recall.
-- **Dependência de segmentação em sentenças:** com chunks de ~420 caracteres (2–3 sentenças), a granularidade seria grosseira. *(Inferência: o artigo não discute tamanho de chunk.)*
+**[My reading]**
+- **Small sample and easy task:** n = 50 questions, all generated and answered by ChatGPT, with **constructed contrasts** (answer with × without context; complete × incomplete; clean context × polluted context). The 0.95 accuracy on faithfulness is on a paired binary choice with a large contrast — it is not equivalent to the accuracy of an *absolute* judge on real answers, which are almost all "partially faithful".
+- **Same family generating and judging:** ChatGPT answers, judged by gpt-3.5-turbo; the paper does not discuss self-preference (self-enhancement). Relevant for P11.
+- **No validation of real-world use:** no analysis of variance across runs, prompt sensitivity or cost.
+- **Answer relevance and abstention:** by definition (generating questions from the answer), an "I don't know" answer generates generic questions and scores low; the "low answer relevance" example in Table 3 contains exactly "have not been provided". The paper does not discuss abstention.
+- **Context relevance and missing content:** since CR is a ratio of useful sentences to total, it does not detect *missing* information — the opposite of a recall.
+- **Dependence on sentence segmentation:** with chunks of ~420 characters (2–3 sentences), the granularity would be coarse. *(Inference: the paper does not discuss chunk size.)*
 
-## 6. Reflexões ancoradas no NOSSO projeto
+## 6. Reflections anchored in OUR project
 
-**R1 — Context relevance NÃO substitui as métricas por ID (P1–P3, P5, P6, D-1; `hit_rate`, `recall_at_k`, `mrr`, `precision_at_k`).** *NEUTRO/DESAFIA a ideia de usá-las como alternativa.* CR não usa gabarito (bom: dispensa `gold_chunk_ids`), mas por isso mesmo **não responde** "o chunk que responde estava no top-k?" nem "em que posição?". Em nosso corpus, com gold de 1 chunk e top-5, um contexto ideal teria 1 chunk útil entre 5: CR tende a ter um teto próximo de 1/k — o mesmo problema do P6 (teto 1/k de `precision_at_k`), *[Minha leitura; é inferência, não medido]*. Logo CR herdaria o defeito do P6 sem entregar a vantagem de ranking do MRR.
+**R1 — Context relevance does NOT replace the ID-based metrics (P1–P3, P5, P6, D-1; `hit_rate`, `recall_at_k`, `mrr`, `precision_at_k`).** *NEUTRAL/CHALLENGES the idea of using them as an alternative.* CR does not use a reference answer (good: it dispenses with `gold_chunk_ids`), but for that very reason it **does not answer** "was the chunk that answers in the top-k?" nor "at what position?". In our corpus, with a 1-chunk gold and top-5, an ideal context would have 1 useful chunk out of 5: CR tends to have a ceiling close to 1/k — the same problem as P6 (1/k ceiling of `precision_at_k`), *[My reading; it is an inference, not measured]*. Hence CR would inherit P6's defect without delivering the ranking advantage of MRR.
 
-**R2 — Onde adotaríamos CR (ckpt-0.6-plan §3.1; fatia `multi-doc open-topic`, 5 exemplos com `retrieval_gold=pending-adjudication`).** *APOIA como complemento.* Para esses 5 exemplos, o plano os **pula** das métricas de retrieval até o mini-pooling do EXP-0. CR (ou melhor, uma variante por entailment — ver ficha do RAGChecker) daria um **sinal provisório de foco do contexto** sem gold. Também serve como **diagnóstico de ruído** (FP3) em todos os slices: "quanto do contexto entregue ao gerador é inútil" — relevante para a escolha de k no CKPT-1 e para o colapso de dedup (mesmo paper 3× no top-5). Marcado como diagnóstico, **não** como gate.
+**R2 — Where we would adopt CR (ckpt-0.6-plan §3.1; `multi-doc open-topic` slice, 5 examples with `retrieval_gold=pending-adjudication`).** *SUPPORTS as a complement.* For these 5 examples, the plan **skips** them in the retrieval metrics until the EXP-0 mini-pooling. CR (or better, an entailment-based variant — see the RAGChecker reading note) would give a **provisional signal of context focus** without gold. It also serves as a **noise diagnostic** (FP3) across all slices: "how much of the context delivered to the generator is useless" — relevant for the choice of k in CKPT-1 and for the dedup collapse (same paper 3× in the top-5). Flagged as a diagnostic, **not** as a gate.
 
-**R3 — `faithfulness_judge` (ckpt-0.6-plan §3.2, FP4).** *APOIA.* O plano já descreve "juiz verifica claim a claim da resposta contra `retrieved_context`" — é exatamente F = |V|/|S| em dois passos (extrair statements; verificar cada um). A diferença a decidir é o formato: RAGAS usa **proporção** de statements suportados; o plano fala em saída `{"score": bool|float, ...}`. Recomendo o float (proporção) por ser mais informativo que bool e permitir agregações por slice. Para `unanswerable`/`stale`, a faithfulness da resposta de abstenção é trivialmente alta (nada afirmado) — não confundir com acerto de abstenção (P8).
+**R3 — `faithfulness_judge` (ckpt-0.6-plan §3.2, FP4).** *SUPPORTS.* The plan already describes "judge checks claim by claim of the answer against `retrieved_context`" — this is exactly F = |V|/|S| in two steps (extract statements; verify each one). The difference to decide is the format: RAGAS uses the **proportion** of supported statements; the plan speaks of an output `{"score": bool|float, ...}`. I recommend the float (proportion) because it is more informative than a bool and allows aggregation per slice. For `unanswerable`/`stale`, the faithfulness of the abstention answer is trivially high (nothing is asserted) — do not confuse it with abstention hit (P8).
 
-**R4 — `answer_relevance` (ckpt-0.6-plan §3.2).** *APOIA parcialmente; DESAFIA aplicar em todos os slices.* A definição por perguntas geradas + cosseno é barata e determinística (sem juiz de nota 1–10), uma alternativa a um juiz LLM livre. **Mas** penaliza abstenção correta (ver Limitações). A matriz do plano já restringe `answer_relevance` a `answerable`, o que é consistente; reforço: **nunca** aplicá-la em `unanswerable`/`stale`, senão uma abstenção correta aparece como "resposta irrelevante" e distorce P8. Adotaríamos o cálculo por embeddings como **baseline barato** e compararíamos com o juiz LLM na calibração (0.8).
+**R4 — `answer_relevance` (ckpt-0.6-plan §3.2).** *SUPPORTS partially; CHALLENGES applying it to all slices.* The definition via generated questions + cosine is cheap and deterministic (no 1–10 score judge), an alternative to a free-form LLM judge. **But** it penalizes correct abstention (see Limitations). The plan's matrix already restricts `answer_relevance` to `answerable`, which is consistent; I reinforce: **never** apply it to `unanswerable`/`stale`, otherwise a correct abstention appears as an "irrelevant answer" and distorts P8. We would adopt the embedding-based computation as a **cheap baseline** and compare it with the LLM judge in calibration (0.8).
 
-**R5 — Validação do juiz (P11, P9; calibração 0.8).** *DESAFIA a força da evidência.* O RAGAS mostra que métricas ref-free *podem* concordar com humanos, mas sob condições favoráveis (n=50, pares com contraste forte, 2 anotadores). Não serve como prova de que um juiz gpt-4o-mini funciona no **nosso** domínio (abstracts de cs.AI, chunks de ~420 caracteres). Reforça a decisão de calibrar com κ no nosso conjunto e **não** confiar em "o RAGAS já foi validado". Também mostra o risco P11 em forma pura: o mesmo ChatGPT gera e julga.
+**R5 — Judge validation (P11, P9; calibration 0.8).** *CHALLENGES the strength of the evidence.* RAGAS shows that ref-free metrics *can* agree with humans, but under favorable conditions (n=50, pairs with a strong contrast, 2 annotators). It does not serve as proof that a gpt-4o-mini judge works in **our** domain (cs.AI abstracts, chunks of ~420 characters). It reinforces the decision to calibrate with κ on our set and **not** rely on "RAGAS has already been validated". It also shows the P11 risk in pure form: the same ChatGPT generates and judges.
 
-**R6 — Reference-free × nosso gold (ckpt-0.6-plan §3.2; `completeness_judge`, `abstention_quality`).** *NEUTRO.* Nosso golden set **tem** gabarito (resposta, gold IDs, `should_abstain`); para correção, completude e abstenção usamos referência. O RAGAS cobre só o que dispensa referência (fidelidade, relevância, foco) — por isso é complemento do nosso catálogo, não alternativa.
+**R6 — Reference-free × our gold (ckpt-0.6-plan §3.2; `completeness_judge`, `abstention_quality`).** *NEUTRAL.* Our golden set **has** a reference answer (answer, gold IDs, `should_abstain`); for correctness, completeness and abstention we use a reference. RAGAS covers only what dispenses with a reference (faithfulness, relevance, focus) — that is why it is a complement to our catalog, not an alternative.
 
-**R7 — P9 (token-F1).** *NEUTRO.* O RAGAS não traz métrica de correção contra gabarito (só *answer relevance*, que ignora factualidade). Não ajuda a decidir token-F1 × juiz de correção; ver fichas do RAGChecker e do QA-judge.
+**R7 — P9 (token-F1).** *NEUTRAL.* RAGAS does not offer a correctness metric against a reference answer (only *answer relevance*, which ignores factuality). It does not help decide token-F1 × correctness judge; see the RAGChecker and QA-judge reading notes.
 
-**O que adotaríamos:** (1) a decomposição em statements + verificação para `faithfulness_judge`, com score = proporção; (2) CR como diagnóstico de ruído e sinal provisório para `open-topic`; (3) AR por embeddings como baseline barato de `answer_relevance`, só em `answerable`. **O que NÃO adotaríamos:** (1) CR como substituto de hit/recall/MRR ou como gate de retrieval; (2) AR nos slices de abstenção; (3) a acurácia de 0.95 como justificativa de confiabilidade do juiz (R5).
+**What we would adopt:** (1) the decomposition into statements + verification for `faithfulness_judge`, with score = proportion; (2) CR as a noise diagnostic and provisional signal for `open-topic`; (3) AR via embeddings as a cheap baseline for `answer_relevance`, only on `answerable`. **What we would NOT adopt:** (1) CR as a substitute for hit/recall/MRR or as a retrieval gate; (2) AR on the abstention slices; (3) the 0.95 accuracy as justification of judge reliability (R5).
 
-## 7. Citações úteis
+## 7. Useful quotations
 
-1. *"We say that the answer a_s(q) is faithful to the context c(q) if the claims that are made in the answer can be inferred from the context."* — Seção 3, "Faithfulness".
-2. *"our assessment of answer relevance does not take into account factuality, but penalises cases where the answer is incomplete or where it contains redundant information."* — Seção 3, "Answer relevance".
-3. *"We found context relevance to be the hardest quality dimension to evaluate. In particular, we observed that ChatGPT often struggles with the task of selecting the sentences from the context that are crucial, especially for longer contexts."* — Seção 5 (após a Tabela 1).
+1. *"We say that the answer a_s(q) is faithful to the context c(q) if the claims that are made in the answer can be inferred from the context."* — Section 3, "Faithfulness".
+2. *"our assessment of answer relevance does not take into account factuality, but penalises cases where the answer is incomplete or where it contains redundant information."* — Section 3, "Answer relevance".
+3. *"We found context relevance to be the hardest quality dimension to evaluate. In particular, we observed that ChatGPT often struggles with the task of selecting the sentences from the context that are crucial, especially for longer contexts."* — Section 5 (after Table 1).

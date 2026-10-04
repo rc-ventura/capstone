@@ -79,6 +79,8 @@ Even the extended set is small by clinical-trial standards. The design assumes:
 
 ## 2b. Ground Truth Map — what gold label exists per slice per evaluator
 
+> **Decision (2026-10-03):** the retrieval gold is the **paper** (`gold_arxiv_ids`, derived from the chunk-gold in `answerable`/`persona`); the chunk that generated the question is kept only as a diagnostic. For a 1-paper gold, hit@k + MRR are reported; for 2+ papers, recall@k + hit@k + MRR. See [`docs/learning-lessons/retrieval_unit_and_gold_granularity.md`](./learning-lessons/retrieval_unit_and_gold_granularity.md).
+
 Every slice now has explicit gold labels. The map below defines which evaluators are reference-based (need gold) vs. reference-free (judge against retrieved context only).
 
 | Slice | Gold retrieval label | Gold answer | Evaluators that use gold retrieval | Evaluators that use gold answer | Reference-free evaluators (no gold needed) |
@@ -206,6 +208,8 @@ The **decision gate** promotes or rejects a configuration. All gates also requir
 **Artifact**: recall-vs-embedding-cost decision table (a real eng memo).
 
 ### CKPT-3 — Chunking strategy (FP3, R4, FP4)
+
+> **Decision (2026-10-03, pending implementation):** the baseline becomes **one index record per abstract** (D-7); the 500/0 chunking becomes an **experimental arm**, so EXP-3 now compares *whole abstract × 500/0 chunks* (and, if it makes sense, 1000/200), always at **paper level** — the `chunk_id` is `sha1(text)` and changes with the chunking. The baseline definitions in CKPT-0/§1 will be updated when the index is swapped. See [`docs/learning-lessons/retrieval_unit_and_gold_granularity.md`](./learning-lessons/retrieval_unit_and_gold_granularity.md) and `docs/roadmap/ckpt-0.6.1b-metrics-roadmap.md` (D-1, D-2, D-7).
 
 **EXP-3**: chunk 500/overlap 0 vs 1000/overlap 200 on the *winning* embedding. Watch precision@k drop (noise) vs recall@k gain (coverage) — the Redis-documented tradeoff — and faithfulness on the `answerable` slice.
 

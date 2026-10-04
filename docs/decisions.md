@@ -2,14 +2,14 @@
 
 > One entry per experiment gate. Format: date, experiment, config change, metric before → after (target slice), regressions checked, verdict (PROMOTE / REJECT), rationale.
 
-## Observações (não-gates, achados fora do experimento)
+## Observations (non-gates, findings outside an experiment)
 
-- **2026-09-27 — dedup de chunks no top-k (achado manual).** Rodando o retriever baseline
-  (k=5) em perguntas do slice `stale`, o top-5 devolveu o mesmo paper 3× (ex.: 3 chunks de
-  2609.19425v1; 3 de 2609.18471v1). Colapso de diversidade — top-k dominado por um único paper.
-  Verificado manualmente durante a revisão do golden set (CKPT-0.5-review). Impacto: FP3 (multi-doc
-  sofre com top-k sem diversidade). Ação futura: `retrieval_precision_at_k` + métrica de diversidade
-  no EXP-0; possível dedup por `arxiv_id` antes de cortar para k.
+- **2026-09-27 — chunk dedup in the top-k (manual finding).** Running the baseline retriever
+  (k=5) on questions from the `stale` slice, the top-5 returned the same paper 3× (e.g., 3 chunks of
+  2609.19425v1; 3 of 2609.18471v1). Diversity collapse — top-k dominated by a single paper.
+  Verified manually during the golden set review (CKPT-0.5-review). Impact: FP3 (multi-doc
+  suffers from a top-k without diversity). Future action: `retrieval_precision_at_k` + a diversity metric
+  in EXP-0; possible dedup by `arxiv_id` before cutting to k.
 
 | Date | EXP | Change | Target slice | Metric before → after | Regressions | Verdict |
 |------|-----|--------|--------------|-----------------------|-------------|---------|

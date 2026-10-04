@@ -1,124 +1,124 @@
 # CKPT-0.5-review Plan — Golden Set Governance: provenance semantics, ADRs, human review, manual tutorial
 
-> Status: **aguardando aprovação**. Nenhum código será alterado antes do "go".
+> Status: **awaiting approval**. No code will be changed before the "go".
 > Parent plans: `docs/plan.md` §2, `docs/plan/ckpt-0.5-plan.md`.
 
-## 1. Contexto
+## 1. Context
 
-O split `core` está completo (100 exemplos; `deep-hit` chega no CKPT-0.8). Durante o 0.5.3
-identificamos um problema de **honestidade de proveniência**: o rótulo `hand-written` afirmava
-autoria humana, mas os 50 exemplos foram redigidos por IA e aprovados em nível de lote — sem
-revisão item a item. Um golden set é o instrumento de medida de todo o capstone: se seus
-metadados mentem, todas as comparações downstream herdam a mentira.
+The `core` split is complete (100 examples; `deep-hit` arrives in CKPT-0.8). During 0.5.3
+we identified a **provenance honesty** problem: the `hand-written` label claimed human
+authorship, but the 50 examples were drafted by AI and approved at batch level — without
+item-by-item review. A golden set is the measuring instrument of the whole capstone: if its
+metadata lies, every downstream comparison inherits the lie.
 
-Este checkpoint de governança trava a semântica ANTES da revisão, revisa os 100 exemplos com
-o humano, e registra as decisões arquiteturais tomadas até aqui.
+This governance checkpoint locks the semantics BEFORE the review, reviews the 100 examples with
+the human, and records the architectural decisions made so far.
 
-## 2. Decisões já tomadas (nesta thread, 2026-09-27)
+## 2. Decisions already made (in this thread, 2026-09-27)
 
-1. **Data model de dois eixos** (origem × revisão), substituindo o campo único `provenance`.
-2. **Três ADRs** em `docs/adrs/`.
-3. **Revisão humana dos 100 exemplos** em blocos compactos nesta conversa.
+1. **Two-axis data model** (origin × review), replacing the single `provenance` field.
+2. **Three ADRs** in `docs/adrs/`.
+3. **Human review of the 100 examples** in compact blocks in this conversation.
 
-## 3. O que construir (escopo exato)
+## 3. What to build (exact scope)
 
-### 3.1 Data model — dois eixos ortogonais
+### 3.1 Data model — two orthogonal axes
 
-Problema do modelo atual: um único campo `provenance` mistura *quem escreveu* com
-*quem revisou*, permitindo estados contraditórios ("curated" sem revisão). Modelo novo:
+Problem with the current model: a single `provenance` field mixes *who wrote it* with
+*who reviewed it*, allowing contradictory states ("curated" without review). New model:
 
-| Campo | Valores | Significado |
+| Field | Values | Meaning |
 |---|---|---|
-| `metadata.authoring.origin` | `llm` \| `human` \| `llm+human` | quem escreveu (`llm+human` = humano editou o rascunho) |
-| `metadata.authoring.method` | `from-chunk` \| `topic-authored` \| `empirical` | como foi construído (de chunk / por tema / encontrado no baseline) |
-| `metadata.review.state` | `draft` \| `spot_checked` \| `human_reviewed` \| `adjudicated` | profundidade da verificação humana |
-| `metadata.review.reviewer` | `user` \| ausente | quem revisou (auditabilidade) |
+| `metadata.authoring.origin` | `llm` \| `human` \| `llm+human` | who wrote it (`llm+human` = a human edited the draft) |
+| `metadata.authoring.method` | `from-chunk` \| `topic-authored` \| `empirical` | how it was built (from a chunk / by topic / found in the baseline) |
+| `metadata.review.state` | `draft` \| `spot_checked` \| `human_reviewed` \| `adjudicated` | depth of human verification |
+| `metadata.review.reviewer` | `user` \| absent | who reviewed (auditability) |
 
-Ciclo de vida:
+Lifecycle:
 
 ```
 origin=llm, state=draft              ← estado atual dos 100
-   │  sessão de revisão humana (este checkpoint)
-   ▼  se aprovado sem edição        → origin=llm,        state=human_reviewed
-      se aprovado com edição        → origin=llm+human,  state=human_reviewed
+   │  human review session (this checkpoint)
+   ▼  if approved without edits      → origin=llm,        state=human_reviewed
+      if approved with edits         → origin=llm+human,  state=human_reviewed
    │  EXP-0 mini-pooling (CKPT-0.8)
    ▼  state=adjudicated + gold_arxiv_ids atualizados
 ```
 
-**Regra de consistência** (impossível por construção ter quimera): `state ∈ {human_reviewed,
-adjudicated}` exige `reviewer` presente; `origin=human` é reservado a texto escrito por humano
-(nenhum exemplo hoje); `origin=llm+human` exige pelo menos um campo textual editado pelo humano.
+**Consistency rule** (a chimera is impossible by construction): `state ∈ {human_reviewed,
+adjudicated}` requires `reviewer` to be present; `origin=human` is reserved for human-written text
+(no example today); `origin=llm+human` requires at least one text field edited by the human.
 
-O campo antigo `provenance` é **removido** na migração (e não apenas renomeado) para não deixar
-duas fontes de verdade. `slice`, `base_id`, `audience`, `source_arxiv_id`, `corpus_snapshot`,
-`open_topic`, `retrieval_gold`, `regenerated` permanecem intocados.
+The old `provenance` field is **removed** in the migration (not just renamed) so as not to leave
+two sources of truth. `slice`, `base_id`, `audience`, `source_arxiv_id`, `corpus_snapshot`,
+`open_topic`, `retrieval_gold`, `regenerated` remain untouched.
 
-### 3.2 Revisão humana dos 100 exemplos (nesta conversa)
+### 3.2 Human review of the 100 examples (in this conversation)
 
-Mecânica:
+Mechanics:
 
-1. Eu imprimo os exemplos em blocos de ~10 no formato:
-   `A07 [2609.19934v1] P: pergunta… | G: gabarito…` (+ `FONTE:` trecho do chunk para synthetic).
-2. Você responde em lote por id: `ok`, `edita: <texto novo>`, ou `reprova: <motivo>`.
-3. Eu aplico via `update_example`: aprovado → `state=human_reviewed`; editado →
-   `origin=llm+human` + seu texto; reprovado → removo do dataset e regenero/reescrevo (mantém contagem-alvo).
-4. Ao final, relatório: N aprovados / N editados / N regenerados.
+1. I print the examples in blocks of ~10 in the format:
+   `A07 [2609.19934v1] P: pergunta… | G: gabarito…` (+ `FONTE:` chunk excerpt for synthetic).
+2. You reply in batch by id: `ok`, `edita: <texto novo>`, or `reprova: <motivo>`.
+3. I apply via `update_example`: approved → `state=human_reviewed`; edited →
+   `origin=llm+human` + your text; rejected → I remove it from the dataset and regenerate/rewrite (keeps the target count).
+4. At the end, report: N approved / N edited / N regenerated.
 
-Ordem dos blocos: `unanswerable`(15), `stale`(10), `format`(10), `multi-doc`(15), depois
-`persona`(10) e `answerable`(40) — os sintéticos por último, pois exigem conferir contra o chunk-fonte.
+Block order: `unanswerable`(15), `stale`(10), `format`(10), `multi-doc`(15), then
+`persona`(10) and `answerable`(40) — the synthetic ones last, since they require checking against the source chunk.
 
-### 3.3 ADRs em `docs/adrs/`
+### 3.3 ADRs in `docs/adrs/`
 
-| ADR | Decisão | Alternativas rejeitadas |
+| ADR | Decision | Rejected alternatives |
 |---|---|---|
-| **ADR-001** | Data model de dois eixos (origin × review state) | campo único `provenance` (quimera curated-sem-revisão); apenas flag booleana |
-| **ADR-002** | Corpus snapshot pin (`CORPUS_SNAPSHOT_DATE` 2026-09-17 + skip-budget aditivo) | oversample multiplicativo (falha real: 766 papers pós-pin, ~128/dia); sem pin (slice `stale` morre no rebuild do CKPT-2) |
-| **ADR-003** | `multi-doc` híbrido 10 known-item + 5 open-topic com gold pendente de adjudicação | 15 known-item puros (irreal p/ produção); 15 open puros (retrieval imensurável sem anotação) |
+| **ADR-001** | Two-axis data model (origin × review state) | single `provenance` field (curated-without-review chimera); boolean flag only |
+| **ADR-002** | Corpus snapshot pin (`CORPUS_SNAPSHOT_DATE` 2026-09-17 + additive skip-budget) | multiplicative oversample (real failure: 766 papers post-pin, ~128/day); no pin (`stale` slice dies on the CKPT-2 rebuild) |
+| **ADR-003** | Hybrid `multi-doc`: 10 known-item + 5 open-topic with gold pending adjudication | 15 pure known-item (unrealistic for production); 15 pure open (retrieval unmeasurable without annotation) |
 
-Formato: template padrão (Status / Context / Decision / Consequences) com data e links para o
-plano e para a learning lesson.
+Format: standard template (Status / Context / Decision / Consequences) with date and links to the
+plan and to the learning lesson.
 
-### 3.4 Doc de semântica dos campos
+### 3.4 Field-semantics doc
 
-`docs/plan/ckpt-0.5-plan.md` §4.3 ganha a tabela final do data model (substitui a nota de
-correção provisória) + o diagrama de ciclo de vida. `docs/README.md` lista `docs/adrs/`.
+`docs/plan/ckpt-0.5-plan.md` §4.3 gets the final data-model table (replacing the provisional
+correction note) + the lifecycle diagram. `docs/README.md` lists `docs/adrs/`.
 
-### 3.5 Tutorial de uso manual do sistema
+### 3.5 Manual-usage tutorial for the system
 
-Novo: `docs/manual-usage.md` — como inspecionar o comportamento do sistema sem o golden set:
+New: `docs/manual-usage.md` — how to inspect the system's behavior without the golden set:
 
 ```bash
 uv run python main.py                 # pipeline completo (corpus → resposta traceada)
 uv run python build_golden_dataset.py # sync idempotente do golden set
 ```
 
-E snippets REPL para análise pontual:
-- rodar só o retriever com k custom em uma pergunta livre (inspeciona recall na mão);
-- rodar o pipeline com pergunta livre e ver a resposta;
-- onde olhar no LangSmith (projeto, filtros por run_type/metadata, thread_id).
+And REPL snippets for ad-hoc analysis:
+- run only the retriever with a custom k on a free-form question (inspects recall by hand);
+- run the pipeline with a free-form question and see the answer;
+- where to look in LangSmith (project, filters by run_type/metadata, thread_id).
 
-## 4. Fora de escopo
+## 4. Out of scope
 
-- `deep-hit` (empírico, CKPT-0.8), `evaluators.py` (0.6), wiring no `main.py` (0.5.4),
-  mini-pooling (0.8). Nenhuma mudança em `app.py`.
+- `deep-hit` (empirical, CKPT-0.8), `evaluators.py` (0.6), wiring into `main.py` (0.5.4),
+  mini-pooling (0.8). No changes to `app.py`.
 
-## 5. Verificação / critérios de aceite
+## 5. Verification / acceptance criteria
 
-1. 100/100 exemplos com o schema novo (`provenance` ausente; dois eixos presentes e válidos).
-2. Regra de consistência verificada por script (state→reviewer; origin=llm+human→edição existe).
-3. Após a revisão: relatório de vereditos salvo em `results/` (aprovação/editado/regenerado por slice).
-4. `python -m pytest`-free: validação por script único rodando contra o servidor (como nos lotes anteriores).
-5. ADRs renderizam; tutorial executa (`main.py` e um snippet REPL testados de verdade).
+1. 100/100 examples with the new schema (`provenance` absent; both axes present and valid).
+2. Consistency rule verified by script (state→reviewer; origin=llm+human→edit exists).
+3. After the review: verdict report saved in `results/` (approved/edited/regenerated per slice).
+4. `python -m pytest`-free: validation by a single script running against the server (as in the previous batches).
+5. ADRs render; the tutorial runs (`main.py` and a REPL snippet actually tested).
 
-## 6. Lotes (mini-checkpoints internos), cada um com commit próprio
+## 6. Batches (internal mini-checkpoints), each with its own commit
 
-| Lote | Conteúdo |
+| Batch | Content |
 |---|---|
-| R1 | Migração do data model nos 100 exemplos + validadores (script) |
-| R2 | Revisão humana: blocos curated (unanswerable/stale/format/multi-doc) |
-| R3 | Revisão humana: blocos sintéticos (persona/answerable) + regenerações |
-| R4 | ADR-001/002/003 + doc de semântica no plano + README docs |
-| R5 | `docs/manual-usage.md` testado |
+| R1 | Data-model migration on the 100 examples + validators (script) |
+| R2 | Human review: curated blocks (unanswerable/stale/format/multi-doc) |
+| R3 | Human review: synthetic blocks (persona/answerable) + regenerations |
+| R4 | ADR-001/002/003 + semantics doc in the plan + docs README |
+| R5 | `docs/manual-usage.md` tested |
 
-A ordem coloca a migração antes da revisão porque o veredito humano **escreve** nos campos novos;
-ADRs depois da revisão para incorporar qualquer aprendizado dela.
+The order puts the migration before the review because the human verdict **writes** to the new fields;
+ADRs after the review to incorporate any learning from it.

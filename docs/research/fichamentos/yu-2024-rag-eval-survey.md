@@ -1,120 +1,120 @@
-# Yu et al. 2024 — Survey de avaliação de RAG (Auepora)
+# Yu et al. 2024 — RAG evaluation survey (Auepora)
 
-- **Referência completa:** Hao Yu, Aoran Gan, Kai Zhang, Shiwei Tong, Qi Liu, Zhaofeng Liu. *Evaluation of Retrieval-Augmented Generation: A Survey.* arXiv:2405.07437v2 [cs.CL], 03/07/2024. <https://arxiv.org/abs/2405.07437> · Repositório do artigo: <https://github.com/YHPeter/Awesome-RAG-Evaluation>
-- **Confiança da leitura:** **integral**, com ressalvas. Li o texto bruto da versão HTML do arXiv (v2): resumo, Seções 1–5, Tabelas 1 e 2 e a lista de benchmarks. **Não li:** o Apêndice 0.A (descrição da estrutura de um RAG), a lista de referências e as figuras (Fig. 1 e 2 vistas só pela legenda). O PDF não pôde ser decodificado pela ferramenta; o resumo automático do HTML continha erros, por isso usei o texto bruto. Números e definições abaixo vêm do texto e das tabelas; a localização é a seção/tabela do próprio artigo.
-- **Natureza do artigo:** survey descritivo (sem experimento próprio, sem números comparativos de desempenho). Corte da literatura: junho/2024 (legenda da Tabela 1).
+- **Full reference:** Hao Yu, Aoran Gan, Kai Zhang, Shiwei Tong, Qi Liu, Zhaofeng Liu. *Evaluation of Retrieval-Augmented Generation: A Survey.* arXiv:2405.07437v2 [cs.CL], 2024-07-03. <https://arxiv.org/abs/2405.07437> · Paper repository: <https://github.com/YHPeter/Awesome-RAG-Evaluation>
+- **Reading confidence:** **full**, with caveats. I read the raw text of the arXiv HTML version (v2): abstract, Sections 1–5, Tables 1 and 2, and the list of benchmarks. **I did not read:** Appendix 0.A (description of a RAG's structure), the reference list, and the figures (Fig. 1 and 2 seen only through their captions). The tool could not decode the PDF; the automatic summary of the HTML contained errors, so I used the raw text. Numbers and definitions below come from the text and tables; the location given is the paper's own section/table.
+- **Nature of the paper:** descriptive survey (no experiment of its own, no comparative performance numbers). Literature cutoff: June/2024 (Table 1 caption).
 
-> Convenção desta ficha: **[Artigo]** = o que o artigo afirma; **[Minha leitura]** = interpretação minha, não afirmada pelos autores.
+> Convention of this reading note: **[Paper]** = what the paper states; **[My reading]** = my interpretation, not stated by the authors.
 
 ---
 
-## 1. Problema que o artigo ataca
+## 1. Problem the paper addresses
 
-**[Artigo]** Avaliar um RAG é difícil porque ele é um sistema híbrido (recuperação + geração) e depende de bases de conhecimento dinâmicas (Seção 1 e Seção 2). Os autores listam três frentes de dificuldade (Seção 2):
+**[Paper]** Evaluating a RAG is hard because it is a hybrid system (retrieval + generation) and depends on dynamic knowledge bases (Section 1 and Section 2). The authors list three fronts of difficulty (Section 2):
 
-- **Retrieval:** bases vastas e mutáveis; relevância que muda no tempo; fontes enganosas ou de baixa qualidade. Frase-chave: *"The traditional evaluation indicators for retrieval, such as Recall and Precision, cannot fully capture the nuances of RAG retrieval systems"* (Seção 2).
-- **Generation:** avaliar fidelidade (faithfulness) e correção da resposta, mais relevância e coerência; tarefas abertas tornam "correto" subjetivo.
-- **Sistema como um todo:** o desempenho não se entende avaliando cada componente isolado; latência e consultas ambíguas também importam.
+- **Retrieval:** vast and mutable knowledge bases; relevance that changes over time; misleading or low-quality sources. Key sentence: *"The traditional evaluation indicators for retrieval, such as Recall and Precision, cannot fully capture the nuances of RAG retrieval systems"* (Section 2).
+- **Generation:** evaluating faithfulness and correctness of the answer, plus relevance and coherence; open-ended tasks make "correct" subjective.
+- **System as a whole:** performance cannot be understood by evaluating each component in isolation; latency and ambiguous queries also matter.
 
-**[Artigo]** Contribuições declaradas (Seção 1): (1) classificar os desafios de avaliar RAG por componente; (2) propor o framework de análise **Auepora**; (3) analisar os benchmarks existentes com ele.
+**[Paper]** Stated contributions (Section 1): (1) classify the challenges of evaluating RAG by component; (2) propose the analysis framework **Auepora**; (3) analyze existing benchmarks with it.
 
-Lacuna que o survey aponta: *"Most prior benchmarks predominantly tackle one or several aspects of the RAG assessment but lack a comprehensive, holistic analysis"* (Seção 2, "Conclusion").
+Gap the survey points out: *"Most prior benchmarks predominantly tackle one or several aspects of the RAG assessment but lack a comprehensive, holistic analysis"* (Section 2, "Conclusion").
 
-## 2. Método (passo a passo, com definições exatas)
+## 2. Method (step by step, with exact definitions)
 
-O "método" é analítico: os autores reúnem os frameworks/benchmarks de avaliação de RAG e os classificam por **Target** (o que avaliar), **Dataset** (como avaliar) e **Metric** (como medir). A ideia central é enumerar todos os pares possíveis entre **"Evaluable Outputs" (EOs, saídas avaliáveis)** e **"Ground Truths" (GTs, verdades de referência)** (Seção 3, Fig. 1).
+The "method" is analytical: the authors gather the RAG evaluation frameworks/benchmarks and classify them by **Target** (what to evaluate), **Dataset** (how to evaluate) and **Metric** (how to measure). The central idea is to enumerate all possible pairs between **"Evaluable Outputs" (EOs)** and **"Ground Truths" (GTs, reference truths)** (Section 3, Fig. 1).
 
-### 2.1 Targets (Seção 3.1)
+### 2.1 Targets (Section 3.1)
 
-**Retrieval** — EO = documentos relevantes recuperados:
+**Retrieval** — EO = relevant retrieved documents:
 
-- **Relevance (Relevant Documents ↔ Query)** — *(mede se o que veio bate com a necessidade de informação expressa na pergunta)*. O artigo diz que mede "a precisão e especificidade do processo de recuperação".
-- **Accuracy (Relevant Documents ↔ Documents Candidates)** — *(mede se o sistema consegue pontuar documentos relevantes acima dos irrelevantes dentro do conjunto de candidatos; é a face de ranking)*.
+- **Relevance (Relevant Documents ↔ Query)** — *(measures whether what came back matches the information need expressed in the query)*. The paper says it measures "the precision and specificity of the retrieval process".
+- **Accuracy (Relevant Documents ↔ Documents Candidates)** — *(measures whether the system can score relevant documents above irrelevant ones within the candidate set; it is the ranking face)*.
 
-**Generation** — EO = texto gerado e conteúdo estruturado:
+**Generation** — EO = generated text and structured content:
 
-- **Relevance (Response ↔ Query)** — *(a resposta trata do que foi perguntado?)*
-- **Faithfulness (Response ↔ Relevant Documents)** — *(a resposta só reflete o que está nos documentos relevantes? consistência entre gerado e fonte)*
-- **Correctness (Response ↔ Sample Response)** — *(a resposta bate com uma resposta de referência, tomada como verdade)*
+- **Relevance (Response ↔ Query)** — *(does the answer address what was asked?)*
+- **Faithfulness (Response ↔ Relevant Documents)** — *(does the answer reflect only what is in the relevant documents? consistency between generated text and source)*
+- **Correctness (Response ↔ Sample Response)** — *(does the answer match a reference answer, taken as the truth)*
 
-**Requisitos adicionais** (Seção 3.1, sem GT no sentido acima): *Latency* (tempo de resposta), *Diversity* (variedade/amplitude do recuperado e do gerado), *Noise Robustness* (lida com informação irrelevante sem piorar a resposta), *Negative Rejection* (abster-se quando a informação é insuficiente), *Counterfactual Robustness* (identifica e ignora informação incorreta mesmo avisada), e "mais": readability, toxicity, perplexity.
+**Additional requirements** (Section 3.1, no GT in the sense above): *Latency* (response time), *Diversity* (variety/breadth of what is retrieved and generated), *Noise Robustness* (handles irrelevant information without degrading the answer), *Negative Rejection* (abstaining when information is insufficient), *Counterfactual Robustness* (identifies and ignores incorrect information even when warned), and "more": readability, toxicity, perplexity.
 
-### 2.2 Datasets (Seção 3.2, Tabela 2)
+### 2.2 Datasets (Section 3.2, Table 2)
 
-Estratégias de construção: datasets existentes (parte do KILT — NQ, HotpotQA, FEVER —, SuperGLUE — MultiRC, ReCoRD), WikiEval (RAGAs), e conjuntos **gerados por LLM a partir de notícias** (RGB, MultiHop-RAG, CRUD-RAG, CDQA) ou de páginas de admissão universitária (DomainRAG). **[Artigo]** O survey nota que datasets estáticos "não resolvem" cenários dinâmicos e que LLMs permitem gerar pares pergunta/gabarito em resolução diária para evitar "cola" (Seções 3.2 e 4).
+Construction strategies: existing datasets (part of KILT — NQ, HotpotQA, FEVER —, SuperGLUE — MultiRC, ReCoRD), WikiEval (RAGAs), and sets **generated by an LLM from news** (RGB, MultiHop-RAG, CRUD-RAG, CDQA) or from university admission pages (DomainRAG). **[Paper]** The survey notes (paraphrase) that static datasets do not cover dynamic scenarios and that LLMs make it possible to generate question/reference-answer pairs at "daily or finer-grained time resolution, preventing LLMs from cheating" (Sections 3.2 and 4).
 
-### 2.3 Metrics (Seção 3.3) — definições literais do artigo
+### 2.3 Metrics (Section 3.3) — the paper's literal definitions
 
-**Não baseadas em rank:**
-- **Accuracy** — *(proporção de resultados verdadeiros — positivos e negativos — entre todos os casos)*.
-- **Precision = TP / (TP + FP)** — *(dos itens recuperados, que fração é relevante)*.
-- **Recall@k = |RD ∩ Top_k_d| / |RD|** — *(dos documentos relevantes RD, que fração apareceu no top-k)*.
+**Non-rank-based:**
+- **Accuracy** — *(proportion of true results — positives and negatives — among all cases)*.
+- **Precision = TP / (TP + FP)** — *(of the retrieved items, what fraction is relevant)*.
+- **Recall@k = |RD ∩ Top_k_d| / |RD|** — *(of the relevant documents RD, what fraction appeared in the top-k)*.
 
-**Baseadas em rank:**
-- **MRR = (1/|Q|) · Σᵢ 1/rankᵢ**, onde rankᵢ é a posição do **primeiro** documento relevante da consulta i — *(quão no topo está o primeiro correto, média sobre consultas)*.
-- **MAP = (1/|Q|) · Σ_q [ Σ_k P(k)·rel(k) ] / |relevantes_q|** — *(média da precisão acumulada nas posições em que há relevante; premia relevantes cedo e muitos)*.
+**Rank-based:**
+- **MRR = (1/|Q|) · Σᵢ 1/rankᵢ**, where rankᵢ is the position of the **first** relevant document for query i — *(how close to the top the first correct one is, averaged over queries)*.
+- **MAP = (1/|Q|) · Σ_q [ Σ_k P(k)·rel(k) ] / |relevant_q|** — *(average of the cumulative precision at the positions where a relevant document occurs; rewards relevant documents that appear early and in large numbers)*.
 
-**Geração:** **ROUGE** *(sobreposição de n-gramas/subsequências com a referência, orientada a recall)*; **BLEU** *(precisão de n-gramas com penalidade de brevidade; o artigo reconhece que não capta fluência/gramática)*; **BERTScore** *(similaridade semântica por embeddings contextuais, mais robusto a paráfrase)*; **LLM as a Judge** *(um LLM dá nota por coerência, relevância, fluência etc.; pode ser zero/few-shot ou ajustado em julgamentos humanos; escalas detalhadas de 1 a 5 padronizam a avaliação)*.
+**Generation:** **ROUGE** *(n-gram/subsequence overlap with the reference, recall-oriented)*; **BLEU** *(n-gram precision with a brevity penalty; the paper acknowledges that it does not capture fluency/grammar)*; **BERTScore** *(semantic similarity via contextual embeddings, more robust to paraphrase)*; **LLM as a Judge** *(an LLM scores for coherence, relevance, fluency etc.; can be zero/few-shot or fine-tuned on human judgments; detailed 1-to-5 scales standardize the evaluation)*.
 
-**Requisitos adicionais:** *Single Query Latency* (tempo médio por consulta, recuperação + geração); *Cosine similarity/distance* para diversidade (menor similaridade ⇒ mais diverso); *Rejection Rate* ("taxa em que o sistema se abstém de gerar resposta") para negative rejection; *Error Detection Rate* ("razão de afirmações contrafactuais detectadas") para robustez contrafactual; *Misleading Rate* e *Mistake Reappearance Rate* (do benchmark RECALL) para ruído.
+**Additional requirements:** *Single Query Latency* (average time per query, retrieval + generation); *Cosine similarity/distance* for diversity (lower similarity ⇒ more diverse); *Rejection Rate* ("The rate at which the system refrains from generating a response.") for negative rejection; *Error Detection Rate* ("The ratio of counterfactual statements detected in retrieved information.") for counterfactual robustness; *Misleading Rate* and *Mistake Reappearance Rate* (from the RECALL benchmark) for noise.
 
-### 2.4 Tabela 1 (resumo do que li)
+### 2.4 Table 1 (summary of what I read)
 
-Classifica 3 *tools* (TruEra RAG Triad, LangChain Bench., Databricks Eval), 11 *benchmarks* (RAGAs, RECALL, ARES, RGB, MultiHop-RAG, CRUD-RAG, MedRAG, FeB4RAG, CDQA, DomainRAG, ReEval) e 2 trabalhos de pesquisa (FiD-Light — latência; Diversity Reranker — diversidade). Exemplos de como cada um mede: RAGAs = Context Relevance via "LLM as a Judge", Answer Relevance via "LLM Gen + CosSim", Faithfulness via LLM-judge; ARES = os três via "LLM + Classifier"; MultiHop-RAG = Retrieval Quality via "MAP, MRR, Hit@K" e Response Correctness via LLM-judge. **[Minha leitura]** Contei 16 linhas na Tabela 1; a introdução diz "12 distinct evaluation frameworks" (Seção 1) — discrepância menor de contagem (talvez 12 = benchmarks + datasets), sem impacto no conteúdo.
+Classifies 3 *tools* (TruEra RAG Triad, LangChain Bench., Databricks Eval), 11 *benchmarks* (RAGAs, RECALL, ARES, RGB, MultiHop-RAG, CRUD-RAG, MedRAG, FeB4RAG, CDQA, DomainRAG, ReEval) and 2 research works (FiD-Light — latency; Diversity Reranker — diversity). Examples of how each one measures: RAGAs = Context Relevance via "LLM as a Judge", Answer Relevance via "LLM Gen + CosSim", Faithfulness via LLM-judge; ARES = all three via "LLM + Classifier"; MultiHop-RAG = Retrieval Quality via "MAP, MRR, Hit@K" and Response Correctness via LLM-judge. **[My reading]** I counted 16 rows in Table 1; the introduction says "12 distinct evaluation frameworks" (Section 1) — a minor counting discrepancy (perhaps 12 = benchmarks + datasets), with no impact on the content.
 
-## 3. Principais contribuições
+## 3. Main contributions
 
-1. Taxonomia de **desafios** por componente (retrieval, generation, sistema) — Seção 2.
-2. Framework **Auepora** (Target × Dataset × Metric, via pares EO↔GT) — Seção 3.
-3. Mapeamento de **16 trabalhos** em alvos e métricas (Tabela 1) e de datasets (Tabela 2).
-4. Lista de **requisitos adicionais** (latência, diversidade, robustez a ruído/contrafactual, rejeição negativa) com métricas associadas — Seções 3.1 e 3.3.
-5. Agenda de lacunas (Seção 4): benchmarks RAG-específicos, métricas além do QA tradicional, relação entre métricas de retrieval e qualidade final.
+1. Taxonomy of **challenges** by component (retrieval, generation, system) — Section 2.
+2. The **Auepora** framework (Target × Dataset × Metric, via EO↔GT pairs) — Section 3.
+3. Mapping of **16 works** onto targets and metrics (Table 1) and of datasets (Table 2).
+4. List of **additional requirements** (latency, diversity, noise/counterfactual robustness, negative rejection) with associated metrics — Sections 3.1 and 3.3.
+5. Agenda of gaps (Section 4): RAG-specific benchmarks, metrics beyond traditional QA, relationship between retrieval metrics and final quality.
 
-## 4. Resultados-chave (com localização)
+## 4. Key results (with location)
 
-Survey sem experimentos; os "resultados" são achados descritivos:
+Survey with no experiments; the "results" are descriptive findings:
 
-- **Tabela 1:** a maioria dos frameworks mede relevância de contexto e fidelidade/correção da resposta; poucos cobrem robustez e rejeição (RGB) ou diversidade/latência (trabalhos de pesquisa).
-- **Seção 3.1 (texto):** *tools* só especificam alvos (flexíveis); *benchmarks* trazem dados + alvos; RAGAs e ARES avaliam relevância do contexto recuperado, RGB e MultiHop-RAG priorizam acurácia contra GT.
-- **Seção 3.3:** métricas de ranking tradicionais (MAP@K, MRR@K, F1 por tokens) aparecem em MultiHop-RAG e CDQA; o survey cita ([17]) que essa metodologia baseada em ranking "não é inadequada" para RAG mas deveria haver métricas de retrieval mais específicas.
-- **Seção 4:** em QA com LLMs fortes é difícil distinguir o efeito do retrieval; LLM-judge é tendência, com os problemas listados abaixo.
+- **Table 1:** most frameworks measure context relevance and answer faithfulness/correctness; few cover robustness and rejection (RGB) or diversity/latency (research works).
+- **Section 3.1 (text):** *tools* only specify targets (flexible); *benchmarks* bring data + targets; RAGAs and ARES evaluate the relevance of the retrieved context, RGB and MultiHop-RAG prioritize accuracy against GT.
+- **Section 3.3:** traditional ranking metrics (MAP@K, MRR@K, token-level F1) appear in MultiHop-RAG and CDQA; the survey cites ([17]) that this ranking-based methodology "is not unsuitable" for RAG but that there should be more specific retrieval metrics.
+- **Section 4:** in QA with strong LLMs it is hard to distinguish the effect of retrieval; LLM-judge is a trend, with the problems listed below.
 
-## 5. Limitações
+## 5. Limitations
 
-**[Artigo] — as do autor (Seção 4):**
-- Datasets estáticos não cobrem cenários dinâmicos; dificuldade de um dataset universal (alvos específicos por benchmark).
-- LLM-as-a-Judge: dificuldade de alinhar com humanos, de definir escala; *"there's no universally applicable grading scale and prompting text"*.
-- Custo/recursos de usar LLM para gerar e validar dados.
-- Falta pesquisa sobre *"the relationship and analysis between retrieval metrics and final generation outputs"*.
+**[Paper] — the authors' own (Section 4):**
+- Static datasets do not cover dynamic scenarios; difficulty of a universal dataset (benchmark-specific targets).
+- LLM-as-a-Judge: difficulty of aligning with humans, of defining a scale; *"there's no universally applicable grading scale and prompting text"*.
+- Cost/resources of using an LLM to generate and validate data.
+- Lack of research on *"the relationship and analysis between retrieval metrics and final generation outputs"*.
 
-**[Minha leitura] — as que identifico:**
-- Sem números: nenhum resultado comparativo de métricas, concordância com humanos ou custo; não dá para "calibrar escolhas" com este artigo.
-- **Não discute viés de pooling / julgamentos incompletos** (0 ocorrências de "pooling") nem como tratar documento recuperado mas não julgado. Precision é definida só como TP/(TP+FP), o que implicitamente trata não-julgado como falso positivo.
-- **Não discute vieses do LLM-judge** (autopreferência, posição, verbosidade) nem calibração (κ, IC); só diz que alinhar é difícil.
-- **nDCG não aparece** em nenhuma ocorrência do texto; "Hit@K" aparece uma única vez (Tabela 1, MultiHop-RAG) sem definição formal. A cobertura de métricas de ranking é mais fraca do que o catálogo padrão de IR.
-- *Rejection Rate* é unilateral (só mede o quanto se absteve), sem a face de **over-refusal**.
-- Cobertura até jun/2024: ficam de fora trabalhos posteriores (ex.: RAGChecker é de ago/2024 e não está aqui).
+**[My reading] — the ones I identify:**
+- No numbers: no comparative results on metrics, agreement with humans or cost; this paper cannot be used to "calibrate choices".
+- **Does not discuss pooling bias / incomplete judgments** (0 occurrences of "pooling") nor how to treat a document that was retrieved but not judged. Precision is defined only as TP/(TP+FP), which implicitly treats unjudged as a false positive.
+- **Does not discuss LLM-judge biases** (self-preference, position, verbosity) nor calibration (κ, CI); it only says that aligning is difficult.
+- **nDCG does not appear** in any occurrence of the text; "Hit@K" appears only once (Table 1, MultiHop-RAG) with no formal definition. The coverage of ranking metrics is weaker than the standard IR catalog.
+- *Rejection Rate* is one-sided (it only measures how much the system abstained), with no **over-refusal** face.
+- Coverage up to Jun/2024: later works are left out (e.g., RAGChecker is from Aug/2024 and is not here).
 
-## 6. Reflexões ancoradas no NOSSO projeto
+## 6. Reflections anchored in OUR project
 
-**R1 — Fórmulas de retrieval (P1–P3, L-3; `evaluators.py: recall_at_k, mrr`).** *APOIA.* O survey define Recall@k = |RD ∩ Top_k|/|RD| e MRR com o **primeiro** relevante — idênticas ao que o P1–P3 consolidou. *NEUTRO* quanto a D-1 (nível chunk × paper): o survey fala em "documentos" sem tratar granularidade. *NEUTRO* sobre L-3 (`ranx` como oráculo): o survey não cita `ranx`; a decisão continua sendo de engenharia, dependendo da ficha do Bassani.
+**R1 — Retrieval formulas (P1–P3, L-3; `evaluators.py: recall_at_k, mrr`).** *SUPPORTS.* The survey defines Recall@k = |RD ∩ Top_k|/|RD| and MRR with the **first** relevant document — identical to what P1–P3 consolidated. *NEUTRAL* regarding D-1 (chunk × paper level): the survey talks about "documents" without addressing granularity. *NEUTRAL* on L-3 (`ranx` as oracle): the survey does not cite `ranx`; the decision remains an engineering one, depending on the Bassani reading note.
 
-**R2 — Taxonomia: o que o nosso catálogo não cobre (ckpt-0.6-plan §3).** Mapeando Targets do survey ↔ nossos avaliadores: Retrieval Relevance/Accuracy ↔ hit/recall/MRR/precision ✔; Generation Relevance ↔ `answer_relevance` ✔; Faithfulness ↔ `faithfulness_judge`, `citation_accuracy` ✔; Correctness ↔ `f1_summary_evaluator` (fraco, P9) e `completeness_judge` parcial; Negative Rejection ↔ `abstention_quality` ✔ (e é mais rico que o do survey, ver R4); Diversity ↔ `distinct_papers@k` (planejada no P6) ✔. **Não cobertos:** (a) **latência e custo** (o survey trata como alvo; para o CKPT-4/rerank e CKPT-1/k isso é decisão de produto — recomendo registrar tempo/tokens por exemplo, barato); (b) **noise robustness** (ruído irrelevante no contexto) e **counterfactual robustness** — a fatia `stale` só cobre parcialmente (resposta desatualizada, não informação *incorreta injetada*); (c) **MAP e nDCG** — nDCG já está no roadmap (glossário), mas o survey **não** fornece definição, então não é "exigência da literatura de survey"; (d) readability/toxicity — fora de escopo para o capstone. *APOIA* a cobertura geral; *DESAFIA* levemente a ausência de latência/custo.
+**R2 — Taxonomy: what our catalog does not cover (ckpt-0.6-plan §3).** Mapping the survey's Targets ↔ our evaluators: Retrieval Relevance/Accuracy ↔ hit/recall/MRR/precision ✔; Generation Relevance ↔ `answer_relevance` ✔; Faithfulness ↔ `faithfulness_judge`, `citation_accuracy` ✔; Correctness ↔ `f1_summary_evaluator` (weak, P9) and `completeness_judge` partial; Negative Rejection ↔ `abstention_quality` ✔ (and it is richer than the survey's, see R4); Diversity ↔ `distinct_papers@k` (planned in P6) ✔. **Not covered:** (a) **latency and cost** (the survey treats it as a target; for CKPT-4/rerank and CKPT-1/k this is a product decision — I recommend recording time/tokens per example, which is cheap); (b) **noise robustness** (irrelevant noise in the context) and **counterfactual robustness** — the `stale` slice only covers it partially (outdated answer, not *injected incorrect* information); (c) **MAP and nDCG** — nDCG is already on the roadmap (glossary), but the survey does **not** provide a definition, so it is not a "requirement of the survey literature"; (d) readability/toxicity — out of scope for the capstone. *SUPPORTS* the overall coverage; *CHALLENGES* slightly the absence of latency/cost.
 
-**R3 — Precision e pooling (P6, D-1; `precision_at_k`).** *NEUTRO/aponta lacuna.* O survey define Precision = TP/(TP+FP) sem discutir julgamento incompleto — exatamente o ponto em que o nosso P6 já foi além (retornar `None` sem gold completo). Consequência prática: **não dá para citar o survey como respaldo** da decisão de P6; o respaldo vem de Buckley & Voorhees/BEIR. O survey também dá razão à preocupação geral (Seção 2: Recall/Precision "não capturam" nuances do RAG), o que **apoia** complementar com métricas de conteúdo (ver ficha do RAGChecker).
+**R3 — Precision and pooling (P6, D-1; `precision_at_k`).** *NEUTRAL/points to a gap.* The survey defines Precision = TP/(TP+FP) without discussing incomplete judgments — exactly the point where our P6 already went further (returning `None` without a complete gold). Practical consequence: **we cannot cite the survey as backing** for the P6 decision; the backing comes from Buckley & Voorhees/BEIR. The survey also agrees with the general concern (Section 2: Recall/Precision "cannot fully capture" the nuances of RAG), which **supports** complementing with content metrics (see the RAGChecker reading note).
 
-**R4 — Abstenção (P7, P8; `f1_summary_evaluator`, `abstention_quality`).** *APOIA a necessidade de medir; DESAFIA reportar só taxa.* O survey inclui *Negative Rejection* como requisito (Seção 3.1) e mede com **Rejection Rate** — fração em que o sistema se abstém. Isso é, na prática, o nosso `abstention recall` e ignora over-refusal; o nosso plano P8 (P/R/F1 + over/under-refusal por slice) vai **além** do survey. Não adotaríamos a métrica do survey isolada: um sistema que sempre se abstém teria Rejection Rate máximo.
+**R4 — Abstention (P7, P8; `f1_summary_evaluator`, `abstention_quality`).** *SUPPORTS the need to measure; CHALLENGES reporting only a rate.* The survey includes *Negative Rejection* as a requirement (Section 3.1) and measures it with **Rejection Rate** — the fraction in which the system abstains. This is, in practice, our `abstention recall` and ignores over-refusal; our plan P8 (P/R/F1 + over/under-refusal per slice) goes **beyond** the survey. We would not adopt the survey's metric in isolation: a system that always abstains would have maximum Rejection Rate.
 
-**R5 — LLM-judge e calibração (P11, P9; `faithfulness_judge` etc.).** *APOIA* medir/calibrar, sem fornecer números. A Seção 4 diz que não há escala/prompt universal e que alinhar com humanos é difícil → sustenta o nosso passo "κ juiz×humano por juiz antes de congelar o baseline" (ckpt-0.6-plan §6). **Não** sustenta o argumento específico de autopreferência (juiz = gerador): o survey não menciona. Para P11 precisamos de Zheng et al./Wataoka (outras fichas).
+**R5 — LLM-judge and calibration (P11, P9; `faithfulness_judge` etc.).** *SUPPORTS* measuring/calibrating, without providing numbers. Section 4 says there is no universal scale/prompt and that aligning with humans is difficult → supports our step "judge×human κ per judge before freezing the baseline" (ckpt-0.6-plan §6). It does **not** support the specific self-preference argument (judge = generator): the survey does not mention it. For P11 we need Zheng et al./Wataoka (other reading notes).
 
-**R6 — Format (P10; `format_validator`).** *NEUTRO/apoio fraco.* DomainRAG introduz "Structural Output" como alvo (Seção 3.1/Tabela 1), mostrando que aderência a formato é considerada alvo de RAG; não discute validação programática.
+**R6 — Format (P10; `format_validator`).** *NEUTRAL/weak support.* DomainRAG introduces "Structural Output" as a target (Section 3.1/Table 1), showing that format adherence is considered a RAG target; it does not discuss programmatic validation.
 
-**R7 — Relação retrieval ↔ geração (D-2, P5; relatório EXP-0).** *APOIA* uma análise que o nosso plano ainda não tem: a Seção 4 pede estudar "a relação entre métricas de retrieval e saídas finais". Isso sugere reportar, no EXP-0, a qualidade da resposta **condicionada** a hit@k (acertou/errou o retrieval) — informação nova e barata (ver ficha do RAGChecker: *context utilization*).
+**R7 — Retrieval ↔ generation relationship (D-2, P5; EXP-0 report).** *SUPPORTS* an analysis that our plan does not yet have: Section 4 calls for research on "the relationship and analysis between retrieval metrics and final generation outputs". This suggests reporting, in EXP-0, answer quality **conditioned** on hit@k (retrieval hit/miss) — new and cheap information (see the RAGChecker reading note: *context utilization*).
 
-**O que adotaríamos:** (1) o vocabulário Auepora (Target × EO↔GT) como índice do relatório/ADR do catálogo; (2) registrar latência/tokens por exemplo; (3) a lista de lacunas (noise/counterfactual robustness) como backlog consciente, não como escopo do CKPT-0.6. **O que NÃO adotaríamos:** Rejection Rate unilateral (R4); BLEU/ROUGE/BERTScore como métricas de qualidade (o próprio survey reconhece limitações; a ficha do RAGChecker mostra correlações com humanos ≤ 43,10 Pearson para BLEU/ROUGE/BERTScore); citar o survey como evidência para decisões de pooling ou de viés de juiz — ele é silencioso nesses pontos.
+**What we would adopt:** (1) the Auepora vocabulary (Target × EO↔GT) as an index for the catalog's report/ADR; (2) recording latency/tokens per example; (3) the list of gaps (noise/counterfactual robustness) as a conscious backlog, not as CKPT-0.6 scope. **What we would NOT adopt:** one-sided Rejection Rate (R4); BLEU/ROUGE/BERTScore as quality metrics (the survey itself acknowledges limitations; the RAGChecker reading note shows correlations with humans ≤ 43.10 Pearson for BLEU/ROUGE/BERTScore); citing the survey as evidence for decisions on pooling or judge bias — it is silent on those points.
 
-## 7. Citações úteis
+## 7. Useful quotations
 
-1. *"The traditional evaluation indicators for retrieval, such as Recall and Precision, cannot fully capture the nuances of RAG retrieval systems"* — Seção 2, "Retrieval".
-2. *"there's no universally applicable grading scale and prompting text, complicating the standardization of 'LLM as a Judge'"* — Seção 4 ("Discussion"), parágrafo sobre métricas.
-3. *"research is needed on performance changes involving intermediate outputs and retrieved documents, as well as the relationship and analysis between retrieval metrics and final generation outputs"* — Seção 4 ("Discussion"), parágrafo de abertura.
+1. *"The traditional evaluation indicators for retrieval, such as Recall and Precision, cannot fully capture the nuances of RAG retrieval systems"* — Section 2, "Retrieval".
+2. *"there's no universally applicable grading scale and prompting text, complicating the standardization of 'LLM as a Judge'"* — Section 4 ("Discussion"), paragraph on metrics.
+3. *"research is needed on performance changes involving intermediate outputs and retrieved documents, as well as the relationship and analysis between retrieval metrics and final generation outputs"* — Section 4 ("Discussion"), opening paragraph.

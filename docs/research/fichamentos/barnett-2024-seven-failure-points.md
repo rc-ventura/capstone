@@ -1,118 +1,118 @@
-# Barnett et al. 2024 — Sete pontos de falha ao construir um sistema RAG
+# Barnett et al. 2024 — Seven failure points when engineering a RAG system
 
-- **Referência completa:** Barnett, S., Kurniawan, S., Thudumu, S., Brannelly, Z., Abdelrazek, M. (2024). *Seven Failure Points When Engineering a Retrieval Augmented Generation System*. 3rd International Conference on AI Engineering — Software Engineering for AI (CAIN 2024), Lisboa. arXiv:2401.05856 [cs.SE]. Link: <https://arxiv.org/abs/2401.05856> (PDF: <https://arxiv.org/pdf/2401.05856>).
-- **Confiança da leitura:** **integral, mas só da versão arXiv v1** (11/01/2024, 6 páginas), lida a partir do texto extraído do PDF (WebFetch devolveu o PDF binário; usei `pdftotext`). Li o artigo todo (resumo, §1–§7, Tabelas 1–2, Figura 1 só pela legenda; a imagem da figura não foi inspecionada). Não conferi versões posteriores nem a versão publicada pela ACM, então números e redação podem diferir nelas. Os rótulos "(a) o artigo afirma" e "(b) minha interpretação" estão marcados no texto.
+- **Full reference:** Barnett, S., Kurniawan, S., Thudumu, S., Brannelly, Z., Abdelrazek, M. (2024). *Seven Failure Points When Engineering a Retrieval Augmented Generation System*. 3rd International Conference on AI Engineering — Software Engineering for AI (CAIN 2024), Lisbon. arXiv:2401.05856 [cs.SE]. Link: <https://arxiv.org/abs/2401.05856> (PDF: <https://arxiv.org/pdf/2401.05856>).
+- **Reading confidence:** **complete, but only of arXiv version v1** (2024-01-11, 6 pages), read from the text extracted from the PDF (WebFetch returned the binary PDF; I used `pdftotext`). I read the whole paper (abstract, §1–§7, Tables 1–2, Figure 1 only through the caption; the figure image was not inspected). I did not check later versions or the version published by ACM, so numbers and wording may differ in them. The labels "(a) the paper states" and "(b) my interpretation" are marked in the text.
 
-## 1. Problema que o artigo ataca
+## 1. Problem the paper addresses
 
-**(a) O artigo afirma:** engenheiros de software estão adicionando busca semântica às aplicações com RAG (recuperar documentos e passá-los a um LLM), mas não havia relato de "o que quebra" na prática. O artigo se declara "um relato de experiência" (abstract) sobre falhas de RAG em 3 estudos de caso (pesquisa, educação, biomédico) e diz ser, "até onde sabemos", o primeiro insight empírico sobre os desafios de criar RAGs robustos (§1). Entrega: (1) um catálogo de pontos de falha (FP), (2) um relato de 3 casos, (3) uma agenda de pesquisa (§1, "Contributions").
+**(a) The paper states:** software engineers are adding semantic search to applications with RAG (retrieving documents and passing them to an LLM), but there was no account of what breaks in practice. The paper declares itself "an experience report" (abstract) on RAG failures in 3 case studies (research, education, biomedical) and says it is, "to the best of our knowledge", the first empirical insight into the challenges of building robust RAGs (§1). It delivers: (1) a catalog of failure points (FP), (2) an account of 3 cases, (3) a research agenda (§1, "Contributions").
 
-Duas perguntas de pesquisa (§1): **RQ1** "Quais pontos de falha ocorrem ao construir um RAG?" (respondida na §5, com o experimento BioASQ) e **RQ2** "Quais as considerações-chave ao construir um RAG?" (respondida na §6, com as lições dos 3 casos).
+Two research questions (§1): **RQ1** "What are the failure points that occur when engineering a RAG system?" (answered in §5, with the BioASQ experiment) and **RQ2** "What are the key considerations when engineering a RAG system?" (answered in §6, with the lessons from the 3 cases).
 
-**(b) Minha interpretação:** é um artigo de engenharia de software (CAIN), não de avaliação. Ele cataloga *onde* o RAG falha, mas não propõe métricas nem mede prevalência de cada falha. Isso importa para o nosso uso (ver §6 desta ficha).
+**(b) My interpretation:** it is a software engineering paper (CAIN), not an evaluation paper. It catalogs *where* RAG fails, but proposes no metrics and does not measure the prevalence of each failure. This matters for our use (see §6 of this reading note).
 
-## 2. Método (passo a passo, com as definições exatas)
+## 2. Method (step by step, with the exact definitions)
 
-**Arquitetura de referência (§3, Figura 1).** Dois processos:
-- **Index** (tempo de desenvolvimento): cada documento é dividido em *chunks*, cada chunk vira um *embedding* (vetor numérico que representa o sentido do texto) e é gravado numa base. Decisões: tamanho do chunk ("se são pequenos, certas perguntas não podem ser respondidas; se são longos, as respostas incluem ruído gerado", §3.1) e modelo de embedding (trocar exige reindexar tudo).
-- **Query** (tempo de execução): pergunta → reescrita em consulta geral (*rewriter*) → embedding → top-k por similaridade (ex.: cosseno) → *re-ranker* → **Consolidator** (reduz o que cabe no prompt por causa de limite de tokens e de taxa) → *Reader* (o LLM que filtra ruído, obedece o formato e produz a resposta) (§3.2).
+**Reference architecture (§3, Figure 1).** Two processes:
+- **Index** (development time): each document is split into *chunks*, each chunk becomes an *embedding* (a numeric vector that represents the meaning of the text) and is stored in a database. Decisions: chunk size ("If chunks are too small certain questions cannot be answered, if the chunks are too long then the answers include generated noise", §3.1) and embedding model (changing it requires re-indexing everything).
+- **Query** (runtime): question → rewritten into a general query (*rewriter*) → embedding → top-k by similarity (e.g., cosine) → *re-ranker* → **Consolidator** (reduces what fits in the prompt because of token and rate limits) → *Reader* (the LLM that filters noise, obeys the format and produces the answer) (§3.2).
 
-**Estudos de caso (§4, Tabela 1).** Três sistemas:
-| Caso | Domínio | Tipo de doc | Tamanho do dataset | Estágios | Em uso? |
+**Case studies (§4, Table 1).** Three systems:
+| Case | Domain | Doc type | Dataset size | Stages | In use? |
 |---|---|---|---|---|---|
-| Cognitive Reviewer | Pesquisa | PDFs | "(Any size)" | Chunker, Rewriter, Retriever, Reader | sim (*) |
-| AI Tutor | Educação | vídeos, HTML, PDF | 38 | Chunker, Rewriter, Retriever, Reader | sim (*) (piloto com 200 alunos, §4.2) |
-| BioASQ | Biomédico | PDFs científicos | 4017 | Chunker, Retriever, Reader | experimento |
+| Cognitive Reviewer | Research | PDFs | "(Any size)" | Chunker, Rewriter, Retriever, Reader | yes (*) |
+| AI Tutor | Education | videos, HTML, PDF | 38 | Chunker, Rewriter, Retriever, Reader | yes (*) (pilot with 200 students, §4.2) |
+| BioASQ | Biomedical | scientific PDFs | 4017 | Chunker, Retriever, Reader | experiment |
 
-Só o BioASQ tem dados abertos (figshare, nota 5); os outros dois foram omitidos "por confidencialidade" (§4).
+Only BioASQ has open data (figshare, footnote 5); the other two were omitted "due to confidentiality concerns" (§4).
 
-**Único experimento quantitativo (§4.3).** BioASQ: baixaram 4017 documentos de acesso aberto e 1000 perguntas, indexaram tudo e geraram as respostas com GPT-4. Avaliação: a técnica "OpenEvals" da OpenAI (avaliador automático por LLM); depois, **inspeção manual de 40 casos e de "todos os casos que o OpenEvals marcou como inexatos"**. Conclusão do §4.3: a avaliação automática foi "mais pessimista que um avaliador humano" nesse domínio. Ameaça à validade declarada pelos autores: os revisores não eram especialistas biomédicos, então o LLM pode saber mais que eles.
+**Only quantitative experiment (§4.3).** BioASQ: they downloaded 4017 open-access documents and 1000 questions, indexed everything and generated the answers with GPT-4. Evaluation: OpenAI's "OpenEvals" technique (automatic LLM-based evaluator); then, **manual inspection of 40 cases and of "all issues that the OpenEvals flagged as inaccurate"**. Conclusion of §4.3: the automatic evaluation was "more pessimistic than a human rater" in that domain. Threat to validity declared by the authors: the reviewers were not biomedical experts, so the LLM may know more than they do.
 
-**Os sete pontos de falha (§5, textuais, tradução minha entre aspas simples, original em inglês logo depois):**
-- **FP1 Missing Content** — a pergunta não pode ser respondida a partir dos documentos. No caso feliz o sistema diz "Sorry, I don't know"; mas "para perguntas relacionadas ao conteúdo e sem resposta, o sistema pode ser enganado a dar uma resposta".
-- **FP2 Missed the Top Ranked Documents** — a resposta está no documento mas ele não ficou bem ranqueado para ser devolvido; na prática devolve-se o top-K, com K escolhido "com base em desempenho".
-- **FP3 Not in Context — Consolidation strategy Limitations** — documentos com a resposta *foram recuperados* da base mas "não entraram no contexto" para gerar a resposta; ocorre quando muitos documentos voltam e um processo de consolidação seleciona.
-- **FP4 Not Extracted** — a resposta *está no contexto*, mas o LLM não a extraiu; "tipicamente" por excesso de ruído ou informação contraditória no contexto.
-- **FP5 Wrong Format** — a pergunta pedia um formato (tabela, lista) e o LLM ignorou a instrução.
-- **FP6 Incorrect Specificity** — a resposta vem, mas não é específica o bastante ou é específica demais; ocorre quando os projetistas têm um resultado desejado (ex.: professores para alunos, em que se espera conteúdo educacional específico "não só a resposta") e também quando o usuário não sabe perguntar e é geral demais.
-- **FP7 Incomplete** — respostas "não incorretas", mas que omitem parte da informação que estava no contexto. Exemplo: "Quais os pontos-chave dos documentos A, B e C?"; os autores sugerem perguntar separadamente.
+**The seven failure points (§5, textual, my translation in quotes, English original right after):**
+- **FP1 Missing Content** — the question cannot be answered from the documents. In the happy case the system says "Sorry, I don't know"; but "for questions that are related to the content but don't have answers the system could be fooled into giving a response".
+- **FP2 Missed the Top Ranked Documents** — the answer is in the document but it was not ranked high enough to be returned; in practice the top-K is returned, with K chosen "based on performance".
+- **FP3 Not in Context — Consolidation strategy Limitations** — documents with the answer *were retrieved* from the database but "did not make it into the context" for generating the answer; it happens when many documents come back and a consolidation process selects.
+- **FP4 Not Extracted** — the answer *is in the context*, but the LLM did not extract it; "typically" because of too much noise or contradictory information in the context.
+- **FP5 Wrong Format** — the question asked for a format (table, list) and the LLM ignored the instruction.
+- **FP6 Incorrect Specificity** — the answer comes, but it is not specific enough or is too specific; it happens when the designers have a desired outcome (e.g., teachers for students, where specific educational content is expected "not just the answer") and also when the user does not know how to ask and is too general.
+- **FP7 Incomplete** — answers that are "not incorrect", but that omit part of the information that was in the context. Example: "What are the key points covered in documents A, B and C?"; the authors suggest asking separately.
 
-**Como (não) se mede cada FP.** O artigo **não define métrica, limiar nem procedimento de detecção para nenhum dos 7 FP**. O mais próximo: no §3 diz que RAGs são difíceis de testar porque não há dados e eles precisam ser obtidos por geração sintética ou piloto com pouco teste; no §6.3, que são necessários pares pergunta–resposta específicos da aplicação e métricas de qualidade, que usar LLMs é caro, introduz latência e muda a cada versão; cita G-Eval (Liu et al. 2023) como técnica de avaliação offline "promissora", mas "condicionada a ter pares Q&A rotulados" (Tabela 2, última linha).
+**How each FP is (not) measured.** The paper **defines no metric, threshold or detection procedure for any of the 7 FPs**. The closest: in §3 it says RAGs are hard to test because there is no data and it must be obtained by synthetic generation or a pilot with little testing; in §6.3, that application-specific question–answer pairs and quality metrics are needed, that using LLMs is expensive, introduces latency and changes with each version; it cites G-Eval (Liu et al. 2023) as an offline evaluation technique that looks promising but is premised on having labeled Q&A pairs (Table 2, last row; paraphrase).
 
-## 3. Principais contribuições (lista)
+## 3. Main contributions (list)
 
-1. Catálogo de 7 pontos de falha organizados pelo pipeline Index/Query (§5, Figura 1).
-2. Relato de experiência de 3 casos (2 em operação na Deakin University) (§4).
-3. Tabela de 9 lições (Tabela 2) ligando cada lição a FPs e a casos.
-4. Agenda de pesquisa: chunking e embeddings (§6.1), RAG vs. fine-tuning (§6.2), testes e monitoramento (§6.3).
-5. Duas conclusões-chave (abstract): "validar um sistema RAG só é viável durante a operação" e "a robustez evolui, não é projetada no início".
+1. Catalog of 7 failure points organized by the Index/Query pipeline (§5, Figure 1).
+2. Experience report of 3 cases (2 in operation at Deakin University) (§4).
+3. Table of 9 lessons (Table 2) linking each lesson to FPs and cases.
+4. Research agenda: chunking and embeddings (§6.1), RAG vs. fine-tuning (§6.2), testing and monitoring (§6.3).
+5. Two key conclusions (abstract): "validation of a RAG system is only feasible during operation" and "the robustness of a RAG system evolves rather than designed in at the start".
 
-## 4. Resultados-chave (com números e onde estão)
+## 4. Key results (with numbers and where they are)
 
-**(a) O que o artigo afirma, com o n de cada evidência:**
-- **Evidência quantitativa:** só o BioASQ (§4.3): 4017 documentos, 1000 pares Q&A, 40 casos inspecionados manualmente mais todos os marcados como incorretos pelo avaliador automático. **Não há contagem por FP, nem taxa de acerto geral, nem tabela de resultados.** O único resultado reportado é qualitativo: avaliador automático mais pessimista que humano.
-- **Inconsistência interna:** o §1 (RQ1) diz que o experimento envolveu "15,000 documents and 1000 question and answer pairs"; o §4.3 e a Tabela 1 dizem 4017 documentos. O `docs/research/rag_failure_modes_review.md` do projeto repete "15k docs". Não consegui resolver qual está certo só com a v1.
-- **Lições (Tabela 2) — o que é "lição" e não evidência medida:**
-  | Lição | FP | Caso | Natureza |
+**(a) What the paper states, with the n of each piece of evidence:**
+- **Quantitative evidence:** only BioASQ (§4.3): 4017 documents, 1000 Q&A pairs, 40 cases manually inspected plus all those marked as incorrect by the automatic evaluator. **There is no count per FP, no overall hit rate, and no results table.** The only reported result is qualitative: the automatic evaluator was more pessimistic than the human.
+- **Internal inconsistency:** §1 (RQ1) says the experiment involved "15,000 documents and 1000 question and answer pairs"; §4.3 and Table 1 say 4017 documents. The project's `docs/research/rag_failure_modes_review.md` repeats "15k docs". I could not resolve which is right from v1 alone.
+- **Lessons (Table 2) — what is a "lesson" and not measured evidence:**
+  | Lesson | FP | Case | Nature |
   |---|---|---|---|
-  | Contexto maior dá melhores resultados ("8K vs 4K", contrário a trabalho prévio com GPT-3.5) | FP4 | AI Tutor | observação em 1 sistema, sem número reportado |
-  | Cache semântico reduz custo e latência | FP1 | AI Tutor | recomendação |
-  | Jailbreaks contornam o RAG | FP5–7 | AI Tutor | recomendação apoiada em literatura externa |
-  | Metadados (nome do arquivo, nº do chunk) melhoram a recuperação | FP2, FP4 | AI Tutor | observação qualitativa |
-  | Embeddings open-source foram tão bons quanto os fechados em texto curto | FP2, FP4–7 | BioASQ, AI Tutor | observação, sem número |
-  | RAG exige calibração contínua | FP2–7 | AI Tutor, BioASQ | opinião/lição |
-  | Implementar um pipeline configurável | FP1, FP2 | os 3 | lição |
-  | Pipelines montados sob medida são subótimos (treino ponta a ponta ajuda) | FP2, FP4 | BioASQ, AI Tutor | apoiada em Siriwardhana et al. 2023 |
-  | Teste de desempenho só é possível em runtime | FP2–7 | Cognitive Reviewer, AI Tutor | lição |
+  | Larger context gives better results ("8K vs 4K", contrary to prior work with GPT-3.5) | FP4 | AI Tutor | observation in 1 system, no number reported |
+  | Semantic cache reduces cost and latency | FP1 | AI Tutor | recommendation |
+  | Jailbreaks bypass the RAG | FP5–7 | AI Tutor | recommendation supported by external literature |
+  | Metadata (file name, chunk no.) improves retrieval | FP2, FP4 | AI Tutor | qualitative observation |
+  | Open-source embeddings were as good as closed ones on short text | FP2, FP4–7 | BioASQ, AI Tutor | observation, no number |
+  | RAG requires continuous calibration | FP2–7 | AI Tutor, BioASQ | opinion/lesson |
+  | Implement a configurable pipeline | FP1, FP2 | all 3 | lesson |
+  | Custom-assembled pipelines are suboptimal (end-to-end training helps) | FP2, FP4 | BioASQ, AI Tutor | supported by Siriwardhana et al. 2023 |
+  | Performance testing is only possible at runtime | FP2–7 | Cognitive Reviewer, AI Tutor | lesson |
 
-  **Minha leitura:** quase todas as linhas da Tabela 2 são relatos qualitativos; nenhuma vem com tamanho de efeito.
+  **My reading:** almost all rows of Table 2 are qualitative reports; none comes with an effect size.
 
-**(b) Minha interpretação do peso da evidência:** os FPs são uma **taxonomia qualitativa** derivada de 3 sistemas, útil para cobertura de testes (cobrir cada modo de falha), mas não é estimativa de prevalência nem prova de causa.
+**(b) My interpretation of the weight of the evidence:** the FPs are a **qualitative taxonomy** derived from 3 systems, useful for test coverage (covering each failure mode), but they are neither an estimate of prevalence nor proof of cause.
 
-## 5. Limitações (as do autor e as que eu identifico)
+## 5. Limitations (the author's and the ones I identify)
 
-**Do autor:**
-- Ameaça à validade no BioASQ: revisores não especialistas (§4.3).
-- Dois dos três casos não podem ser abertos por confidencialidade (§4), logo não são reproduzíveis.
-- O §6.3 reconhece que a questão de gerar perguntas e respostas realistas do domínio "permanece um problema aberto" e que testar RAG exige dados que normalmente não existem.
+**From the author:**
+- Threat to validity in BioASQ: non-expert reviewers (§4.3).
+- Two of the three cases cannot be opened due to confidentiality (§4), hence they are not reproducible.
+- §6.3 acknowledges that the question of generating realistic domain questions and answers "remains an open problem" and that testing RAG requires data that usually does not exist.
 
-**Minhas (marcadas como interpretação):**
-- Sem contagem por FP, não dá para dizer quais FPs dominam. As afirmações sobre FP1–FP7 como "mais comuns" nos nossos documentos de revisão vêm de outras fontes (RaftLabs, Suthar), não deste artigo.
-- Inconsistência 15.000 × 4017 documentos (ver §4).
-- O catálogo mistura estágios do pipeline com sintomas na resposta: FP1 é propriedade do corpus em relação à pergunta; FP2 e FP3 são perdas de recuperação; FP4–FP7 são falhas do leitor (LLM). Não há tratamento de **alucinação com a evidência certa no contexto** (um LLM que afirma algo que o contexto não diz), apenas de omissão (FP4/FP7). Isso é uma lacuna em relação a Magesh et al. 2025, que o próprio Magesh nota ao dizer que a tipologia dele "colapsa" alguns FPs do Barnett e introduz novos.
-- Sem comparação com uma baseline sem RAG, sem análise estatística, sem intervalos de confiança.
-- A lição "contexto maior é melhor" vem de um sistema e contradiz Liu et al. 2023 (*Lost in the middle*); o artigo apenas observa o contraste, sem testar a causa.
+**Mine (marked as interpretation):**
+- Without a count per FP, we cannot say which FPs dominate. The statements about FP1–FP7 as "most common" in our review documents come from other sources (RaftLabs, Suthar), not from this paper.
+- Inconsistency 15,000 × 4017 documents (see §4).
+- The catalog mixes pipeline stages with symptoms in the answer: FP1 is a property of the corpus relative to the question; FP2 and FP3 are retrieval losses; FP4–FP7 are failures of the reader (LLM). There is no treatment of **hallucination with the right evidence in the context** (an LLM that asserts something the context does not say), only of omission (FP4/FP7). This is a gap relative to Magesh et al. 2025, which Magesh himself notes when saying that his typology collapses some of Barnett's FPs (paraphrase of Magesh) and introduces new ones.
+- No comparison with a no-RAG baseline, no statistical analysis, no confidence intervals.
+- The lesson "Larger context get better results" comes from one system and contradicts Liu et al. 2023 (*Lost in the middle*); the paper merely notes the contrast, without testing the cause.
 
-## 6. Reflexões ancoradas no NOSSO projeto
+## 6. Reflections anchored in OUR project
 
-Referência de pontos: P1–P11, D-1, D-2, L-3 em `docs/roadmap/ckpt-0.6.1b-metrics-roadmap.md`; plano em `docs/roadmap/ckpt-0.6-plan.md` (§3) e `docs/plan.md`.
+Reference for the points: P1–P11, D-1, D-2, L-3 in `docs/roadmap/ckpt-0.6.1b-metrics-roadmap.md`; plan in `docs/roadmap/ckpt-0.6-plan.md` (§3) and `docs/plan.md`.
 
-**R1 — O mapeamento "FP3 = ruído no contexto" não bate com a definição do Barnett. (DESAFIA o que está escrito.)**
-O plano 0.6 §3.1 (`retrieval_precision_at_k`) diz "FP3 — retorno irrelevante/noise" e o roadmap P6 diz que `distinct_papers@k` e a precision "respondem FP3 ('ruído no contexto')". No Barnett (§5), **FP3 é "Not in Context — consolidation strategy limitations"**: o documento certo *foi recuperado* mas *não entrou no contexto* por causa de consolidação, reranking ou limite de tokens. O ruído aparece no artigo como **causa de FP4**. **Afeta:** `evaluators.py::precision_at_k`, `docs/plan.md` §3, `ckpt-0.6-plan.md` §3.1, roadmap P6.
-Para o nosso sistema (top-5 de chunks de ~420 caracteres, sem passo de consolidação), FP3 provavelmente quase não ocorre; só voltaria a existir com um reranker que corte documentos (CKPT-4) ou com truncamento de contexto. **Recomendação:** renomear o rótulo de `precision_at_k` (e de `distinct_papers@k`) para "ruído no contexto — causa de FP4" e tratar FP3 como "recuperado mas descartado", mensurável só quando existir passo de seleção entre retrieval e prompt (ex.: `gold_chunk ∈ retrieved` mas `gold_chunk ∉ prompt`).
+**R1 — The mapping "FP3 = noise in the context" does not match Barnett's definition. (CHALLENGES what is written.)**
+Plan 0.6 §3.1 (`retrieval_precision_at_k`) says "FP3 — irrelevant return/noise" and roadmap P6 says that `distinct_papers@k` and precision "answer FP3 ('noise in the context')". In Barnett (§5), **FP3 is "Not in Context — consolidation strategy limitations"**: the right document *was retrieved* but *did not make it into the context* because of consolidation, reranking or token limit. Noise appears in the paper as the **cause of FP4**. **Affects:** `evaluators.py::precision_at_k`, `docs/plan.md` §3, `ckpt-0.6-plan.md` §3.1, roadmap P6.
+For our system (top-5 chunks of ~420 characters, no consolidation step), FP3 probably almost never occurs; it would only come back with a reranker that cuts documents (CKPT-4) or with context truncation. **Recommendation:** rename the label of `precision_at_k` (and of `distinct_papers@k`) to "noise in the context — cause of FP4" and treat FP3 as "retrieved but discarded", measurable only when a selection step exists between retrieval and prompt (e.g., `gold_chunk ∈ retrieved` but `gold_chunk ∉ prompt`).
 
-**R2 — `faithfulness_judge` e `citation_accuracy` rotulados "FP4" estão mal ancorados. (DESAFIA.)**
-O plano 0.6 §3.2 coloca os dois sob FP4. FP4 do Barnett é **omissão** (a resposta estava no contexto e o LLM não a extraiu). Fidelidade e acurácia de citação medem o contrário: **afirmação sem suporte no contexto** (comissão/alucinação). **Afeta:** `faithfulness_judge`, `citation_accuracy`, e o gap que FP4 realmente pede: uma métrica de **"resposta correta dado que o chunk-gold foi recuperado"** (por exemplo, correção condicionada a `hit@k=1`) e/ou completeness no nível do chunk. **O que adotaríamos:** manter os dois juízes (pelo Magesh e pelo ALCE), mas corrigir o rótulo para "alucinação com contexto presente (fora do catálogo do Barnett)" e acrescentar a medida condicional para FP4. **Neutro** quanto à utilidade dos juízes; só desafia o rótulo.
+**R2 — `faithfulness_judge` and `citation_accuracy` labeled "FP4" are poorly anchored. (CHALLENGES.)**
+Plan 0.6 §3.2 puts both under FP4. Barnett's FP4 is **omission** (the answer was in the context and the LLM did not extract it). Faithfulness and citation accuracy measure the opposite: a **claim without support in the context** (commission/hallucination). **Affects:** `faithfulness_judge`, `citation_accuracy`, and the gap that FP4 really asks for: a metric of **"correct answer given that the gold chunk was retrieved"** (for example, correctness conditioned on `hit@k=1`) and/or completeness at the chunk level. **What we would adopt:** keep both judges (for Magesh and ALCE), but fix the label to "hallucination with context present (outside Barnett's catalog)" and add the conditional measure for FP4. **Neutral** as to the usefulness of the judges; it only challenges the label.
 
-**R3 — Os demais mapeamentos estão coerentes. (APOIA.)**
-FP1→`abstention_quality` + slices `unanswerable`/`stale` (P7, P8); FP2→`recall@k`/`hit@k`/`MRR` e slice `deep-hit`; FP5→`format_validator` (P10); FP6→`specificity_judge` e slice `persona`; FP7→`completeness_judge` e slice `multi-doc`. O exemplo de FP7 do artigo ("pontos-chave dos documentos A, B e C") é exatamente o nosso `multi-doc`. A recomendação do artigo de perguntar separadamente sustenta o experimento de decomposição (CKPT-5).
+**R3 — The remaining mappings are coherent. (SUPPORTS.)**
+FP1→`abstention_quality` + `unanswerable`/`stale` slices (P7, P8); FP2→`recall@k`/`hit@k`/`MRR` and `deep-hit` slice; FP5→`format_validator` (P10); FP6→`specificity_judge` and `persona` slice; FP7→`completeness_judge` and `multi-doc` slice. The paper's FP7 example ("What are the key points covered in documents A, B and C?") is exactly our `multi-doc`. The paper's recommendation to ask separately supports the decomposition experiment (CKPT-5).
 
-**R4 — "Validação só em operação": o artigo APOIA o monitoramento, mas é um argumento, não um resultado.**
-Isso sustenta o CKPT-8 (avaliadores online) e o princípio do `rag_failure_modes_review.md`. Mas a base é anedótica (AI Tutor em piloto). **Cuidado:** não citar como "achado empírico" em relatório; é uma lição de engenharia.
+**R4 — "Validation only in operation": the paper SUPPORTS monitoring, but it is an argument, not a result.**
+This supports CKPT-8 (online evaluators) and the principle of `rag_failure_modes_review.md`. But the basis is anecdotal (AI Tutor in a pilot). **Caution:** do not cite it as an "empirical finding" in a report; it is an engineering lesson.
 
-**R5 — Estimativa de prevalência por FP não existe: o artigo não ajuda a dimensionar os slices do golden set. (NEUTRO.)**
-Os 100 exemplos (40 answerable, 15 unanswerable, 10 stale, 15 multi-doc, 10 format, 10 persona; ver roadmap §3) foram dimensionados por decisão nossa. Nada no Barnett diz quantos casos de cada FP são necessários. Com slices de 10–15 itens, os intervalos de confiança são largos (minha interpretação), então relatar IC por slice (cf. P11 e calibração).
+**R5 — There is no estimate of prevalence per FP: the paper does not help size the golden set slices. (NEUTRAL.)**
+The 100 examples (40 answerable, 15 unanswerable, 10 stale, 15 multi-doc, 10 format, 10 persona; see roadmap §3) were sized by our own decision. Nothing in Barnett says how many cases of each FP are needed. With slices of 10–15 items, the confidence intervals are wide (my interpretation), so report a CI per slice (cf. P11 and calibration).
 
-**R6 — "Avaliador automático mais pessimista que humano" (§4.3): APOIA a calibração humana do juiz (P11, 0.8).**
-O único dado de avaliação do artigo é que um LLM-judge divergiu do humano. É n pequeno (40 casos), com revisor não especialista. **Afeta:** calibração κ juiz×humano com as 100 labels revisadas. Reforça a decisão de não congelar o baseline antes de medir κ por juiz.
+**R6 — Automated evaluator more pessimistic than a human rater (§4.3): SUPPORTS human calibration of the judge (P11, 0.8).**
+The only evaluation data point in the paper is that an LLM judge diverged from the human. It is a small n (40 cases), with a non-expert reviewer. **Affects:** judge×human κ calibration with the 100 reviewed labels. It reinforces the decision not to freeze the baseline before measuring κ per judge.
 
-**R7 — Chunking: o artigo diz que chunks pequenos impedem responder e chunks grandes trazem ruído (§3.1) e pede avaliação sistemática (§6.1). (APOIA a pergunta, não dá resposta.)**
-Nosso corpus tem 843 chunks de ~420 caracteres (2–5 por paper). O artigo não fornece número nem regra. Relaciona-se a D-1 (gold por chunk ou por paper): como um abstract é cortado em 2–5 pedaços, o "chunk certo" pode ser diferente do chunk que responde parcialmente. Nada no Barnett decide D-1.
+**R7 — Chunking: the paper says small chunks prevent answering and large chunks bring noise (§3.1) and asks for systematic evaluation (§6.1). (SUPPORTS the question, gives no answer.)**
+Our corpus has 843 chunks of ~420 characters (2–5 per paper). The paper provides no number or rule. It relates to D-1 (gold per chunk or per paper): since an abstract is cut into 2–5 pieces, the "right chunk" may be different from the chunk that partially answers. Nothing in Barnett decides D-1.
 
-**O que adotaríamos:** (1) FP1–FP7 como **lista de verificação de cobertura** do golden set e como vocabulário do relatório; (2) corrigir os rótulos FP3/FP4 (R1, R2); (3) a ideia de medir retrieval e geração separadamente (estrutura em 2 processos).
-**O que NÃO adotaríamos e por quê:** (1) tratar o catálogo como completo, pois ele não cobre alucinação com contexto presente nem citação falsa (ver Magesh); (2) citar "15k documentos" (ver §4); (3) usar a Tabela 2 como evidência quantitativa, pois ela é qualitativa; (4) herdar a ordem FP1–FP7 como prioridade, pois o artigo não ordena por frequência.
+**What we would adopt:** (1) FP1–FP7 as a **coverage checklist** for the golden set and as the vocabulary of the report; (2) fix the FP3/FP4 labels (R1, R2); (3) the idea of measuring retrieval and generation separately (2-process structure).
+**What we would NOT adopt and why:** (1) treating the catalog as complete, since it does not cover hallucination with context present nor false citation (see Magesh); (2) citing "15k documents" (see §4); (3) using Table 2 as quantitative evidence, since it is qualitative; (4) inheriting the FP1–FP7 order as priority, since the paper does not order by frequency.
 
-## 7. Citações úteis (trechos literais curtos)
+## 7. Useful quotations (short verbatim excerpts)
 
 1. "validation of a RAG system is only feasible during operation" — Abstract.
 2. "Documents with the answer were retrieved from the database but did not make it into the context for generating an answer." — §5, FP3.

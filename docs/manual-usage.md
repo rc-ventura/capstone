@@ -1,36 +1,36 @@
-# Uso manual do sistema (sem o golden set)
+# Manual usage of the system (without the golden set)
 
-Como inspecionar o comportamento do copiloto na mão — para auditoria, debug e para
-entender o que o golden set vai medir. Todo comando foi testado no CKPT-0.5.
+How to inspect the copilot's behavior by hand — for auditing, debugging, and to
+understand what the golden set will measure. Every command was tested in CKPT-0.5.
 
-## 0. Setup único
+## 0. One-time setup
 
 ```bash
-# .env com OPENAI_API_KEY, LANGSMITH_API_KEY (copie de example.env)
+# .env with OPENAI_API_KEY, LANGSMITH_API_KEY (copy from example.env)
 uv run python -c "import config; print('OK')"
 ```
 
-O corpus é carregado do cache parquet em `resources/` (construído sob demanda na 1ª vez;
-com o pin de snapshot não re-baixa papers novos — ADR-002).
+The corpus is loaded from the parquet cache in `resources/` (built on demand the 1st time;
+with the snapshot pin it does not re-download new papers — ADR-002).
 
-## 1. Pipeline completo (corpus → retriever → resposta traceada)
+## 1. Full pipeline (corpus → retriever → traced answer)
 
 ```bash
 uv run python main.py
 ```
 
-Saída esperada: o corpus confirma N chunks, depois `Q:` / `A:` da pergunta embutida.
-O trace cai no projeto LangSmith `capstone-arxiv-copilot`.
+Expected output: the corpus confirms N chunks, then `Q:` / `A:` of the built-in question.
+The trace lands in the LangSmith project `capstone-arxiv-copilot`.
 
-## 2. Sync idempotente do golden set
+## 2. Idempotent sync of the golden set
 
 ```bash
 uv run python build_golden_dataset.py
 ```
 
-Cria slices faltantes, pula as completas; 2ª rodada é noop. Não toca em `app.py`.
+Creates missing slices, skips complete ones; the 2nd run is a no-op. Does not touch `app.py`.
 
-## 3. Inspecionar o retriever isolado (REPL)
+## 3. Inspect the retriever in isolation (REPL)
 
 ```python
 import utils, config
@@ -40,9 +40,9 @@ for i, doc in enumerate(retriever.invoke("tool hallucination in LLM agents"), 1)
     print(i, doc.metadata["arxiv_id"], doc.metadata["published"], doc.metadata["title"][:70])
 ```
 
-Troque a pergunta livre. Para k custom: `config.RunConfig(k=10)`.
+Swap in any free-form question. For a custom k: `config.RunConfig(k=10)`.
 
-## 4. Rodar o pipeline com uma pergunta livre
+## 4. Run the pipeline with a free-form question
 
 ```python
 import app, config
@@ -50,7 +50,7 @@ import app, config
 print(app.arxiv_copilot("What does TRACE retrieve and why?"))
 ```
 
-## 5. Inspecionar o golden set via SDK
+## 5. Inspect the golden set via SDK
 
 ```python
 from langsmith import Client
@@ -66,16 +66,16 @@ print("Q:", e.inputs["question"])
 print("G:", e.outputs["answer"])
 ```
 
-## 6. Onde olhar no LangSmith (UI)
+## 6. Where to look in LangSmith (UI)
 
-- Projeto `capstone-arxiv-copilot` → traces de `arxiv_copilot` com run_type
-  `chain`/`retriever` e metadata (embedding_model, k, chunk_strategy, prompt_version…).
-- Dataset `arxiv-copilot-golden` → exemplos com `split=core`, metadata `slice` e `review`.
+- Project `capstone-arxiv-copilot` → `arxiv_copilot` traces with run_type
+  `chain`/`retriever` and metadata (embedding_model, k, chunk_strategy, prompt_version…).
+- Dataset `arxiv-copilot-golden` → examples with `split=core`, metadata `slice` and `review`.
 
-## Atalhos de diagnóstico úteis
+## Useful diagnostic shortcuts
 
-| Quero saber… | Comando |
+| I want to know… | Command |
 |---|---|
-| quais chunks um chunk_id aponta | `utils.load_cached_chunks()` e filtrar por `utils.chunk_id(d)` |
-| o retriever deduplica por paper? | rode o snippet §3 e veja se repete `arxiv_id` (achado em docs/decisions.md) |
-| estado de revisão dos 100 | snippet §5 + `Counter(e.metadata["review"]["state"] for e in exs)` |
+| which chunks a chunk_id points to | `utils.load_cached_chunks()` and filter by `utils.chunk_id(d)` |
+| does the retriever dedup by paper? | run the §3 snippet and check whether `arxiv_id` repeats (finding in docs/decisions.md) |
+| review state of the 100 | §5 snippet + `Counter(e.metadata["review"]["state"] for e in exs)` |

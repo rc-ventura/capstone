@@ -34,12 +34,14 @@ def _ranx(ranked: list[str], gold: set[str]) -> dict[str, float]:
     }
 
 
-def _ours(chunks: list[str], papers: list[str], reference: dict) -> dict[str, float]:
+def _ours(
+    chunks: list[str], papers: list[str], reference: dict, level: str = "paper"
+) -> dict[str, float]:
     return {
-        "recall": ev.recall_at_k(chunks, papers, reference),
-        "hit": ev.hit_rate(chunks, papers, reference),
-        "mrr": ev.mrr(chunks, papers, reference),
-        "precision": ev.precision_at_k(chunks, papers, reference),
+        "recall": ev.recall_at_k(chunks, papers, reference, level=level),
+        "hit": ev.hit_rate(chunks, papers, reference, level=level),
+        "mrr": ev.mrr(chunks, papers, reference, level=level),
+        "precision": ev.precision_at_k(chunks, papers, reference, level=level),
     }
 
 
@@ -76,5 +78,7 @@ def test_chunk_level_matches_ranx():
         papers = [c.split(":")[0] for c in ranked]
         case = (ranked, gold)
         _assert_close(
-            _ours(ranked, papers, {"gold_chunk_ids": sorted(gold)}), _ranx(ranked, gold), case
+            _ours(ranked, papers, {"gold_chunk_ids": sorted(gold)}, level="chunk"),
+            _ranx(ranked, gold),
+            case,
         )

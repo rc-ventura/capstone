@@ -1,79 +1,79 @@
-# Saad-Falcon et al. 2023 — ARES (juízes treinados + PPI)
+# Saad-Falcon et al. 2023 — ARES (trained judges + PPI)
 
-- **Referência completa:** Jon Saad-Falcon, Omar Khattab, Christopher Potts, Matei Zaharia. *ARES: An Automated Evaluation Framework for Retrieval-Augmented Generation Systems.* arXiv:2311.09476 (versão lida: v2, 31/03/2024). <https://arxiv.org/abs/2311.09476> · Código/datasets no GitHub (link no artigo).
-  *(O venue — NAACL 2024 — vem do meu conhecimento prévio e **não foi verificado** nesta leitura.)*
-- **Confiança da leitura:** **integral.** Li o texto bruto da versão HTML do arXiv (v2): resumo, Seções 1–7, Tabelas 1–6 (com os números das células) e o Apêndice A.1–A.6 (configuração de fine-tuning e prompts). **Não vi:** as Figuras 1–3 (só as legendas), a Tabela 7 (exemplos de pares positivos/negativos; vi só parte) e a lista de referências. O PDF não pôde ser decodificado; usei o HTML.
+- **Full reference:** Jon Saad-Falcon, Omar Khattab, Christopher Potts, Matei Zaharia. *ARES: An Automated Evaluation Framework for Retrieval-Augmented Generation Systems.* arXiv:2311.09476 (version read: v2, 2024-03-31). <https://arxiv.org/abs/2311.09476> · Code/datasets on GitHub (link in the paper).
+  *(The venue — NAACL 2024 — comes from my prior knowledge and was **not verified** in this reading.)*
+- **Reading confidence:** **complete.** I read the raw text of the arXiv HTML version (v2): abstract, Sections 1–7, Tables 1–6 (with the cell numbers) and Appendix A.1–A.6 (fine-tuning configuration and prompts). **I did not see:** Figures 1–3 (captions only), Table 7 (examples of positive/negative pairs; I saw only part of it) and the reference list. The PDF could not be decoded; I used the HTML.
 
-> Convenção: **[Artigo]** = afirmado no texto/tabelas; **[Minha leitura]** = interpretação minha.
+> Convention: **[Paper]** = stated in the text/tables; **[My reading]** = my interpretation.
 
 ---
 
-## 1. Problema que o artigo ataca
+## 1. Problem the paper addresses
 
-**[Artigo]** Avaliar RAG tradicionalmente exige anotação manual de perguntas, passagens a recuperar e respostas — cara e específica de domínio (Seção 1). Avaliação por LLM *out of the box* (ex.: RAGAS) usa prompts fixos escritos à mão, com "pouca adaptabilidade a vários contextos de avaliação e nenhuma garantia de qualidade" (Seção 1). ARES propõe (i) **juízes leves treinados por domínio** com dados sintéticos, e (ii) **intervalos de confiança estatísticos** via *prediction-powered inference* (PPI), usando um **pequeno conjunto de anotações humanas** (Resumo, Seção 1).
+**[Paper]** Evaluating RAG traditionally requires manual annotation of questions, passages to retrieve and answers — expensive and domain-specific (Section 1). LLM-based evaluation *out of the box* (e.g., RAGAS) uses fixed hand-written prompts, with "little adaptability to various evaluation contexts and no guarantees about quality" (Section 1). ARES proposes (i) **lightweight judges trained per domain** with synthetic data, and (ii) **statistical confidence intervals** via *prediction-powered inference* (PPI), using a **small set of human annotations** (Abstract, Section 1).
 
-## 2. Método (passo a passo, definições exatas)
+## 2. Method (step by step, exact definitions)
 
-Entradas obrigatórias (Seção 1 e 3): (a) um **conjunto de passagens do domínio**, (b) um **conjunto de validação com preferência humana de ≈150 pontos anotados ou mais** (positivos e negativos para as três métricas), (c) **≥5 exemplos few-shot** de perguntas e respostas do domínio (usados para gerar dados sintéticos).
+Required inputs (Section 1 and 3): (a) a **set of in-domain passages**, (b) a **human-preference validation set of ≈150 or more annotated points** (positives and negatives for the three metrics), (c) **≥5 few-shot examples** of in-domain questions and answers (used to generate synthetic data).
 
-### 2.1 As três dimensões (Seção 3.2) — rótulos **binários** por tripla (pergunta, passagem, resposta)
+### 2.1 The three dimensions (Section 3.2) — **binary** labels per triple (question, passage, answer)
 
-- **Context relevance** — *"Is the passage returned relevant for answering the given query?"* (a passagem recuperada é relevante para responder a pergunta?)
-- **Answer faithfulness** — *"Is the answer generated faithful to the retrieved passage, or does it contain hallucinated or extrapolated statements beyond the passage?"* (a resposta é fiel à passagem ou extrapola/alucina?)
-- **Answer relevance** — *"Is the answer generated relevant given the query and retrieved passage?"* (a resposta é relevante dada a pergunta e a passagem?)
+- **Context relevance** — *"Is the passage returned relevant for answering the given query?"* (is the retrieved passage relevant for answering the question?)
+- **Answer faithfulness** — *"Is the answer generated faithful to the retrieved passage, or does it contain hallucinated or extrapolated statements beyond the passage?"* (is the answer faithful to the passage, or does it extrapolate/hallucinate?)
+- **Answer relevance** — *"Is the answer generated relevant given the query and retrieved passage?"* (is the answer relevant given the question and the passage?)
 
-**[Minha leitura]** Diferente do RAGAS (score contínuo por extração/razão de sentenças), aqui cada dimensão é um **classificador binário**; a métrica do *sistema* é a média dos rótulos previstos sobre amostras de suas triplas (Seção 3.3: "By averaging the individual predicted labels…").
+**[My reading]** Unlike RAGAS (continuous score by extraction/ratio of sentences), here each dimension is a **binary classifier**; the *system's* metric is the mean of the predicted labels over samples of its triples (Section 3.3: "By averaging the individual predicted labels…").
 
-### 2.2 Dados sintéticos (Seção 3.1)
+### 2.2 Synthetic data (Section 3.1)
 
-1. FLAN-T5 XXL gera, a partir de passagens do corpus e dos few-shots, uma pergunta e uma resposta por passagem (prompts em A.5/A.6).
-2. **Filtro de qualidade:** descarta consultas que *não recuperam sua passagem original como primeiro resultado* com o retriever (técnica citada de trabalhos anteriores).
-3. **Negativos** (mesmo número que positivos):
-   - *Fracos:* para context relevance, passagens aleatórias do domínio; para faithfulness/relevance, respostas sintéticas de **outras** passagens.
-   - *Fortes:* para context relevance, passagens **do mesmo documento** da passagem-gold (se o dataset não tem várias passagens por documento, amostra do top-10 BM25); para faithfulness/relevance, resposta **contraditória** gerada pelo FLAN-T5 com few-shot.
+1. FLAN-T5 XXL generates, from corpus passages and the few-shots, one question and one answer per passage (prompts in A.5/A.6).
+2. **Quality filter:** discards queries that *do not retrieve their original passage as the first result* with the retriever (technique cited from earlier work).
+3. **Negatives** (same number as positives):
+   - *Weak:* for context relevance, random in-domain passages; for faithfulness/relevance, synthetic answers from **other** passages.
+   - *Strong:* for context relevance, passages **from the same document** as the gold passage (if the dataset does not have several passages per document, sample from the BM25 top-10); for faithfulness/relevance, a **contradictory** answer generated by FLAN-T5 with few-shot.
 
-### 2.3 Juízes (Seção 3.2, 4.1, A.1)
+### 2.3 Judges (Section 3.2, 4.1, A.1)
 
-Três modelos **DeBERTa-v3-Large** (304M), um por métrica, com cabeça de classificação binária (camada linear, dropout 0,1 sobre o [CLS]). Perda: entropia cruzada com Adam; lr **5e-6**, batch **32**, warmup/decay linear (A.1). Early stopping: parar após **3 épocas sem melhora na perda**, avaliada no conjunto de validação humano (Seção 3.2). Baseline de in-context learning: gpt-3.5-turbo-16k (versão 10/23), com 8 few-shots (A.2–A.4).
+Three **DeBERTa-v3-Large** models (304M), one per metric, with a binary classification head (linear layer, dropout 0.1 over the [CLS]). Loss: cross-entropy with Adam; lr **5e-6**, batch **32**, linear warmup/decay (A.1). Early stopping: stop after **3 epochs without improvement in the loss**, evaluated on the human validation set (Section 3.2). In-context learning baseline: gpt-3.5-turbo-16k (version 10/23), with 8 few-shots (A.2–A.4).
 
-### 2.4 Ranking de sistemas com intervalos de confiança — PPI (Seção 3.3)
+### 2.4 System ranking with confidence intervals — PPI (Section 3.3)
 
-*(PPI = técnica estatística que combina um conjunto pequeno de rótulos humanos com previsões do juiz em um conjunto grande sem rótulo, para produzir um intervalo de confiança mais estreito do que só usar os rótulos humanos)*
+*(PPI = a statistical technique that combines a small set of human labels with the judge's predictions on a large unlabeled set, to produce a confidence interval narrower than using the human labels alone)*
 
-1. Os juízes rotulam uma amostra das triplas de cada sistema; a média dá a nota "bruta".
-2. Sobre o conjunto humano, o PPI aprende uma **função retificadora** (estima o erro do juiz) e a usa para construir um **conjunto de confiança** da métrica verdadeira do sistema (ex.: sua taxa de context relevance), com α padrão de **95%**.
-3. O **ponto médio** do intervalo é usado para ranquear os sistemas.
+1. The judges label a sample of each system's triples; the mean gives the "raw" score.
+2. On the human set, PPI learns a **rectifier function** (estimates the judge's error) and uses it to build a **confidence set** for the system's true metric (e.g., its context relevance rate), with default α of **95%**.
+3. The interval's **midpoint** is used to rank the systems.
 
-### 2.5 Protocolo experimental (Seção 4)
+### 2.5 Experimental protocol (Section 4)
 
-- **Datasets (4.2):** KILT (NQ, HotpotQA, FEVER, WoW) e SuperGLUE (MultiRC, ReCoRD, versões *open-domain*). Faithfulness **não** foi avaliada nesses (sem alucinações anotadas por humanos) — só em AIS (Seção 5.2).
-- **Sistemas "mock" (4.2):** a partir do conjunto de validação de cada dataset, criam **nove splits** com taxa de sucesso de 70% a 90% em passos de **2,5 p.p.** (70,0; 72,5; …; 90,0). Positivos = exemplos originais; negativos = passagens/respostas amostradas do mesmo documento ou de documento aleatório. Como a taxa real é conhecida, o ranking correto é conhecido.
-- **Métrica (4.3): Kendall's τ** = (pares concordantes − discordantes) / total de pares, entre o ranking correto e o do ARES; "sucesso" se τ > 0,9. *(Detalhe: o texto diz que o τ "varia de 0,0 a 1,0" e define pares empatados como discordantes; o τ clássico varia de −1 a 1.)*
-- **Baselines:** RAGAS v0.0.18; juiz GPT-3.5 few-shot; "sampled annotations" (150 labels por sistema mock).
+- **Datasets (4.2):** KILT (NQ, HotpotQA, FEVER, WoW) and SuperGLUE (MultiRC, ReCoRD, *open-domain* versions). Faithfulness was **not** evaluated on these (no human-annotated hallucinations) — only on AIS (Section 5.2).
+- **"Mock" systems (4.2):** from each dataset's validation set, they create **nine splits** with success rate from 70% to 90% in steps of **2.5 p.p.** (70.0; 72.5; …; 90.0). Positives = original examples; negatives = passages/answers sampled from the same document or from a random document. Since the true rate is known, the correct ranking is known.
+- **Metric (4.3): Kendall's τ** = (concordant pairs − discordant pairs) / total pairs, between the correct ranking and ARES's; considered "successful" if τ > 0.9. *(Detail: the text says τ "ranges from 0.0 to 1.0" and defines tied pairs as discordant; the classic τ ranges from −1 to 1.)*
+- **Baselines:** RAGAS v0.0.18; few-shot GPT-3.5 judge; "sampled annotations" (150 labels per mock system).
 
-## 3. Principais contribuições
+## 3. Main contributions
 
-1. Juízes **ajustados por domínio** por métrica, treinados só com dados sintéticos — Seção 3.1–3.2.
-2. **PPI** aplicado à avaliação de RAG para dar **IC** às métricas — Seção 3.3.
-3. Negativos **fortes** e **fracos** específicos por métrica — Seção 3.1.
-4. Evidência em 8 tarefas (6 em mocks, AIS, sistemas reais) de ranking melhor que RAGAS e juiz GPT-3.5 — Seção 5.
-5. Estudos de **quantidade de anotações** (Tabela 3), **GPT-4 no lugar de humanos** (Tabela 4) e **generalização entre domínios** (Tabela 6).
+1. **Domain-fine-tuned** judges per metric, trained only with synthetic data — Section 3.1–3.2.
+2. **PPI** applied to RAG evaluation to give **CIs** to the metrics — Section 3.3.
+3. Metric-specific **strong** and **weak** negatives — Section 3.1.
+4. Evidence on 8 tasks (6 on mocks, AIS, real systems) of better ranking than RAGAS and the GPT-3.5 judge — Section 5.
+5. Studies of **number of annotations** (Table 3), **GPT-4 in place of humans** (Table 4) and **cross-domain generalization** (Table 6).
 
-## 4. Resultados-chave (com localização)
+## 4. Key results (with location)
 
-**Tabela 1 (Seção 5.1)** — sistemas mock; PPI com **300** anotações humanas. Acurácia do juiz por dataset (CR = context relevance; AR = answer relevance):
+**Table 1 (Section 5.1)** — mock systems; PPI with **300** human annotations. Judge accuracy per dataset (CR = context relevance; AR = answer relevance):
 
 | | NQ CR | NQ AR | HotpotQA CR | HotpotQA AR | WoW CR | WoW AR | FEVER CR | FEVER AR | MultiRC CR | MultiRC AR | ReCoRD CR | ReCoRD AR |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | RAGAS | 31.4 | 71.2 | 17.2 | 76.0 | 36.4 | 77.8 | 23.7 | 69.2 | 16.1 | 75.0 | 15.0 | 72.8 |
-| Juiz GPT-3.5 | 73.8 | 95.5 | 75.3 | 71.6 | 84.3 | 85.2 | 60.4 | 59.6 | 72.4 | 60.3 | 81.0 | 65.8 |
+| GPT-3.5 judge | 73.8 | 95.5 | 75.3 | 71.6 | 84.3 | 85.2 | 60.4 | 59.6 | 72.4 | 60.3 | 81.0 | 65.8 |
 | **ARES** | **79.3** | **97.2** | **92.3** | **81.3** | **85.7** | **96.1** | **88.4** | **78.5** | **85.8** | **82.7** | **67.8** | **92.3** |
 
-- Nem toda célula favorece o ARES: em **ReCoRD CR** o juiz GPT-3.5 (81,0%) supera o ARES (67,8%); o ganho sobre os baselines é na média, não uniforme. *(Observação minha a partir das células.)*
-- Kendall's τ: ARES é, em média, **+0,065** (CR) e **+0,132** (AR) acima do RAGAS; +0,06 acima do juiz GPT-3.5 (Seção 5.1). "Sampled annotations" (150 por sistema × 9 = **1.350** labels) fica **0,08 de τ abaixo** do ARES, que usa **78% menos anotações** (Seção 5.1).
-- **Inconsistência interna:** a introdução diz que o ARES supera o RAGAS em **59,3** p.p. (CR) e 14,4 p.p. (AR) na acurácia; a Seção 5.1 diz **59,9** (CR) e 14,4 (AR). **[Minha leitura]** Calculei a média das seis colunas de CR da Tabela 1: (79,3+92,3+85,7+88,4+85,8+67,8)/6 − (31,4+17,2+36,4+23,7+16,1+15,0)/6 = **59,9**; AR: **14,35 ≈ 14,4**. O número da tabela é 59,9; 59,3 é o da introdução (provável typo). **O roadmap do projeto (`ckpt-0.6.1b…` §B, linha "Calibração humana") cita 59,3 e deveria usar 59,9** (ou citar a introdução explicitamente).
+- Not every cell favors ARES: on **ReCoRD CR** the GPT-3.5 judge (81.0%) beats ARES (67.8%); the gain over the baselines is on average, not uniform. *(My observation from the cells.)*
+- Kendall's τ: ARES is, on average, **+0.065** (CR) and **+0.132** (AR) above RAGAS; +0.06 above the GPT-3.5 judge (Section 5.1). "Sampled annotations" (150 per system × 9 = **1,350** labels) falls **0.08 of τ below** ARES, which uses **78% fewer annotations** (Section 5.1).
+- **Internal inconsistency:** the introduction says ARES beats RAGAS by **59.3** p.p. (CR) and 14.4 p.p. (AR) in accuracy; Section 5.1 says **59.9** (CR) and 14.4 (AR). **[My reading]** I computed the mean of the six CR columns of Table 1: (79.3+92.3+85.7+88.4+85.8+67.8)/6 − (31.4+17.2+36.4+23.7+16.1+15.0)/6 = **59.9**; AR: **14.35 ≈ 14.4**. The table's number is 59.9; 59.3 is the introduction's (probable typo). **The project's roadmap (`ckpt-0.6.1b…` §B, row "Human calibration") cites 59.3 and should use 59.9** (or cite the introduction explicitly).
 
-**Tabela 3 (apêndice) — nº de anotações humanas para o PPI × τ** (NQ / MultiRC / ReCoRD; CR e AR):
+**Table 3 (appendix) — no. of human annotations for PPI × τ** (NQ / MultiRC / ReCoRD; CR and AR):
 
 | Labels | NQ CR | NQ AR | MultiRC CR | MultiRC AR | ReCoRD CR | ReCoRD AR |
 |---|---|---|---|---|---|---|
@@ -85,50 +85,50 @@ Três modelos **DeBERTa-v3-Large** (304M), um por métrica, com cabeça de class
 | 50 | 0.44 | 0.94 | 0.61 | 0.44 | 0.56 | 0.67 |
 | 25 | 0.44 | 0.89 | 0.56 | 0.44 | 0.44 | 0.56 |
 
-Legenda da Tabela 3: *"below about 100-150 datapoints in the human preference validation set, ARES cannot meaningfully distinguish between the alternate RAG systems"*. **[Minha leitura]** Mesmo com 150 labels o τ de **context relevance** é 0,72–0,83, abaixo do limiar de "sucesso" (τ > 0,9, Seção 4.3) nos três datasets; só em *answer relevance* o ARES atinge ~0,83–1,0 com 150. Os "≈150" são, portanto, um **piso** para answer relevance, não uma garantia para context relevance.
+Table 3 caption: *"below about 100-150 datapoints in the human preference validation set, ARES cannot meaningfully distinguish between the alternate RAG systems"*. **[My reading]** Even with 150 labels the τ of **context relevance** is 0.72–0.83, below the "successful" threshold (τ > 0.9, Section 4.3) on all three datasets; only on *answer relevance* does ARES reach ~0.83–1.0 with 150. The "≈150" is, therefore, a **floor** for answer relevance, not a guarantee for context relevance.
 
-**Tabela 4 — GPT-4 no lugar dos humanos** (500 labels GPT-4 como set de validação): colunas NQ / ReCoRD / MultiRC, cada uma com CR e AR. τ com rótulos GPT-4: 0,78 / 1,0 · 0,78 / 0,72 · 0,89 / 0,78; τ com rótulos humanos: 0,94 / 1,0 · 0,83 / 0,89 · 0,94 / 0,89. A legenda diz que o τ cai "0,05 a 0,30 na maioria dos casos"; pelas células que li as quedas vão de 0,00 a 0,17 (maiores: ReCoRD AR, −0,17; NQ CR, −0,16). Conclusão do artigo (Seção 5.1): GPT-4 é menos bom que humanos nesse papel, mas a ideia "arguably has promise".
+**Table 4 — GPT-4 in place of humans** (500 GPT-4 labels as the validation set): columns NQ / ReCoRD / MultiRC, each with CR and AR. τ with GPT-4 labels: 0.78 / 1.0 · 0.78 / 0.72 · 0.89 / 0.78; τ with human labels: 0.94 / 1.0 · 0.83 / 0.89 · 0.94 / 0.89. The paper says GPT-4-generated labels "decreased Kendall’s tau in most settings by 0.05 to 0.30"; from the cells I read, the drops range from 0.00 to 0.17 (largest: ReCoRD AR, −0.17; NQ CR, −0.16). Paper's conclusion (Section 5.1): GPT-4 is less good than humans in that role, but the idea "arguably has promise".
 
-**Tabela 2 (Seção 5.2)** — AIS (faithfulness real), 200 labels humanos: WoW — juiz **62,5%** de acurácia (previsão 0,478 vs correto 0,458); CNN/DM — **84,0%** (0,835 vs 0,859). Texto: "dentro de 2,5 pontos" do valor correto.
+**Table 2 (Section 5.2)** — AIS (real faithfulness), 200 human labels: WoW — judge **62.5%** accuracy (prediction 0.478 vs correct 0.458); CNN/DM — **84.0%** (0.835 vs 0.859). Text: "within 2.5 accuracy points of the correct scores".
 
-**Tabela 5 (Seção 5.3)** — sistemas reais (3 retrievers: BM25, Ada, ColBERTv2 × 3 geradores: MPT-7b-Instruct, GPT-3.5, GPT-4, mais RAG da Facebook), **1 passagem recuperada por sistema**; PPI com 300 labels: τ médio ARES **0,91** (CR) e **0,97** (AR); +0,16/+0,15 sobre RAGAS. IC do PPI cobriu a média verdadeira em **>95%** dos casos; largura média **7,4** p.p. (CR) e **6,1** p.p. (AR). Melhor retriever: ColBERTv2; melhor gerador: GPT-4.
+**Table 5 (Section 5.3)** — real systems (3 retrievers: BM25, Ada, ColBERTv2 × 3 generators: MPT-7b-Instruct, GPT-3.5, GPT-4, plus Facebook's RAG), **1 retrieved passage per system**; PPI with 300 labels: mean ARES τ **0.91** (CR) and **0.97** (AR); +0.16/+0.15 over RAGAS. PPI's CI covered the true mean in **>95%** of cases; mean width **7.4** p.p. (CR) and **6.1** p.p. (AR). Best retriever: ColBERTv2; best generator: GPT-4.
 
-**Tabela 6 (Seção 5.4)** — generalização entre domínios: bom ao trocar tipo de query/doc (ex.: NQ→FEVER, NQ→MultiRC, NQ→ReCoRD: τ de 0,78 a 1,0); **falha** em mudanças drásticas — idioma (XGLUE: τ **0,33**), texto→código (CodeSearchNet: **0,28**), extração de entidades (T-Rex: **0,38**). Cada mudança exige passagens do domínio e few-shots para reconfigurar.
+**Table 6 (Section 5.4)** — cross-domain generalization: good when changing query/doc type (e.g., NQ→FEVER, NQ→MultiRC, NQ→ReCoRD: τ from 0.78 to 1.0); **fails** on drastic changes — language (XGLUE: τ **0.33**), text→code (CodeSearchNet: **0.28**), entity extraction (T-Rex: **0.38**). Each change requires in-domain passages and few-shots to reconfigure.
 
-## 5. Limitações
+## 5. Limitations
 
-**[Artigo] (Seção 7):** depende de **150–300 anotações** de humanos "familiarizados com o domínio" (domínios especializados — direito, medicina, finanças — exigem especialistas); exige **GPU** (~32 GB para DeBERTa-v3-Large e FLAN-T5-XXL; horas de ajuste/geração); só **inglês**.
+**[Paper] (Section 7):** depends on **150–300 annotations** by an annotator "familiar with the RAG system’s domain application" (specialized domains — law, medicine, finance — require experts); requires a **GPU** (~32 GB for DeBERTa-v3-Large and FLAN-T5-XXL; hours of fine-tuning/generation); **English** only.
 
-**[Minha leitura]**
-- **Faithfulness mal validada:** não foi avaliada nos 6 datasets de mock (4.2); só em AIS com 200 labels, e em WoW o juiz acerta 62,5% — modesto.
-- **Sistemas mock têm negativos fáceis:** negativos são passagens aleatórias ou do mesmo documento; não reproduzem erros sutis de sistemas reais. Tabela 5 (reais) usa só 1 passagem por sistema — longe de um RAG com top-k.
-- **Comparação com RAGAS opaca:** o RAGAS produz score **contínuo** (razão de sentenças); o texto lido não explica como foi convertido em "acurácia" (RAGAS com 15–36% em CR, abaixo do acaso de uma classificação binária, sugere um artefato de conversão). Os 59,9 p.p. devem ser lidos com essa cautela.
-- **Filtro de consultas "recupera sua passagem no top-1"** enviesa os dados de treino para o que o retriever **já** acerta (circularidade).
-- Dependência de GPU/treino limita a replicação por um projeto pequeno.
-- Critério de sucesso τ > 0,9 raramente é atingido com 150 labels em CR (Tabela 3).
+**[My reading]**
+- **Poorly validated faithfulness:** it was not evaluated on the 6 mock datasets (4.2); only on AIS with 200 labels, and on WoW the judge gets 62.5% — modest.
+- **Mock systems have easy negatives:** negatives are random passages or from the same document; they do not reproduce subtle errors of real systems. Table 5 (real) uses only 1 passage per system — far from a RAG with top-k.
+- **Opaque comparison with RAGAS:** RAGAS produces a **continuous** score (ratio of sentences); the text I read does not explain how it was converted into "accuracy" (RAGAS at 15–36% on CR, below the chance level of a binary classification, suggests a conversion artifact). The 59.9 p.p. should be read with this caution.
+- **Query filter "retrieves its passage at top-1"** biases the training data toward what the retriever **already** gets right (circularity).
+- Dependence on GPU/training limits replication by a small project.
+- The success criterion τ > 0.9 is rarely reached with 150 labels on CR (Table 3).
 
-## 6. Reflexões ancoradas no NOSSO projeto
+## 6. Reflections anchored in OUR project
 
-**R1 — Tamanho e *tipo* das nossas 100 labels humanas (P11, calibração 0.8; `ckpt-0.6-plan.md` §6 "Calibração formal… usa suas labels da revisão").** *DESAFIA o plano.* (a) **Tamanho:** 100 < 150. A Tabela 3 mostra que a 100 labels o τ de CR é 0,44–0,67 ("não distingue sistemas"). (b) **Tipo (ponto mais importante):** o conjunto de validação do ARES rotula **saídas de sistema** — triplas (pergunta, passagem recuperada, resposta gerada) com positivo/negativo em cada dimensão. Pelo roadmap (§1 "revisão humana do golden set 100/100"; plano §6), as nossas labels validam **o golden set** (a pergunta e o gabarito estão corretos?), não **respostas geradas pelo RAG**. Para calibrar `faithfulness_judge`/`citation_accuracy` precisamos de labels humanas sobre **respostas reais** do sistema (p.ex., ≥100 respostas × fiel/não fiel, + abstenção). *[Minha leitura; confirmar com o que foi de fato rotulado na revisão.]* Consequência: reservar tempo no CKPT-0.8 para rotular ~100–150 respostas reais, em vez de assumir que as 100 labels do golden servem.
+**R1 — Size and *type* of our 100 human labels (P11, calibration 0.8; `ckpt-0.6-plan.md` §6 "Formal calibration… uses its labels from the review").** *CHALLENGES the plan.* (a) **Size:** 100 < 150. Table 3 shows that at 100 labels the CR τ is 0.44–0.67 ("cannot meaningfully distinguish between the alternate RAG systems"). (b) **Type (most important point):** ARES's validation set labels **system outputs** — triples (question, retrieved passage, generated answer) with positive/negative on each dimension. By the roadmap (§1 "human review of the golden set 100/100"; plan §6), our labels validate **the golden set** (are the question and reference answer correct?), not **answers generated by the RAG**. To calibrate `faithfulness_judge`/`citation_accuracy` we need human labels on **real answers** from the system (e.g., ≥100 answers × faithful/not faithful, + abstention). *[My reading; confirm with what was actually labeled in the review.]* Consequence: reserve time in CKPT-0.8 to label ~100–150 real answers, instead of assuming that the golden's 100 labels will do.
 
-**R2 — PPI e intervalos de confiança (P12 do roadmap, "teste de significância"; `decisions.md`).** *APOIA como evolução opcional.* O roadmap já registra "PPI formal fica como evolução opcional". O ARES mostra o ganho concreto: IC de 7,4/6,1 p.p. de largura **com 300 labels** (Seção 5.3) e τ melhor que anotar 1.350 amostras. Com 100 labels o IC seria mais largo *(inferência minha; o artigo não mediu a 100 na Tabela 5)*. Adotaríamos o conceito de **reportar IC** nas métricas de juiz (bootstrap simples primeiro; PPI se tivermos ≥150 labels de respostas reais). **Não** adotaríamos o pipeline completo.
+**R2 — PPI and confidence intervals (P12 of the roadmap, "significance test"; `decisions.md`).** *SUPPORTS as an optional evolution.* The roadmap already records "formal PPI stays as an optional evolution". ARES shows the concrete gain: CI of 7.4/6.1 p.p. width **with 300 labels** (Section 5.3) and better τ than annotating 1,350 samples. With 100 labels the CI would be wider *(my inference; the paper did not measure at 100 in Table 5)*. We would adopt the concept of **reporting CIs** on the judge metrics (simple bootstrap first; PPI if we have ≥150 labels of real answers). We would **not** adopt the full pipeline.
 
-**R3 — Fine-tuning de juízes DeBERTa + dados sintéticos (P11; `config.py`).** *NÃO adotaríamos.* Exige GPU de ~32 GB e horas; foi validado em Wikipedia/notícias em inglês (Tabela 6 mostra queda em mudanças drásticas de domínio); nossos abstracts de cs.AI são um domínio técnico diferente e o corpus tem 843 chunks. O custo-benefício é pior que usar um LLM-juiz bem calibrado com κ. Também não resolve P11 (juiz ≠ gerador) por si só — deslocaria o problema para a qualidade do dado sintético.
+**R3 — Fine-tuning DeBERTa judges + synthetic data (P11; `config.py`).** *We would NOT adopt.* It requires a ~32 GB GPU and hours; it was validated on English Wikipedia/news (Table 6 shows a drop on drastic domain changes); our cs.AI abstracts are a different technical domain and the corpus has 843 chunks. The cost-benefit is worse than using a well-calibrated LLM judge with κ. It also does not solve P11 (judge ≠ generator) by itself — it would shift the problem to the quality of the synthetic data.
 
-**R4 — Nosso golden é "synthetic-by-construction" como o ARES (ADR-001/003; `build_golden_dataset.py:518`).** *NEUTRO + alerta.* Em ambos, a pergunta nasce do próprio chunk/passagem. O ARES acrescenta um **filtro** (a consulta deve recuperar sua passagem no top-1). **Não adotaríamos esse filtro** no golden: ele elimina justamente as perguntas que o retriever erra, tornando o hit@k artificialmente alto e anulando o slice `deep-hit`, concebido para expor documentos que ranqueiam baixo (viés de seleção — o mesmo risco de pooling da lesson L1). Se quisermos medir "perguntas mal formuladas", fazê-lo como diagnóstico separado, não como filtro.
+**R4 — Our golden is "synthetic-by-construction" like ARES (ADR-001/003; `build_golden_dataset.py:518`).** *NEUTRAL + warning.* In both, the question is born from the chunk/passage itself. ARES adds a **filter** (the query must retrieve its passage at top-1). We **would not adopt that filter** in the golden: it eliminates precisely the questions the retriever gets wrong, making hit@k artificially high and nullifying the `deep-hit` slice, designed to expose documents that rank low (selection bias — the same pooling risk as lesson L1). If we want to measure "poorly formulated questions", do it as a separate diagnostic, not as a filter.
 
-**R5 — Negativos fortes = chunks do mesmo documento (P6, D-1, L1/anti-pooling-bias; `precision_at_k`).** *DESAFIA a premissa deles para o nosso corpus, e APOIA o nosso gold apertado só onde a pergunta é gerada de 1 chunk.* O ARES trata passagens do mesmo documento como **negativas** (Seção 3.1) — a mesma suposição "não-gold = irrelevante" que o P6 e a lesson L1 buscam evitar. Em abstracts fragmentados em 2–5 chunks de ~420 caracteres, um chunk irmão pode perfeitamente responder à pergunta. O ARES só pode fazer isso porque o objetivo é *treinar* um juiz com negativos plausíveis (e os mocks têm rótulos conhecidos por construção). Para *avaliar retrieval* no nosso caso, manter `None`/dedup por paper (P6) continua mais honesto. Isso informa D-1: para o slice `answerable`, o gold de chunk é "apertado" por construção (ARES tem a mesma limitação), reforçando a opção de **gold ampliado** (chunks do paper que também respondem, adjudicados) como candidata — em vez de "tudo em paper".
+**R5 — Strong negatives = chunks from the same document (P6, D-1, L1/anti-pooling-bias; `precision_at_k`).** *CHALLENGES their premise for our corpus, and SUPPORTS our tight gold only where the question is generated from 1 chunk.* ARES treats passages from the same document as **negatives** (Section 3.1) — the same "non-gold = irrelevant" assumption that P6 and lesson L1 seek to avoid. In abstracts fragmented into 2–5 chunks of ~420 characters, a sibling chunk may perfectly well answer the question. ARES can only do this because the goal is to *train* a judge with plausible negatives (and the mocks have labels known by construction). To *evaluate retrieval* in our case, keeping `None`/dedup by paper (P6) remains more honest. This informs D-1: for the `answerable` slice, the chunk gold is "tight" by construction (ARES has the same limitation), reinforcing the **expanded gold** option (chunks of the paper that also answer, adjudicated) as a candidate — instead of "everything at paper level".
 
-**R6 — Avaliar *sistemas*, não exemplos (gates do plano: deltas ≥15% core / ≥10% extended; CKPT-1..4; P11/P12).** *APOIA uma mudança de ênfase.* O ARES mede se o juiz **ranqueia corretamente sistemas** (Kendall's τ sobre sistemas separados por 2,5 p.p.), que é o que os nossos gates exigem (comparar k, modelo, chunk, rerank). O κ por exemplo (plano 0.8) mede outra coisa. Proporia reportar, além do κ: (i) concordância no **nível de sistema/configuração** (o juiz ordena as configurações como o humano?), e (ii) o **IC** da diferença entre configurações. Com ~100 exemplos e deltas de 10–15%, a Tabela 3 sugere cautela: diferenças pequenas podem não ser resolvíveis.
+**R6 — Evaluating *systems*, not examples (plan gates: deltas ≥15% core / ≥10% extended; CKPT-1..4; P11/P12).** *SUPPORTS a change of emphasis.* ARES measures whether the judge **correctly ranks systems** (Kendall's τ over systems separated by 2.5 p.p.), which is what our gates require (comparing k, model, chunk, rerank). The per-example κ (plan 0.8) measures something else. I would propose reporting, in addition to κ: (i) agreement at the **system/configuration level** (does the judge order the configurations like the human?), and (ii) the **CI** of the difference between configurations. With ~100 examples and deltas of 10–15%, Table 3 suggests caution: small differences may not be resolvable.
 
-**R7 — Uso do juiz GPT-3.5/4 como substituto de humano (P11; `JUDGE_MODEL`).** *APOIA parcialmente.* Tabela 4: rótulos de GPT-4 no lugar de humanos reduzem τ em 0,05–0,30 — útil como **pré-triagem barata** para ampliar o conjunto de validação, mas não substitui humanos. Para nós, isso sustenta: usar o juiz forte (≠ gerador) apenas para *auxiliar*, com amostra humana final. O ARES **não** estuda autopreferência (juiz da mesma família do gerador) — P11 continua dependendo de Zheng/Wataoka.
+**R7 — Use of the GPT-3.5/4 judge as a human substitute (P11; `JUDGE_MODEL`).** *PARTIALLY SUPPORTS.* Table 4: GPT-4 labels in place of humans reduce τ by 0.05–0.30 — useful as a **cheap pre-screening** to enlarge the validation set, but it does not replace humans. For us, this supports: using the strong judge (≠ generator) only to *assist*, with a final human sample. ARES does **not** study self-preference (judge from the same family as the generator) — P11 still depends on Zheng/Wataoka.
 
-**R8 — Context relevance/faithfulness como alternativa às métricas por ID (P1–P3, P5, P6).** *NEUTRO/DESAFIA a ideia.* O "context relevance" do ARES é um rótulo binário por **passagem** (a passagem é relevante para responder?) — é uma *relevância por julgamento* (por LLM), não um substituto de gold por ID: não dá ranking nem recall; e, como o juiz é treinado com "mesmo documento = negativo", herda o viés da R5. Útil como **segunda opinião** em amostras (ex.: validar o gold apertado), não como métrica principal.
+**R8 — Context relevance/faithfulness as an alternative to ID-based metrics (P1–P3, P5, P6).** *NEUTRAL/CHALLENGES the idea.* ARES's "context relevance" is a binary label per **passage** (is the passage relevant for answering?) — it is a *relevance by judgment* (by LLM), not a substitute for ID-based gold: it gives neither ranking nor recall; and, since the judge is trained with "same document = negative", it inherits the bias of R5. Useful as a **second opinion** on samples (e.g., validating the tight gold), not as the main metric.
 
-**O que adotaríamos:** (1) rotular **respostas reais** (~100–150) para calibrar juízes (R1); (2) reportar **IC** e concordância em nível de sistema (R2, R6); (3) usar juiz forte como pré-triagem, com amostra humana final (R7); (4) corrigir 59,3 → 59,9 no roadmap (Seção 4). **O que NÃO adotaríamos:** fine-tuning DeBERTa/dados sintéticos (R3); filtro "recupera no top-1" no golden (R4); "mesmo documento = negativo" como definição de irrelevância (R5).
+**What we would adopt:** (1) labeling **real answers** (~100–150) to calibrate judges (R1); (2) reporting **CIs** and system-level agreement (R2, R6); (3) using a strong judge as pre-screening, with a final human sample (R7); (4) fixing 59.3 → 59.9 in the roadmap (Section 4). **What we would NOT adopt:** DeBERTa fine-tuning/synthetic data (R3); the "retrieves at top-1" filter in the golden (R4); "same document = negative" as the definition of irrelevance (R5).
 
-## 7. Citações úteis
+## 7. Useful quotations
 
-1. *"below about 100-150 datapoints in the human preference validation set, ARES cannot meaningfully distinguish between the alternate RAG systems based on their accuracies in context relevance and answer relevance"* — Tabela 3 (legenda, apêndice).
-2. *"For context relevance negatives, we randomly sample in-domain passages from the same document as the gold passage."* — Seção 3.1 ("Strong Negative Generation").
-3. *"ARES relies on a small set of annotations in the human preference validation set (roughly 150-300 datapoints but more is better). These annotations often require an annotator familiar with the RAG system's domain application."* — Seção 7 (Limitations).
+1. *"below about 100-150 datapoints in the human preference validation set, ARES cannot meaningfully distinguish between the alternate RAG systems based on their accuracies in context relevance and answer relevance"* — Table 3 (caption, appendix).
+2. *"For context relevance negatives, we randomly sample in-domain passages from the same document as the gold passage."* — Section 3.1 ("Strong Negative Generation").
+3. *"ARES relies on a small set of annotations in the human preference validation set (roughly 150-300 datapoints but more is better). These annotations often require an annotator familiar with the RAG system's domain application."* — Section 7 (Limitations).

@@ -1,494 +1,517 @@
-# Roadmap vivo — CKPT-0.6.1b: correção e fortalecimento das métricas
+# Living Roadmap — CKPT-0.6.1b: fixing and hardening the metrics
 
-> **Documento iterativo (versão 2, 2026-10-03).** Reescrito a cada rodada de discussão; a versão corrente é sempre esta.
-> Regras de redação: toda métrica citada vem com o que mede entre parênteses quando isso não é óbvio; todo "erro de
-> desenho" é explicado em linguagem simples, com exemplo numérico, **alternativas pesquisadas antes da recomendação**
-> e a decisão registrada no log da §5. Nada abaixo de P5 foi implementado: são **propostas para discussão**.
+> **Iterative document (version 2, 2026-10-03).** Rewritten at every discussion round; the current version is always this one.
+> Writing rules: every metric cited comes with what it measures in parentheses when that is not obvious; every "design
+> error" is explained in plain language, with a numeric example, **alternatives researched before the recommendation**
+> and the decision recorded in the §5 log. Nothing below P5 was implemented: they are **proposals for discussion**.
 
-## 1. Estado atual
+## 1. Current state
 
-| Ponto | Status | Observação |
+| Point | Status | Notes |
 |---|---|---|
-| P1 MRR deslocado (gold por paper) | ✅ feito, **não commitado** | `evaluators.py` |
-| P2 precision = 0 (gold por paper) | ✅ feito, **não commitado** | idem |
-| P3 níveis chunk × paper misturados (causa de P1/P2) | ✅ feito, **não commitado** | helper `_ranked_and_gold`; oráculo `ranx` em teste |
-| P4 `f1_summary_evaluator` com formato inválido | ✅ feito, **não commitado** | assinatura + retorno `{"results": [...]}` |
-| P5 hit@k ≡ recall@k com 1 gold | 🟡 **proposta reescrita** (§6) | aguarda sua decisão D-2 |
-| P6 `precision_at_k` com gold de 1 chunk | 🟡 **proposta reescrita** (§6) | aguarda D-1 e D-4 |
-| P7 detecção de abstenção por `startswith` | 🟡 **proposta reescrita** (§6) | aguarda D-5 |
-| P8 abstenção como acurácia | 🟡 **proposta reescrita** (§6) | aguarda D-6 |
-| P9–P11 | 🟠 rascunho, **atualizado com as fichas** (§7) | discutir depois de P5–P8 |
-| P12–P17 (novos, surgidos das fichas) | 🆕 listados na §7 | triagem pendente |
-| Fichamentos | ✅ **15/15 gravados** | §4 |
+| P1 Shifted MRR (gold per paper) | ✅ done, **not committed** | `evaluators.py` |
+| P2 precision = 0 (gold per paper) | ✅ done, **not committed** | same |
+| P3 chunk × paper levels mixed (cause of P1/P2) | ✅ done, **not committed** | helper `_ranked_and_gold`; `ranx` oracle in tests |
+| P4 `f1_summary_evaluator` with invalid format | ✅ done, **not committed** | signature + return `{"results": [...]}` |
+| P5 hit@k ≡ recall@k with 1 gold | ✅ **implemented, not committed** | paper as the default level (D-1), `k`, `hit_at_ks`, `primary_retrieval_metrics` (D-2) |
+| P6 `precision_at_k` with a 1-chunk gold | 🟡 **postponed at your request** | the whole-abstract baseline eliminates sibling chunks: reassess the scope (note in §6) |
+| **D-7 baseline = one record per abstract** | 🟡 **approved**, implementation pending | next slice: `utils`/`config`, new cache, derived gold; see §5 |
+| P7 abstention detection via `startswith` | 🟡 **proposal rewritten** (§6) | awaiting D-5 |
+| P8 abstention as accuracy | 🟡 **proposal rewritten** (§6) | awaiting D-6 |
+| P9–P11 | 🟠 draft, **updated with the reading notes (fichamentos)** (§7) | discuss after P5–P8 |
+| P12–P17 (new, arising from the reading notes) | 🆕 listed in §7 | triage pending |
+| Reading notes | ✅ **15/15 written** | §4 |
 
-Verificação do lote já feito: `uv run pytest` → 35 testes verdes; MRR (Mean Reciprocal Rank: 1 ÷ posição do primeiro
-documento relevante) de 0,167 → 1,0 e precision@k (fração do top-k que é relevante) de 0,0 → 0,2 nos casos que
-reproduziam o bug; 600 casos aleatórios concordam com o `ranx`.
+Verification of the batch already done: `uv run pytest` → 35 green tests; MRR (Mean Reciprocal Rank: 1 ÷ position of the first
+relevant document) from 0.167 → 1.0 and precision@k (fraction of the top-k that is relevant) from 0.0 → 0.2 in the cases that
+reproduced the bug; 600 random cases agree with `ranx`.
 
-## 2. Glossário de métricas (o que cada uma mede)
+## 2. Metrics glossary (what each one measures)
 
-| Métrica | O que mede, em uma frase |
+| Metric | What it measures, in one sentence |
 |---|---|
-| **hit@k** (acerto) | O top-k trouxe **pelo menos um** documento correto? Vale 1 (sim) ou 0 (não). Nos padrões de IR chama-se *success@k*. |
-| **recall@k** (cobertura) | De **todos** os documentos corretos, que fração apareceu no top-k? (2 corretos, achou 1 → 0,5) |
-| **MRR** (Mean Reciprocal Rank — "quão no topo está o primeiro correto") | 1 ÷ posição do primeiro correto. 1.º → 1,0; 2.º → 0,5; 3.º → 0,33; 5.º → 0,2; ausente → 0. |
-| **precision@k** (pureza) | Do que foi recuperado, que fração é correta? (5 recuperados, 1 correto → 0,2) |
-| **nDCG** (normalized Discounted Cumulative Gain — qualidade do ranking inteiro) | Premia correto no topo e aceita graus de relevância. Com 1 relevante binário vale 1/log₂(posição+1): 1.º → 1,0; 2.º → 0,63; 3.º → 0,5; 5.º → 0,39. |
-| **Hole@k** (taxa de buracos) | Fração do top-k que **ninguém julgou** (nem é gold, nem foi marcado irrelevante). Mede quanto do que o sistema recuperou está "no escuro". |
-| **distinct_papers@k** (diversidade) | Papers distintos ÷ k. 5 chunks do mesmo paper → 0,2. Mede redundância, **não** relevância. |
-| **abstention recall** (abstenção correta) | Dos exemplos em que o sistema **deveria** se abster, quantos se abstiveram. É o gate do plano (≥ 90% em `unanswerable`). |
-| **over-refusal rate** (recusa indevida) | Dos exemplos **respondíveis**, quantos o sistema recusou. Mede inutilidade. |
-| **under-refusal rate** (resposta indevida) | Dos exemplos **irrespondíveis**, quantos o sistema respondeu mesmo assim (= 1 − abstention recall). Mede risco de alucinação. |
-| **F1 de classificação** (equilíbrio entre acertos e falsos alarmes) | Média harmônica de precision e recall de uma classe. |
-| **token-F1** (sobreposição de palavras) | F1 sobre as palavras da resposta gerada × resposta-gabarito. |
-| **faithfulness** (fidelidade ao contexto) | A resposta só afirma o que o contexto recuperado sustenta? |
-| **κ de Cohen** (concordância além do acaso) | Quanto dois avaliadores (ex.: juiz-LLM e humano) concordam descontando a concordância por sorte. |
-| **IC de Wilson** (intervalo de confiança para proporções) | Faixa plausível da taxa verdadeira dado o n pequeno. 10 acertos em 10 → [72%; 100%]. |
+| **hit@k** (hit) | Did the top-k bring **at least one** correct document? It is 1 (yes) or 0 (no). In IR standards it is called *success@k*. |
+| **recall@k** (coverage) | Of **all** correct documents, what fraction appeared in the top-k? (2 correct, found 1 → 0.5) |
+| **MRR** (Mean Reciprocal Rank — "how close to the top the first correct one is") | 1 ÷ position of the first correct one. 1st → 1.0; 2nd → 0.5; 3rd → 0.33; 5th → 0.2; absent → 0. |
+| **precision@k** (purity) | Of what was retrieved, what fraction is correct? (5 retrieved, 1 correct → 0.2) |
+| **nDCG** (normalized Discounted Cumulative Gain — quality of the whole ranking) | Rewards correct documents at the top and accepts degrees of relevance. With 1 binary relevant document it equals 1/log₂(position+1): 1st → 1.0; 2nd → 0.63; 3rd → 0.5; 5th → 0.39. |
+| **Hole@k** (hole rate) | Fraction of the top-k that **no one judged** (neither gold nor marked irrelevant). Measures how much of what the system retrieved is "in the dark". |
+| **distinct_papers@k** (diversity) | Distinct papers ÷ k. 5 chunks of the same paper → 0.2. Measures redundancy, **not** relevance. |
+| **abstention recall** (correct abstention) | Of the examples where the system **should** abstain, how many it abstained on. It is the plan's gate (≥ 90% on `unanswerable`). |
+| **over-refusal rate** (refusing when it should answer) | Of the **answerable** examples, how many the system refused. Measures uselessness. |
+| **under-refusal rate** (answering when it should abstain) | Of the **unanswerable** examples, how many the system answered anyway (= 1 − abstention recall). Measures hallucination risk. |
+| **Classification F1** (balance between hits and false alarms) | Harmonic mean of the precision and recall of a class. |
+| **token-F1** (word overlap) | F1 over the words of the generated answer × the reference answer. |
+| **faithfulness** (fidelity to the context) | Does the answer only claim what the retrieved context supports? |
+| **Cohen's κ** (agreement beyond chance) | How much two raters (e.g., LLM judge and human) agree after discounting agreement by luck. |
+| **Wilson CI** (confidence interval for proportions) | Plausible range of the true rate given a small n. 10 hits out of 10 → [72%; 100%]. |
 
-**Oráculo de teste:** implementação de referência usada só para conferir se a nossa dá o mesmo resultado. Não faz parte do produto.
+**Test oracle:** a reference implementation used only to check that ours gives the same result. It is not part of the product.
 
-## 3. Por que o projeto usa IDs de chunk **e** IDs de paper? (pergunta 3 do usuário)
+## 3. Why does the project use chunk IDs **and** paper IDs? (user's question 3)
 
-**Fatos do corpus (medidos em `resources/*.parquet`):** 250 papers, 843 chunks, de 2 a 5 chunks por paper
-(média 3,4), ~420 caracteres por chunk. Cada paper é só o *abstract*, cortado em pedaços de ~500 caracteres.
+**Corpus facts (measured in `resources/*.parquet`):** 250 papers, 843 chunks, from 2 to 5 chunks per paper
+(mean 3.4), ~420 characters per chunk. Each paper is only the *abstract*, cut into pieces of ~500 characters.
 
-**O retriever devolve chunks**, não papers. O que muda é **como o gabarito (gold) de cada exemplo foi construído**
+**The retriever returns chunks**, not papers. What varies is **how the gold of each example was built**
 (ADR-001, ADR-003):
 
-| Slice | Como a pergunta nasceu | O que sabemos com certeza | Gold que dá para gravar |
+| Slice | How the question was born | What we know for sure | Gold that can be recorded |
 |---|---|---|---|
-| `answerable` (40), `persona` (10) | Um LLM leu **um chunk** e gerou a pergunta (*synthetic-by-construction*) | Qual **trecho exato** responde | `gold_chunk_ids` (1 chunk) |
-| `multi-doc` known-item (10) | "Compare o paper A e o paper B" | Quais **papers** — mas não qual chunk de cada | `gold_arxiv_ids` (2–3 papers) |
-| `multi-doc` open-topic (5) | Pergunta temática, sem nomear papers | Nada ainda | vazio até a adjudicação humana (EXP-0) |
-| `unanswerable` (15), `stale` (10), `format` (10) | Fora do corpus / sem retrieval | Nada a recuperar | vazio |
+| `answerable` (40), `persona` (10) | An LLM read **one chunk** and generated the question (*synthetic-by-construction*) | Which **exact passage** answers it | `gold_chunk_ids` (1 chunk) |
+| `multi-doc` known-item (10) | "Compare paper A and paper B" | Which **papers** — but not which chunk of each | `gold_arxiv_ids` (2–3 papers) |
+| `multi-doc` open-topic (5) | Thematic question, without naming papers | Nothing yet | empty until human adjudication (EXP-0) |
+| `unanswerable` (15), `stale` (10), `format` (10) | Outside the corpus / no retrieval | Nothing to retrieve | empty |
 
-Não é escolha de arquitetura: é consequência de dois jeitos de construir o dataset. Os avaliadores precisam
-comparar **no nível em que o gold existe**, e misturar os dois níveis causou os bugs P1–P3.
+This is not an architecture choice: it is a consequence of two ways of building the dataset. The evaluators need to
+compare **at the level where the gold exists**, and mixing the two levels caused bugs P1–P3.
 
-**Nova leitura depois das fichas (decisão D-1):** o gold de 1 chunk é, na verdade, um **conjunto de relevantes
-incompleto** — os outros 2–4 chunks do mesmo paper podem também responder. Logo:
-- métricas em **nível de chunk** são um **piso** (só contam o trecho exato);
-- métricas em **nível de paper** são um **teto** (qualquer chunk do paper conta);
-- a literatura de IR (Büttcher 2007, NIST 2007, BEIR §6) recomenda **julgar os "buracos"** em vez de escolher um nível.
-Proposta: manter os dois níveis, **reportados lado a lado como faixa [piso, teto]** (sem média combinada), e adjudicar
-os chunks-irmãos no mini-pooling do EXP-0 (~200–250 julgamentos, **estimativa do agente de IR, ainda não conferida
-contra o golden set**). Ver `ir-pooling-incomplete-judgments.md` (reflexão 3).
+**New reading after the reading notes (decision D-1):** the 1-chunk gold is, in fact, an **incomplete set of
+relevant documents** — the other 2–4 chunks of the same paper may also answer. Therefore:
+- metrics at **chunk level** are a **floor** (they only count the exact passage);
+- metrics at **paper level** are a **ceiling** (any chunk of the paper counts).
 
-## 4. Fichamentos (leitura integral dos artigos) — 15/15 gravados
+**DECIDED (2026-10-03)** — measurements and reasoning in the lesson [`retrieval_unit_and_gold_granularity.md`](../learning-lessons/retrieval_unit_and_gold_granularity.md):
+- **D-7: the baseline becomes one index record per abstract** (the whole abstract is the "chunk"). The 500-character chunking
+  becomes an **experimental arm** (EXP-3: "does splitting the abstract help or hurt?"). Reason: the product cites papers and reads only abstracts;
+  the median abstract has 255 tokens (fits comfortably in the embedding); the top-5 now always has 5 distinct papers.
+- **D-1: the retrieval gold is the paper.** With one record per abstract, chunk = paper, so there is no "book + page" nor a list of
+  chunks. For the 500-character configuration (EXP-3 arm) the evaluator keeps the **chunk level as a diagnostic** ("did it find the exact
+  passage?"), never compared across chunking configurations (the `chunk_id` is a hash of the text).
+- **Contingency (yours):** if the metrics are harmed by the golden set's bias (questions generated from 500-character
+  chunks; the whole abstract lost a little on hit@1: 0.90 versus 1.00), **regenerate `answerable`/`persona` from the whole
+  abstract** instead of from chunks.
+- Left out: unjudged relevant documents in **other** papers (only the EXP-0 mini-pooling reveals them).
 
-Pasta: `docs/research/fichamentos/`. Todas seguem: referência · problema · método · contribuições · números com
-seção/tabela · limitações · **reflexões ancoradas no nosso plano** · confiança da leitura.
+## 4. Reading notes (full reading of the papers) — 15/15 written
 
-| Ficha | Confiança | Usada em |
+> **Related lessons:** [Retrieval Unit and Gold Granularity for RAG over Abstracts: Chunk vs. Paper vs. Whole Abstract](../learning-lessons/retrieval_unit_and_gold_granularity.md) (D-1, D-7, EXP-3) · [Golden Dataset Construction for RAG: Synthetic vs. Adjudication vs. Calibration](../learning-lessons/golden_dataset_construction_and_human_calibration.md) (L1/L2/L3).
+
+Folder: `docs/research/fichamentos/`. All follow: reference · problem · method · contributions · numbers with
+section/table · limitations · **reflections anchored in our plan** · confidence of the reading.
+
+| Reading note | Confidence | Used in |
 |---|---|---|
-| [`yu-2024-rag-eval-survey.md`](../research/fichamentos/yu-2024-rag-eval-survey.md) | integral (HTML; sem Apêndice 0.A) | catálogo de métricas |
-| [`es-2023-ragas.md`](../research/fichamentos/es-2023-ragas.md) | integral (HTML) | P9, juízes |
-| [`saad-falcon-2023-ares.md`](../research/fichamentos/saad-falcon-2023-ares.md) | integral (HTML) | P11, calibração |
-| [`ru-2024-ragchecker.md`](../research/fichamentos/ru-2024-ragchecker.md) | integral (HTML; Tab. 16 e figuras não vistas) | D-1, P6, P9 |
-| [`barnett-2024-seven-failure-points.md`](../research/fichamentos/barnett-2024-seven-failure-points.md) | integral (v1) | mapeamento FP→métrica (P13) |
-| [`magesh-2025-hallucination-free.md`](../research/fichamentos/magesh-2025-hallucination-free.md) | integral (**preprint v1**; versão publicada não lida) | P12, P7/P8, P11 |
-| [`gao-2023-alce.md`](../research/fichamentos/gao-2023-alce.md) | integral (v2) | P12 |
-| [`zheng-2023-llm-as-judge.md`](../research/fichamentos/zheng-2023-llm-as-judge.md) | integral (v4) | P11, P14 |
-| [`wataoka-2024-self-preference.md`](../research/fichamentos/wataoka-2024-self-preference.md) | integral (v2); Fig. 1b só GPT-4 | P11 |
-| [`qa-eval-judge-vs-f1.md`](../research/fichamentos/qa-eval-judge-vs-f1.md) | integral (corpo); apêndices C–E do 2305.12421 não lidos | P9 |
-| [`ir-pooling-incomplete-judgments.md`](../research/fichamentos/ir-pooling-incomplete-judgments.md) | integral; tabelas do Büttcher parciais | D-1, P5, P6 |
-| [`thakur-2021-beir.md`](../research/fichamentos/thakur-2021-beir.md) | integral (v4) | P5, P6 |
-| [`bassani-2022-ranx.md`](../research/fichamentos/bassani-2022-ranx.md) | **PARCIAL** (paper completo bloqueado: pôster, docs e código) | L-3 |
-| [`abstention-benchmarks.md`](../research/fichamentos/abstention-benchmarks.md) | integral (AbstentionBench, RefusalBench) + extras parciais | P7, P8 |
-| [`zhou-2023-ifeval.md`](../research/fichamentos/zhou-2023-ifeval.md) | integral (v1); código dos checadores não lido | P10 |
+| [`yu-2024-rag-eval-survey.md`](../research/fichamentos/yu-2024-rag-eval-survey.md) | full (HTML; without Appendix 0.A) | metrics catalog |
+| [`es-2023-ragas.md`](../research/fichamentos/es-2023-ragas.md) | full (HTML) | P9, judges |
+| [`saad-falcon-2023-ares.md`](../research/fichamentos/saad-falcon-2023-ares.md) | full (HTML) | P11, calibration |
+| [`ru-2024-ragchecker.md`](../research/fichamentos/ru-2024-ragchecker.md) | full (HTML; Tab. 16 and figures not seen) | D-1, P6, P9 |
+| [`barnett-2024-seven-failure-points.md`](../research/fichamentos/barnett-2024-seven-failure-points.md) | full (v1) | FP→metric mapping (P13) |
+| [`magesh-2025-hallucination-free.md`](../research/fichamentos/magesh-2025-hallucination-free.md) | full (**preprint v1**; published version not read) | P12, P7/P8, P11 |
+| [`gao-2023-alce.md`](../research/fichamentos/gao-2023-alce.md) | full (v2) | P12 |
+| [`zheng-2023-llm-as-judge.md`](../research/fichamentos/zheng-2023-llm-as-judge.md) | full (v4) | P11, P14 |
+| [`wataoka-2024-self-preference.md`](../research/fichamentos/wataoka-2024-self-preference.md) | full (v2); Fig. 1b GPT-4 only | P11 |
+| [`qa-eval-judge-vs-f1.md`](../research/fichamentos/qa-eval-judge-vs-f1.md) | full (body); appendices C–E of 2305.12421 not read | P9 |
+| [`ir-pooling-incomplete-judgments.md`](../research/fichamentos/ir-pooling-incomplete-judgments.md) | full; Büttcher tables partial | D-1, P5, P6 |
+| [`thakur-2021-beir.md`](../research/fichamentos/thakur-2021-beir.md) | full (v4) | P5, P6 |
+| [`bassani-2022-ranx.md`](../research/fichamentos/bassani-2022-ranx.md) | **PARTIAL** (full paper blocked: poster, docs and code) | L-3 |
+| [`abstention-benchmarks.md`](../research/fichamentos/abstention-benchmarks.md) | full (AbstentionBench, RefusalBench) + partial extras | P7, P8 |
+| [`zhou-2023-ifeval.md`](../research/fichamentos/zhou-2023-ifeval.md) | full (v1); checker code not read | P10 |
 
-## 5. Log de decisões
+## 5. Decision log
 
-| ID | Data | Decisão / pergunta | Base | Status |
+| ID | Date | Decision / question | Basis | Status |
 |---|---|---|---|---|
-| L-1 | 2026-10-03 | Comparar sempre **no nível do gold**; deduplicar papers preservando a ordem | Bugs P1–P3; `decisions.md` (mesmo paper 3× no top-5) | Implementado |
-| L-2 | 2026-10-03 | Summary evaluator segue o contrato do LangSmith: `(outputs, reference_outputs)` → `{"results":[{key,score}]}` | `langsmith` 0.13.0 (`extra="forbid"`) + curso | Implementado |
-| L-3 | 2026-10-03 | `ranx` como **oráculo de teste (dev)** | `bassani-2022-ranx.md` (parcial) + teste empírico abaixo | **Aguarda você** (ver nota) |
-| D-1 | — | Dois níveis (chunk=piso, paper=teto) lado a lado + adjudicar irmãos no EXP-0? | §3, `ir-pooling…`, `thakur…` | Proposta |
-| D-2 | — | Em gold único reportar hit@k + MRR (+ curva hit@1/3/5) e recall só em multi-gold? | P5 | Proposta |
-| D-3 | — | Rodar BM25 em paralelo a todo retriever novo para detectar viés lexical do gold sintético? | `thakur…` reflexão 4 (analogia) | Proposta |
-| D-4 | — | `precision_at_k` só com gold completo + `distinct_papers@k` à parte? | P6 | Proposta |
-| D-5 | — | Abstenção: juiz LLM como verdade + heurística como baseline barato; marcador estruturado só no CKPT-6? | P7 | Proposta |
-| D-6 | — | Abstenção: gate = recall **com** guarda-corpo obrigatório de over-refusal, por slice, com IC? | P8 | Proposta |
+| L-1 | 2026-10-03 | Always compare **at the gold level**; deduplicate papers preserving order | Bugs P1–P3; `decisions.md` (same paper 3× in the top-5) | Implemented |
+| L-2 | 2026-10-03 | The summary evaluator follows the LangSmith contract: `(outputs, reference_outputs)` → `{"results":[{key,score}]}` | `langsmith` 0.13.0 (`extra="forbid"`) + course | Implemented |
+| L-3 | 2026-10-03 | `ranx` as a **test oracle (dev)** | `bassani-2022-ranx.md` (partial) + empirical test below | **Awaiting you** (see note) |
+| L-4 | 2026-10-03 | Retrieval evaluators: **default level = paper** (`level="paper"`), `level="chunk"` as a diagnostic, `k` truncates the raw list before dedup | D-1/D-2 | Implemented |
+| D-1 | 2026-10-03 | Retrieval gold **per paper**; exact chunk only as a diagnostic (config 500/0). No adjudication of siblings in EXP-0. | §3; measurements in the [lesson](../learning-lessons/retrieval_unit_and_gold_granularity.md) | ✅ **Decided** (implemented in P5) |
+| D-2 | 2026-10-03 | Gold of 1 paper → report **hit@k + MRR** (+ hit@1/3/5 curve); gold of 2+ papers → **recall@k** (primary) + hit@k + MRR | P5 | ✅ **Decided** (`primary_retrieval_metrics`, `hit_at_ks`) |
+| D-3 | — | Run BM25 in parallel with every new retriever to detect lexical bias of the synthetic gold? | `thakur…` reflection 4 (analogy) | Proposal |
+| D-4 | — | `precision_at_k` only with complete gold + `distinct_papers@k` separately? | P6 | Proposal |
+| D-5 | — | Abstention: LLM judge as ground truth + heuristic as a cheap baseline; structured marker only in CKPT-6? | P7 | Proposal |
+| D-6 | — | Abstention: gate = recall **with** a mandatory over-refusal guardrail, per slice, with CI? | P8 | Proposal |
+| D-7 | 2026-10-03 | **Baseline = one record per abstract**; 500/0 chunking becomes an EXP-3 arm. Measured: retrieval ≈ equal (same hit@5; 5 distinct papers vs 3.8), 2.6× input tokens, 2.2× cost, +8% latency. **Contingency:** if the golden set's bias (generated from chunks) harms the metrics, regenerate `answerable`/`persona` from the whole abstract | [lesson](../learning-lessons/retrieval_unit_and_gold_granularity.md) | ✅ **Approved**; implementation pending (next slice) |
 
-**Nota L-3 (teste empírico feito em ambiente descartável, sem tocar no projeto):**
+**L-3 note (empirical test done in a throwaway environment, without touching the project):**
 
-| | `ranx` (instalado hoje) | `ir-measures` + `pytrec-eval-terrier` |
+| | `ranx` (installed today) | `ir-measures` + `pytrec-eval-terrier` |
 |---|---|---|
-| Pacotes novos | **22** (numba, llvmlite, matplotlib, seaborn, ir-datasets…) | **4** (ir-measures, numpy, pytrec-eval-terrier, scipy) |
-| Instala no Python 3.13 do projeto | sim | **sim** (testado: resolve e roda) |
-| `success@k` vs `recall@k` com 1 gold | `hit_rate` ≡ recall | `Success@5 = R@5 = 1.0` nos dois casos testados (confirma P5 na prática) |
-| `precision@k` | ÷ k | ÷ k (`P@5 = 0.2` com 1 acerto) |
-| Base | pôster: "testado contra trec_eval"; paper não lido | wrapper do próprio `trec_eval` (referência da comunidade) |
-Ambos concordam com as nossas fórmulas nos casos testados. Recomendação: **trocar para `ir-measures`** (mesma garantia
-com ~5× menos dependências) e manter o `ranx` fora do lock; o teste de propriedade continua igual. Só o `ranx` dá os
-testes pareados (t, Fisher, Tukey) — se você quiser significância estatística (P15), reavalie.
+| New packages | **22** (numba, llvmlite, matplotlib, seaborn, ir-datasets…) | **4** (ir-measures, numpy, pytrec-eval-terrier, scipy) |
+| Installs on the project's Python 3.13 | yes | **yes** (tested: resolves and runs) |
+| `success@k` vs `recall@k` with 1 gold | `hit_rate` ≡ recall | `Success@5 = R@5 = 1.0` in both tested cases (confirms P5 in practice) |
+| `precision@k` | ÷ k | ÷ k (`P@5 = 0.2` with 1 hit) |
+| Basis | poster: "tested against trec_eval"; paper not read | wrapper of `trec_eval` itself (community reference) |
+Both agree with our formulas in the tested cases. Recommendation: **switch to `ir-measures`** (same guarantee
+with ~5× fewer dependencies) and keep `ranx` out of the lock file; the property test stays the same. Only `ranx` provides the paired
+tests (t, Fisher, Tukey) — if you want statistical significance (P15), reassess.
 
-### Correções a documentos existentes (propostas; **nenhuma aplicada**)
+### Corrections to existing documents (proposals; **none applied**)
 
-| # | Onde | O que está lá | Correção | Fonte |
+| # | Where | What is there | Correction | Source |
 |---|---|---|---|---|
-| C-1 | `docs/learning-lessons/golden_dataset_…` (§Design consequence) | "bpref-style tolerance" | bpref exige não-relevantes **julgados** (nosso gold só tem positivos) e superestima sistemas fora do pool; a tolerância correta é "não penalizar não-julgado" | `ir-pooling…` reflexão 2 |
-| C-2 | mesma lesson, L3 (linha 161) | a revisão humana do golden set vira o "conjunto de calibração de juízes" | A revisão julgou **perguntas/gold**, não **respostas geradas**; calibrar juízes exige rotular respostas reais (ver P11) | `results/ckpt-0.5-review.md`; ARES; Zheng |
-| C-3 | `docs/plan.md` / 0.6 §3.1 | FP3 = "ruído"; `faithfulness`/`citation_accuracy` = FP4 | No Barnett, FP3 = limite de consolidação (recuperado mas não coube no contexto); FP4 = omissão (resposta no contexto, não extraída). `precision_at_k` não mede FP3 | `barnett-2024…` |
-| C-4 | `docs/research/rag_failure_modes_review.md` | "15k docs"; "17–34%" | Barnett: 4.017 docs no §4.3 (o §1 diz 15.000: inconsistência do paper); Magesh v1: 17–33% | `barnett…`, `magesh…` |
-| C-5 | roadmap §6 (rascunho antigo) e plano 0.6 | `ranx` "validado em ECIR/CIKM/SIGIR" | Só o ECIR 2022 trata de avaliação; CIKM 2022 = fusão (`ranx.fuse`), SIGIR 2023 = repositório de runs (`ranxhub`) | `bassani…` |
-| C-6 | rascunho P9 / fundamentação | "token-F1 pune correta e premia errada" | Os artigos mostram só que **subestima respostas corretas**; 0,22/0,40/0,85 são médias de Pearson sobre 1.288 julgamentos binários de QA **extrativo** | `qa-eval-judge-vs-f1.md` |
-| C-7 | rascunho "ARES: 59,3 p.p." | 59,3 | O paper usa 59,3 (§1) e 59,9 (§5.1); a média da Tab. 1 dá 59,9 | `saad-falcon-2023-ares.md` |
-| C-8 | plano 0.6 §4 (formato do juiz) | JSON `{"score","reason"}` | A nota vem **antes** da justificativa, anulando o efeito de explicar primeiro (Zheng); mas "dar razões" piorou o GPT-3.5 em Wang → testar localmente | `zheng…`, `qa-eval…` |
+| C-1 | `docs/learning-lessons/golden_dataset_…` (§Design consequence) | "bpref-style tolerance" | bpref requires **judged** non-relevant documents (our gold only has positives) and overestimates systems outside the pool; the correct tolerance is "do not penalize unjudged" | `ir-pooling…` reflection 2 |
+| C-2 | same lesson, L3 (line 161) | the human review of the golden set becomes the "judge calibration set" | The review judged **questions/gold**, not **generated answers**; calibrating judges requires labeling real answers (see P11) | `results/ckpt-0.5-review.md`; ARES; Zheng |
+| C-3 | `docs/plan.md` / 0.6 §3.1 | FP3 = "noise"; `faithfulness`/`citation_accuracy` = FP4 | In Barnett, FP3 = consolidation limit (retrieved but did not fit in the context); FP4 = omission (answer in the context, not extracted). `precision_at_k` does not measure FP3 | `barnett-2024…` |
+| C-4 | `docs/research/rag_failure_modes_review.md` | "15k docs"; "17–34%" | Barnett: 4,017 docs in §4.3 (§1 says 15,000: an inconsistency in the paper); Magesh v1: 17–33% | `barnett…`, `magesh…` |
+| C-5 | roadmap §6 (old draft) and plan 0.6 | `ranx` "validated at ECIR/CIKM/SIGIR" | Only ECIR 2022 deals with evaluation; CIKM 2022 = fusion (`ranx.fuse`), SIGIR 2023 = run repository (`ranxhub`) | `bassani…` |
+| C-6 | P9 draft / rationale | "token-F1 punishes the correct answer and rewards the wrong one" | The papers only show that it **underestimates correct answers**; 0.22/0.40/0.85 are Pearson means over 1,288 binary judgments of **extractive** QA | `qa-eval-judge-vs-f1.md` |
+| C-7 | draft "ARES: 59.3 p.p." | 59.3 | The paper uses 59.3 (§1) and 59.9 (§5.1); the average in Tab. 1 gives 59.9 | `saad-falcon-2023-ares.md` |
+| C-8 | plan 0.6 §4 (judge format) | JSON `{"score","reason"}` | The score comes **before** the justification, nullifying the effect of explaining first (Zheng); but "giving reasons" made GPT-3.5 worse in Wang → test locally | `zheng…`, `qa-eval…` |
 
-**Achados do curso `intro-to-langsmith` (módulo 2):** o summary evaluator do curso é um **F1 de classificação** (TP/FP/FN),
-com assinatura `(outputs: list[dict], reference_outputs: list[dict])`; o nosso calculava token-F1. O juiz do curso é testado
-com um par de sentido **oposto** ("Yes… integrated" × "No… NOT integrated"). O curso lê `outputs["output"]` e o nosso
-avaliador lê `outputs["answer"]` → o runner do 0.7 precisa devolver `answer`. O curso não tem métricas de retrieval.
-
----
-
-## 6. Propostas reescritas: P5, P6, P7, P8
-
-> Formato de cada ponto: **(1) o que está implementado · (2) o problema em linguagem simples · (3) evidência ·
-> (4) o que a literatura diz (com ficha) · (5) alternativas · (6) recomendação · (7) passos · (8) o que preciso de você.**
+**Findings from the `intro-to-langsmith` course (module 2):** the course's summary evaluator is a **classification F1** (TP/FP/FN),
+with signature `(outputs: list[dict], reference_outputs: list[dict])`; ours computed token-F1. The course's judge is tested
+with a pair of **opposite** meaning ("Yes… integrated" × "No… NOT integrated"). The course reads `outputs["output"]` and ours
+reads `outputs["answer"]` → the 0.7 runner needs to return `answer`. The course has no retrieval metrics.
 
 ---
 
-### P5 — hit@k e recall@k são o mesmo número quando o gold tem 1 documento
+## 6. Rewritten proposals: P5, P6, P7, P8
 
-**(1) Implementado.** `hit_rate` e `recall_at_k` em `evaluators.py`, calculadas separadamente e destinadas a sair como duas colunas.
+> Format of each point: **(1) what is implemented · (2) the problem in plain language · (3) evidence ·
+> (4) what the literature says (with reading note) · (5) alternatives · (6) recommendation · (7) steps · (8) what I need from you.**
 
-**(2) Em linguagem simples.** hit@k pergunta "o top-k trouxe algum documento correto?". recall@k pergunta "que fração dos
-documentos corretos apareceu?". Se só existe **um** correto, a "fração" só pode ser 0/1 ou 1/1 — exatamente a resposta do hit.
-Isso **não é bug de conta**; é redundância que pode enganar a leitura do relatório (duas colunas "concordando" que na verdade
-são uma).
+---
 
-| Situação (gold = 1 chunk) | hit@5 | recall@5 |
+### P5 — hit@k and recall@k are the same number when the gold has 1 document
+
+**(1) Implemented.** `hit_rate` and `recall_at_k` in `evaluators.py`, computed separately and meant to be output as two columns.
+
+**(2) In plain language.** hit@k asks "did the top-k bring any correct document?". recall@k asks "what fraction of the
+correct documents appeared?". If there is only **one** correct document, the "fraction" can only be 0/1 or 1/1 — exactly the hit answer.
+This is **not an arithmetic bug**; it is redundancy that can mislead the reading of the report (two columns "agreeing" that are actually
+one).
+
+| Situation (gold = 1 chunk) | hit@5 | recall@5 |
 |---|---|---|
-| Chunk correto no top-5 | 1 | 1 |
-| Chunk correto fora do top-5 | 0 | 0 |
-| (multi-doc, 2 papers gold, achou 1) | 1 | **0,5** ← só aqui diferem |
+| Correct chunk in the top-5 | 1 | 1 |
+| Correct chunk outside the top-5 | 0 | 0 |
+| (multi-doc, 2 gold papers, found 1) | 1 | **0.5** ← only here do they differ |
 
-**(3) Evidência.** `answerable` (40) + `persona` (10) = **50 dos 100 exemplos** têm gold de 1 chunk. Confirmado também empiricamente
-com `ir-measures`: `Success@5 = R@5 = 1.0` e ambos `0.0` com gold ausente. Efeito sutil: como o gold é "este chunk exato", o hit
-vira 0 mesmo se o sistema trouxer **outro chunk do mesmo paper** que responde — a métrica mede "achou o trecho exato", não
-"achou evidência útil" (isso é o D-1).
+**(3) Evidence.** `answerable` (40) + `persona` (10) = **50 of the 100 examples** have a 1-chunk gold. Also confirmed empirically
+with `ir-measures`: `Success@5 = R@5 = 1.0` and both `0.0` with the gold absent. Subtle effect: since the gold is "this exact chunk", hit
+becomes 0 even if the system brings **another chunk of the same paper** that answers — the metric measures "found the exact passage", not
+"found useful evidence" (that is D-1).
 
-**(4) Literatura.**
-- `thakur-2021-beir.md`: o BEIR **não define hit rate**; descarta precision/recall por serem "rank unaware" (não consideram a posição) e adota nDCG@10. Com 1 relevante binário, nDCG@k = 1/log₂(posição+1), isto é, um MRR com desconto mais suave (derivação do agente, conferida na tabela do glossário).
-- `bassani-2022-ranx.md` (código) e `ir-measures`: nomeiam `success` e `recall` separadamente (trec_eval convention), embora coincidam com 1 relevante.
-- `ir-pooling…` (B&V §4): com poucos relevantes por consulta todas as medidas ficam instáveis; com 40–50 exemplos de resultado binário o ruído amostral é grande. **Nenhuma fonte recomenda MRR para gold único** — isso é convenção do campo, não resultado.
+**(4) Literature.**
+- `thakur-2021-beir.md`: BEIR **does not define hit rate**; it discards precision/recall for being "rank unaware" (they do not consider position) and adopts nDCG@10. With 1 binary relevant document, nDCG@k = 1/log₂(position+1), that is, an MRR with a softer discount (agent's derivation, checked against the glossary table).
+- `bassani-2022-ranx.md` (code) and `ir-measures`: name `success` and `recall` separately (trec_eval convention), although they coincide with 1 relevant document.
+- `ir-pooling…` (B&V §4): with few relevant documents per query all measures become unstable; with 40–50 examples with a binary outcome the sampling noise is large. **No source recommends MRR for a single gold** — that is a field convention, not a result.
 
-**(5) Alternativas.**
-| | O que faria | Prós | Contras |
+**(5) Alternatives.**
+| | What it would do | Pros | Cons |
 |---|---|---|---|
-| A | hit@k + MRR em gold único; recall só em multi-gold | sem duplicação; MRR traz a posição | exige regra "qual métrica é primária por slice" |
-| B | curva **hit@1 / hit@3 / hit@5** | informa o efeito de k (experimento CKPT-1) quase de graça | 3 números por exemplo |
-| C | nDCG@k no lugar do MRR | padrão do BEIR | redundante com MRR em gold binário de 1 item; só vale com graus de relevância |
-| D | ampliar o gold (irmãos adjudicados, D-1) | recall volta a ser informativo e o "piso" sobe | custo humano (~200–250 julgamentos, estimativa) |
-| E | manter as duas e só documentar | zero esforço | leitura enganosa |
+| A | hit@k + MRR on a single gold; recall only on multi-gold | no duplication; MRR brings the position | requires a rule "which metric is primary per slice" |
+| B | **hit@1 / hit@3 / hit@5** curve | reports the effect of k (CKPT-1 experiment) almost for free | 3 numbers per example |
+| C | nDCG@k instead of MRR | BEIR standard | redundant with MRR on a binary 1-item gold; only worthwhile with graded relevance |
+| D | expand the gold (adjudicated siblings, D-1) | recall becomes informative again and the "floor" rises | human cost (~200–250 judgments, estimate) |
+| E | keep both and just document | zero effort | misleading reading |
 
-**(6) Recomendação (D-2): A + B agora; D em paralelo via D-1.** nDCG fica para quando existir relevância graduada (CKPT-4).
+**(6) Recommendation (D-2): A + B now; D in parallel via D-1.** nDCG is left for when graded relevance exists (CKPT-4).
 
-**(7) Passos (se aprovado).**
-1. `hit_rate(..., k: int | None = None)`: corta `ranked[:k]` antes de comparar (hoje usa o top-k inteiro recebido). Idem MRR/recall para consistência.
-2. Helper `primary_retrieval_metrics(reference_outputs) -> list[str]`: `["hit", "mrr"]` se `|gold| == 1`; `["recall", "hit", "mrr"]` se `|gold| ≥ 2`. O runner (0.7) usa isso para decidir o que reporta por slice.
-3. Docstrings e `docs/plan.md` §3: "recall e hit só divergem com |gold| ≥ 2".
-4. Testes: identidade recall≡hit com gold único; divergência com 2 golds; `hit@1/3/5` em listas conhecidas. Oráculo (L-3) cobre `Success@k`.
+**(7) Steps (if approved).**
+1. `hit_rate(..., k: int | None = None)`: truncates `ranked[:k]` before comparing (today it uses the whole top-k received). Same for MRR/recall for consistency.
+2. Helper `primary_retrieval_metrics(reference_outputs) -> list[str]`: `["hit", "mrr"]` if `|gold| == 1`; `["recall", "hit", "mrr"]` if `|gold| ≥ 2`. The runner (0.7) uses this to decide what to report per slice.
+3. Docstrings and `docs/plan.md` §3: "recall and hit only diverge with |gold| ≥ 2".
+4. Tests: recall≡hit identity with a single gold; divergence with 2 golds; `hit@1/3/5` on known lists. The oracle (L-3) covers `Success@k`.
 
-**(8) Preciso de você:** concorda com A+B? Quer a curva hit@1/3/5 ou só hit@5?
+**(8) What I need from you:** do you agree with A+B? Do you want the hit@1/3/5 curve or only hit@5?
+
+**Decision and execution (2026-10-03).** D-2 approved (with D-1 and D-7, see §3 and §5). Implemented in `evaluators.py` (**not committed**):
+- `level="paper"` (default) and `level="chunk"` (diagnostic) in `hit_rate`, `recall_at_k`, `mrr`, `precision_at_k`; optional `k` (truncates the raw top-k before dedup);
+- `hit_at_ks(..., ks=(1, 3, 5))` — the hit@1/3/5 curve;
+- `primary_retrieval_metrics(reference_outputs)` — 1 gold paper → `["hit", "mrr"]`; 2+ → `["recall", "hit", "mrr"]`; no gold → `[]`.
+- Tests: 44 green (includes the real "checkpoint handoff" case: MRR 1.0 at paper level and 0.5 at chunk level) and the `ranx` oracle (now with `level="chunk"` for the diagnostic).
+- Checked on the real golden set (baseline retriever, k=5): `answerable` (n=40) hit@1/3/5 = 1.000, MRR 1.000, exact-chunk diagnostic 0.975; `persona` (n=10) same, with diagnostic 1.000; `multi-doc` (n=10) recall@5 0.667, hit@1/3/5 = 0.70 / 0.70 / 0.90, MRR 0.740.
+- **Effect on interpretation:** in `answerable`/`persona` hit@k is already **saturated at 100%** on the baseline: these slices do not discriminate retrieval in EXP-0 (the curve is only informative in `multi-doc`, `deep-hit` and after the index change).
 
 ---
 
-### P6 — `precision_at_k` com gold de 1 chunk: teto de 1/k e pune quem não foi julgado
+### P6 — `precision_at_k` with a 1-chunk gold: ceiling of 1/k and penalizes what was not judged
 
-**(1) Implementado.** `precision_at_k` roda em qualquer exemplo com gold não vazio e conta tudo fora do gold como erro. O
-docstring admite a restrição ("meaningful only where the gold is the complete relevant set"), mas o código não a impõe.
-Após P1–P3 o denominador em nível de paper é o nº de papers **distintos** recuperados.
+> **Note (2026-10-03):** with the whole-abstract baseline (D-7) there are no sibling chunks, so the central problem of P6 (a sibling counted as an error) disappears **in the baseline**; the remaining scope is precision in `multi-doc` and the 500/0 arm of EXP-3. Reassess when we close P6 (postponed).
 
-**(2) Em linguagem simples.** Precision pergunta "do que o sistema trouxe, quanto prestava?". Mas só sabemos que **1 chunk**
-prestava — os outros 4 do top-5 podem prestar também (3,4 chunks por paper em média; o `decisions.md` já registrou o
-mesmo paper 3× no top-5). Contá-los como "erro" é tratar **"não julgado" como "irrelevante"** — e com gold de 1 chunk a nota
-máxima possível é 1/5 = 0,2, mesmo com retrieval perfeito.
+**(1) Implemented.** `precision_at_k` runs on any example with a non-empty gold and counts everything outside the gold as an error. The
+docstring admits the restriction ("meaningful only where the gold is the complete relevant set"), but the code does not enforce it.
+After P1–P3 the denominator at paper level is the number of **distinct** papers retrieved.
 
-**(3) Evidência.** Reproduzido: gold de 1 chunk com acerto em 1.º → `precision = 0.2` (máximo possível). Hoje o plano 0.6 §3.1 ainda diz que
-precision mede "ruído (FP3)"; o Barnett define FP3 de outra forma (ver C-3).
+**(2) In plain language.** Precision asks "of what the system brought, how much was worth having?". But we only know that **1 chunk**
+was relevant — the other 4 of the top-5 may be relevant too (3.4 chunks per paper on average; `decisions.md` already recorded the
+same paper 3× in the top-5). Counting them as "errors" is treating **"unjudged" as "irrelevant"** — and with a 1-chunk gold the maximum
+possible score is 1/5 = 0.2, even with perfect retrieval.
 
-**(4) Literatura.**
-- `ir-pooling…` (NIST 2007 §7; Büttcher 2007 §5.2): tratar não-julgado como irrelevante dá uma **cota inferior** (conservadora); **ignorar** não-julgados (bpref, P@k(j), listas condensadas) **não é neutro** e superestima. Citação: "Ignoring the unjudged documents… assumes… the same proportion of relevant… — an assumption that is simply wrong."
-- `thakur-2021-beir.md` (§6, Tab. 4): quando o sistema recupera algo **sem julgamento**, o score cai sem erro dele, e o efeito é desigual (BM25 +0,012 vs ANCE +0,081 ao anotar os buracos). Solução do BEIR: **anotar os buracos** e medir Hole@10.
-- `barnett-2024…`: FP3 = "recuperado mas não entrou no contexto" (limite de consolidação) — com k=5 chunks de ~420 caracteres é praticamente inexistente no nosso sistema. **`precision_at_k` não mede FP3.**
-- `ru-2024-ragchecker.md`: *context precision* por **conteúdo** (um chunk é relevante se sustenta alguma claim do gabarito), não por ID — contorna chunk-irmão e quebra de ID por re-chunking, **mas as métricas diagnósticas do RAGChecker não foram validadas com humanos** no paper.
-- `saad-falcon-2023-ares.md`: trata passagens do **mesmo documento** como negativos difíceis — exatamente a premissa que o nosso corpus de abstracts fragmentados desmente.
+**(3) Evidence.** Reproduced: 1-chunk gold with a hit at 1st → `precision = 0.2` (the maximum possible). Today plan 0.6 §3.1 still says
+precision measures "noise (FP3)"; Barnett defines FP3 differently (see C-3).
 
-**(5) Alternativas.**
-| | O que faria | Prós | Contras |
+**(4) Literature.**
+- `ir-pooling…` (NIST 2007 §7; Büttcher 2007 §5.2): treating unjudged as irrelevant gives a **lower bound** (conservative); **ignoring** unjudged documents (bpref, P@k(j), condensed lists) **is not neutral** and overestimates. Quote: "Ignoring the unjudged documents… assumes… the same proportion of relevant… — an assumption that is simply wrong."
+- `thakur-2021-beir.md` (§6, Tab. 4): when the system retrieves something **without a judgment**, the score drops through no fault of its own, and the effect is uneven (BM25 +0.012 vs ANCE +0.081 when annotating the holes). BEIR's solution: **annotate the holes** and measure Hole@10.
+- `barnett-2024…`: FP3 = "retrieved but did not make it into the context" (consolidation limit) — with k=5 chunks of ~420 characters it is practically nonexistent in our system. **`precision_at_k` does not measure FP3.**
+- `ru-2024-ragchecker.md`: *context precision* by **content** (a chunk is relevant if it supports some claim of the reference answer), not by ID — it works around sibling chunks and ID breakage from re-chunking, **but RAGChecker's diagnostic metrics were not validated with humans** in the paper.
+- `saad-falcon-2023-ares.md`: treats passages from the **same document** as hard negatives — exactly the premise that our corpus of fragmented abstracts refutes.
+
+**(5) Alternatives.**
+| | What it would do | Pros | Cons |
 |---|---|---|---|
-| A | `precision_at_k` só com **gold completo** (flag `gold_complete`); `None` caso contrário | honesto; segue NIST/Büttcher | some a métrica em `answerable` |
-| B | `distinct_papers@k` como métrica separada (diversidade) | mede o colapso observado (mesmo paper 3×) sem fingir relevância | não diz se o conteúdo presta |
-| C | **julgar os buracos** (Hole@k) no EXP-0 e só então calcular precision de chunk | é o que a literatura recomenda; sobe o piso do gold | custo humano |
-| D | context precision por conteúdo (RAGChecker/RAGAS) | independe de ID e de chunking | custo de LLM; não validado em humanos; usaria gpt-4o-mini = gerador |
-| E | manter como está | zero esforço | métrica enganosa |
+| A | `precision_at_k` only with a **complete gold** (flag `gold_complete`); `None` otherwise | honest; follows NIST/Büttcher | the metric disappears in `answerable` |
+| B | `distinct_papers@k` as a separate metric (diversity) | measures the observed collapse (same paper 3×) without pretending to measure relevance | does not say whether the content is worth having |
+| C | **judge the holes** (Hole@k) in EXP-0 and only then compute chunk precision | is what the literature recommends; raises the gold floor | human cost |
+| D | context precision by content (RAGChecker/RAGAS) | independent of ID and of chunking | LLM cost; not validated on humans; would use gpt-4o-mini = generator |
+| E | keep as is | zero effort | misleading metric |
 
-**(6) Recomendação (D-4): A + B agora; C no EXP-0; D só como diagnóstico para os 5 `open_topic`** (que não têm gold até a adjudicação).
-Além disso: **renomear o papel da métrica** no plano de "ruído/FP3" para "pureza do top-k (só com gold completo)".
+**(6) Recommendation (D-4): A + B now; C in EXP-0; D only as a diagnostic for the 5 `open_topic` examples** (which have no gold until adjudication).
+In addition: **rename the metric's role** in the plan from "noise/FP3" to "top-k purity (only with a complete gold)".
 
-**(7) Passos.**
-1. `build_golden_dataset.py` grava `reference.gold_complete` (`True` só em multi-doc known-item); migração idempotente dos 100 exemplos.
-2. `precision_at_k` retorna `None` se `gold_complete` for falso/ausente.
-3. Nova `distinct_papers_at_k(retrieved_chunk_ids, retrieved_arxiv_ids)` (pura, sem gold).
-4. `hole_rate_at_k(ranked, judged_ids)` (preparada; usada no EXP-0).
-5. ADR-005 curto: "semântica de precision" + correção C-3 no plano. Testes: gold de 1 chunk ⇒ `None`; multi-doc known ⇒ valor; mesmo paper 3× ⇒ `distinct_papers@5 = 0,6`.
+**(7) Steps.**
+1. `build_golden_dataset.py` writes `reference.gold_complete` (`True` only for multi-doc known-item); idempotent migration of the 100 examples.
+2. `precision_at_k` returns `None` if `gold_complete` is false/absent.
+3. New `distinct_papers_at_k(retrieved_chunk_ids, retrieved_arxiv_ids)` (pure, no gold).
+4. `hole_rate_at_k(ranked, judged_ids)` (prepared; used in EXP-0).
+5. Short ADR-005: "precision semantics" + correction C-3 in the plan. Tests: 1-chunk gold ⇒ `None`; known multi-doc ⇒ a value; same paper 3× ⇒ `distinct_papers@5 = 0.6`.
 
-**(8) Preciso de você:** (i) concorda em renomear o papel de precision? (ii) aceita julgar os buracos no EXP-0 (D-1/C)? (iii) a diversidade (B) entra como métrica oficial ou só diagnóstico?
+**(8) What I need from you:** (i) do you agree with renaming precision's role? (ii) do you accept judging the holes in EXP-0 (D-1/C)? (iii) does diversity (B) become an official metric or only a diagnostic?
 
 ---
 
-### P7 — Detectar abstenção por `startswith`
+### P7 — Detecting abstention via `startswith`
 
-**(1) Implementado.** Dentro de `f1_summary_evaluator`: `answer.strip().startswith(("I don't know", "No papers found"))`.
+**(1) Implemented.** Inside `f1_summary_evaluator`: `answer.strip().startswith(("I don't know", "No papers found"))`.
 
-**(2) Em linguagem simples.** O avaliador só reconhece a recusa se a resposta **começar** com uma de duas frases exatas. Mas o prompt
-(`app.py`, `PROMPT_V1`) só diz "say you don't know", sem fixar frase, e **nunca** instrui "No papers found" (essa frase só existe no gabarito de `stale`).
-Qualquer paráfrase ("I'm sorry, the context doesn't say…") conta como **não** abstenção.
+**(2) In plain language.** The evaluator only recognizes a refusal if the answer **starts** with one of two exact phrases. But the prompt
+(`app.py`, `PROMPT_V1`) only says "say you don't know", without fixing a phrase, and **never** instructs "No papers found" (that phrase only exists in the `stale` reference answer).
+Any paraphrase ("I'm sorry, the context doesn't say…") counts as **not** abstaining.
 
-**(3) Evidência.** Reproduzido: `"I'm sorry, the context doesn't say."` → `abstention_accuracy = 0.0` quando devia ser 1.0.
+**(3) Evidence.** Reproduced: `"I'm sorry, the context doesn't say."` → `abstention_accuracy = 0.0` when it should be 1.0.
 
-**(4) Literatura.**
-- `abstention-benchmarks.md` (AbstentionBench, Meta FAIR 2025): define abstenção de forma **ampla** (não responder diretamente, expressar incerteza, caveats, resposta parcial); gastou um apêndice justificando **não** usar match de string e adotou **juiz LLM (Llama 3.1 8B, T=0)** validado em **300 pares** anotados e estratificados (88% de acurácia).
-- Mesma ficha (RefusalBench): elimina a ambiguidade na origem — o modelo emite **só** um código `REFUSE_*`; um juiz apenas lê.
-- Mesma ficha (OR-Bench, leitura parcial): keyword matching diverge ≤ 2,4% de um juiz GPT-4 — **mas em recusas de segurança**, frases padronizadas; não vale para "I don't know" aberto.
-- `magesh-2025…`: distingue **recusa informativa** (explica por quê) de **recusa padrão**; rotulagem humana especializada.
+**(4) Literature.**
+- `abstention-benchmarks.md` (AbstentionBench, Meta FAIR 2025): defines abstention **broadly** (not answering directly, expressing uncertainty, caveats, partial answer); it spent an appendix justifying **not** using string matching and adopted an **LLM judge (Llama 3.1 8B, T=0)** validated on **300** annotated, stratified pairs (88% accuracy).
+- Same note (RefusalBench): eliminates the ambiguity at the source — the model emits **only** a `REFUSE_*` code; a judge merely reads it.
+- Same note (OR-Bench, partial reading): keyword matching diverges ≤ 2.4% from a GPT-4 judge — **but on safety refusals**, with standardized phrases; it does not hold for an open-ended "I don't know".
+- `magesh-2025…`: distinguishes an **informative refusal** (explains why) from a **default refusal**; specialized human labeling.
 
-**(5) Alternativas.**
-| | O que faria | Prós | Contras |
+**(5) Alternatives.**
+| | What it would do | Pros | Cons |
 |---|---|---|---|
-| A | heurística robusta (conjunto de paráfrases + normalização) | grátis, determinística, testável offline | nunca cobre tudo |
-| B | **juiz LLM** (`abstention_quality`, 0.6.3) como fonte de verdade, validado em amostra humana estratificada | é o padrão dos benchmarks | custo; precisa de validação própria (88% deles não se transfere) |
-| C | marcador estruturado no prompt (`REFUSE`/JSON) | elimina ambiguidade | **muda o produto**: o baseline deve medir o prompt real |
-| D | híbrido A + B | A como baseline barato e como medida de divergência | duas implementações |
+| A | robust heuristic (set of paraphrases + normalization) | free, deterministic, testable offline | never covers everything |
+| B | **LLM judge** (`abstention_quality`, 0.6.3) as ground truth, validated on a stratified human sample | it is the benchmarks' standard | cost; needs its own validation (their 88% does not transfer) |
+| C | structured marker in the prompt (`REFUSE`/JSON) | eliminates ambiguity | **changes the product**: the baseline must measure the real prompt |
+| D | hybrid A + B | A as a cheap baseline and as a divergence measure | two implementations |
 
-**(6) Recomendação (D-5): D — B como fonte de verdade, A como baseline/guarda barata; C só como experimento do CKPT-6.** O juiz deve ver só a resposta
-(testar antes se passar `should_abstain` ao juiz enviesa); T=0.
+**(6) Recommendation (D-5): D — B as ground truth, A as a baseline/cheap guard; C only as a CKPT-6 experiment.** The judge should see only the answer
+(first test whether passing `should_abstain` to the judge biases it); T=0.
 
-**(7) Passos.**
-1. `abstained(answer) -> bool` (função pura): normalização (caixa, aspas tipográficas) + padrões ("don't know", "do not know", "cannot find", "no papers found", "not in the context"…); tabela de testes com ≥ 15 paráfrases de recusa e ≥ 10 respostas não-recusa que contêm "know".
-2. `f1_summary_evaluator` passa a usar `abstained` (mudança mínima).
-3. No 0.6.3, juiz `abstention_quality` com saída estruturada; **sua** rotulagem de ~50 respostas reais estratificadas (`should_abstain × predição`) valida o juiz (junto da calibração de P11).
-4. Relatório do EXP-0 mostra a **divergência heurística × juiz** (alvo ≥ 90% de concordância).
+**(7) Steps.**
+1. `abstained(answer) -> bool` (pure function): normalization (case, typographic quotes) + patterns ("don't know", "do not know", "cannot find", "no papers found", "not in the context"…); test table with ≥ 15 refusal paraphrases and ≥ 10 non-refusal answers that contain "know".
+2. `f1_summary_evaluator` starts using `abstained` (minimal change).
+3. In 0.6.3, an `abstention_quality` judge with structured output; **your** labeling of ~50 real, stratified answers (`should_abstain × prediction`) validates the judge (together with the P11 calibration).
+4. The EXP-0 report shows the **heuristic × judge divergence** (target ≥ 90% agreement).
 
-**(8) Preciso de você:** aceita D? Quantas respostas reais você topa rotular (a literatura usa 300 pares; propus ~50 só para abstenção, dentro de uma amostra maior em P11)?
+**(8) What I need from you:** do you accept D? How many real answers are you willing to label (the literature uses 300 pairs; I proposed ~50 just for abstention, within a larger sample in P11)?
 
 ---
 
-### P8 — Abstenção medida como acurácia (e não como recall + over/under-refusal)
+### P8 — Abstention measured as accuracy (and not as recall + over/under-refusal)
 
-**(1) Implementado.** `abstention_accuracy = acertos / total` sobre `should_abstain`, junto do token-F1 em `f1_summary_evaluator`.
+**(1) Implemented.** `abstention_accuracy = hits / total` over `should_abstain`, alongside token-F1 in `f1_summary_evaluator`.
 
-**(2) Em linguagem simples.** Há **dois erros opostos**, e a acurácia os mistura num número só:
-- **under-refusal** (resposta indevida): responder algo que **não** estava no corpus → risco de alucinação;
-- **over-refusal** (recusa indevida): recusar algo **respondível** → o produto fica inútil.
-O gate do plano ("abstenção correta ≥ 90% em `unanswerable`") é, na prática, o **recall de abstenção**. Só que recall sozinho é **gameável**.
+**(2) In plain language.** There are **two opposite errors**, and accuracy mixes them into a single number:
+- **under-refusal** (answering when it should abstain): answering something that was **not** in the corpus → hallucination risk;
+- **over-refusal** (refusing when it should answer): refusing something **answerable** → the product becomes useless.
+The plan's gate ("correct abstention ≥ 90% on `unanswerable`") is, in practice, the **abstention recall**. But recall alone is **gameable**.
 
-**(3) Evidência (com os números do nosso golden set core, 100 exemplos).** 25 deveriam abster (`unanswerable` 15 + `stale` 10); 75 não.
-| Sistema "bobo" | Acurácia | Abstention recall (gate) | Over-refusal |
+**(3) Evidence (with the numbers from our core golden set, 100 examples).** 25 should abstain (`unanswerable` 15 + `stale` 10); 75 should not.
+| "Dumb" system | Accuracy | Abstention recall (gate) | Over-refusal |
 |---|---|---|---|
-| Nunca se abstém | **75%** (parece bom) | **0%** | 0% |
-| Sempre se abstém | 25% | **100%** (passa o gate!) | **100%** |
-Com n=15 no gate, 14/15 = 93,3% passa e 13/15 = 86,7% reprova: **um único exemplo** decide.
+| Never abstains | **75%** (looks good) | **0%** | 0% |
+| Always abstains | 25% | **100%** (passes the gate!) | **100%** |
+With n=15 at the gate, 14/15 = 93.3% passes and 13/15 = 86.7% fails: **a single example** decides.
 
-**(4) Literatura.**
-- `abstention-benchmarks.md` (AbstentionBench): reporta **recall (principal)**, precision e F1; foca em recall porque precision ≈ 1 nos modelos deles. Sustenta o recall como gate, **não** o F1 como métrica principal.
-- Mesma ficha (RefusalBench): separa **False Refusal Rate** (= over-refusal) e **Missed Refusal Rate** (= under-refusal; sigla "MRR" no paper — **não confundir** com Mean Reciprocal Rank), mais **Refusal Detection F1**; mostra o trade-off (correlação −0,78) e que o GPT-4o recusa 62,8% do respondível e deixa passar 4,3% do irrespondível. Nenhum modelo de fronteira passa de 73% de acerto de recusa **com** a categoria certa. Eles propõem o **CRS** (média simples de duas acurácias) — a ficha recomenda **não** adotá-lo como gate, porque esconde o trade-off.
-- `yu-2024-rag-eval-survey.md`: o "Rejection Rate" do survey é **unilateral** (só um lado).
-- `magesh-2025…`: recusa conta como "incompleta", não como alucinação.
-- Nenhuma fonte discute **amostras pequenas**: decisão de IC (Wilson) é **de engenharia**, não da literatura.
+**(4) Literature.**
+- `abstention-benchmarks.md` (AbstentionBench): reports **recall (primary)**, precision and F1; it focuses on recall because precision ≈ 1 in their models. It supports recall as the gate, **not** F1 as the primary metric.
+- Same note (RefusalBench): separates **False Refusal Rate** (= over-refusal) and **Missed Refusal Rate** (= under-refusal; acronym "MRR" in the paper — **do not confuse** it with Mean Reciprocal Rank), plus **Refusal Detection F1**; shows the trade-off (correlation −0.78) and that GPT-4o refuses 62.8% of the answerable and lets 4.3% of the unanswerable through. No frontier model exceeds 73% refusal accuracy **with** the right category. They propose the **CRS** (simple mean of two accuracies) — the note recommends **not** adopting it as the gate, because it hides the trade-off.
+- `yu-2024-rag-eval-survey.md`: the survey's "Rejection Rate" is **one-sided** (only one side).
+- `magesh-2025…`: a refusal counts as "incomplete", not as a hallucination.
+- No source discusses **small samples**: the decision on CI (Wilson) is **an engineering one**, not from the literature.
 
-**(5) Alternativas.**
-| | Métrica | Prós | Contras |
+**(5) Alternatives.**
+| | Metric | Pros | Cons |
 |---|---|---|---|
-| A | acurácia (atual) | simples | mistura os dois erros; enviesada pelo desbalanceamento 75/25 |
-| B | **recall de abstenção (gate) + over-refusal como guarda-corpo + F1 diagnóstico, por slice** | alinhado a AbstentionBench/RefusalBench; separa riscos | 3 números |
-| C | RefusalBench completo (FRR, Missed Refusal Rate, Detection F1, CRS, categoria) | mais rico | categorização não é requisito; CRS esconde trade-off |
-| D | número único (CRS) | fácil de comparar | esconde o trade-off (a ficha desaconselha) |
+| A | accuracy (current) | simple | mixes the two errors; biased by the 75/25 imbalance |
+| B | **abstention recall (gate) + over-refusal as a guardrail + diagnostic F1, per slice** | aligned with AbstentionBench/RefusalBench; separates the risks | 3 numbers |
+| C | full RefusalBench (FRR, Missed Refusal Rate, Detection F1, CRS, category) | richer | categorization is not a requirement; CRS hides the trade-off |
+| D | single number (CRS) | easy to compare | hides the trade-off (the note advises against it) |
 
-**(6) Recomendação (D-6): B**, usando os nomes do RefusalBench em português (`abstention_recall`, `over_refusal_rate`, `abstention_f1` diagnóstico),
-**por slice** (`unanswerable` × `stale`; o conceito de "stale" do AbstentionBench é outro — ver `abstention-benchmarks.md` reflexão 6) e **sempre com contagem bruta + IC de Wilson**.
-Gate proposto: `abstention_recall ≥ 90%` em `unanswerable` **e** `over_refusal_rate` sem piorar além do IC do baseline (limiar numérico: a definir com você).
+**(6) Recommendation (D-6): B**, using names derived from RefusalBench (`abstention_recall`, `over_refusal_rate`, `abstention_f1` diagnostic),
+**per slice** (`unanswerable` × `stale`; AbstentionBench's concept of "stale" is a different one — see `abstention-benchmarks.md` reflection 6) and **always with raw counts + Wilson CI**.
+Proposed gate: `abstention_recall ≥ 90%` on `unanswerable` **and** `over_refusal_rate` not worsening beyond the baseline's CI (numeric threshold: to be defined with you).
 
-**(7) Passos.**
-1. Novo summary evaluator `abstention_summary(outputs, reference_outputs, examples)` (o argumento `examples` dá acesso a `metadata.slice`), retornando `{"results": [...]}` (contrato L-2): `abstention_recall`, `over_refusal_rate`, `abstention_f1` — total e por slice.
-2. Usa `abstained()` do P7; `f1_summary_evaluator` perde a chave `abstention_accuracy` (fica só o token-F1, que o P9 reavalia).
-3. Contagens (`n`, `k`) e IC de Wilson no `comment` de cada resultado.
-4. Testes com matrizes de confusão sintéticas (TP/FP/TN/FN), incluindo os dois sistemas "bobos" da tabela.
-5. Registro no `decisions.md`: regra de regressão "ganho de recall não pode vir de aumento de over-refusal".
+**(7) Steps.**
+1. New summary evaluator `abstention_summary(outputs, reference_outputs, examples)` (the `examples` argument gives access to `metadata.slice`), returning `{"results": [...]}` (L-2 contract): `abstention_recall`, `over_refusal_rate`, `abstention_f1` — total and per slice.
+2. Uses `abstained()` from P7; `f1_summary_evaluator` loses the `abstention_accuracy` key (only token-F1 remains, which P9 reassesses).
+3. Counts (`n`, `k`) and Wilson CI in each result's `comment`.
+4. Tests with synthetic confusion matrices (TP/FP/TN/FN), including the two "dumb" systems from the table.
+5. Entry in `decisions.md`: regression rule "a recall gain cannot come from an increase in over-refusal".
 
-**(8) Preciso de você:** (i) aceita B como desenho? (ii) qual tolerância de piora do over-refusal (ex.: ≤ 1 exemplo? ≤ 5 p.p.?) (iii) concorda em manter F1 só como diagnóstico?
+**(8) What I need from you:** (i) do you accept B as the design? (ii) what tolerance for worsening of over-refusal (e.g., ≤ 1 example? ≤ 5 p.p.?) (iii) do you agree to keep F1 only as a diagnostic?
 
 ---
 
-## 7. O que as fichas mudaram em P9–P11, e pontos novos
+## 7. What the reading notes changed in P9–P11, and new points
 
-### Atualização dos rascunhos P9–P11 (discussão depois de P5–P8)
-- **P9 (token-F1):** a evidência é **mais fraca** do que eu dizia (C-6). `ru-2024-ragchecker.md` (Tab. 2/5, Pearson com humanos): métrica claim-level 61,93; RAGAS answer-similarity 48,31; ROUGE-L 43,10; BLEU 35,14; BERTScore 33,51; humano×humano 70,09 (juiz-base Llama3-70B). `qa-eval-judge-vs-f1.md` (Wang 2023): o juiz GPT-3.5 **não** superou a comparação lexical em respostas longas (69,5% vs 82,3% no BingChat). Direção provisória: juiz de correção reference-based **calibrado localmente** + token-F1 só diagnóstico.
-- **P10 (format_spec):** `zhou-2023-ifeval.md` apoia spec estruturada, mas o par `instruction_id`+`kwargs` é do **dataset**, não do artigo; os `kwargs` são um registro "união" quase todo `None` → preferir requisitos atômicos com parâmetros por tipo. As 8 transformações do modo *loose* **não** servem (remover 1.ª/última linha derruba cabeçalho de tabela/CSV/citação). Com n=10, IC de Wilson de 10/10 = [72%; 100%]: o slice `format` é **teste de regressão**, não estimativa de taxa.
-- **P11 (juiz ≠ gerador):** `wataoka-2024…`: viés do GPT-4 = 0,520, ligado à **perplexidade** do texto, não à autoria; GPT-4/3.5 ficaram fora da análise de perplexidade; **ninguém testou gpt-4o-mini**. `abstention-benchmarks.md` (RefusalBench): auto-avaliação 91,0% vs 82,1% cross; κ entre juízes tão baixo quanto 0,061. `zheng-2023…`: auto-enhancement observado (GPT-4 +10%, Claude-v1 +25%) mas os autores **não conseguem concluir**. → separar `JUDGE_MODEL`, de **outra família**.
-  **Descoberta nova (C-2):** as "100 labels humanas" revisaram o golden set, **não respostas geradas**. O ARES usa ≥150 pontos rotulando **saídas de sistema** e mostra que com 100–150 o poder de discriminação é limitado (Tab. 3). Para calibrar juízes (κ) é preciso **você rotular respostas reais** depois do baseline (~100–150, faithfulness + abstenção + citação). Magesh dá um marco: κ 0,77 em 48 itens (domínio jurídico).
+### Update of the P9–P11 drafts (discussion after P5–P8)
+- **P9 (token-F1):** the evidence is **weaker** than I said (C-6). `ru-2024-ragchecker.md` (Tab. 2/5, Pearson with humans): claim-level metric 61.93; RAGAS answer-similarity 48.31; ROUGE-L 43.10; BLEU 35.14; BERTScore 33.51; human×human 70.09 (base judge Llama3-70B). `qa-eval-judge-vs-f1.md` (Wang 2023): the GPT-3.5 judge did **not** beat lexical comparison on long answers (69.5% vs 82.3% on BingChat). Provisional direction: a **locally calibrated** reference-based correctness judge + token-F1 only as a diagnostic.
+- **P10 (format_spec):** `zhou-2023-ifeval.md` supports a structured spec, but the `instruction_id`+`kwargs` pair belongs to the **dataset**, not to the paper; the `kwargs` are a "union" record that is almost entirely `None` → prefer atomic requirements with per-type parameters. The 8 transformations of the *loose* mode **do not** fit (removing the 1st/last line breaks a table/CSV/quote header). With n=10, the Wilson CI of 10/10 = [72%; 100%]: the `format` slice is a **regression test**, not a rate estimate.
+- **P11 (judge ≠ generator):** `wataoka-2024…`: GPT-4's bias = 0.520, tied to the text's **perplexity**, not to authorship; GPT-4/3.5 were left out of the perplexity analysis; **no one tested gpt-4o-mini**. `abstention-benchmarks.md` (RefusalBench): self-evaluation 91.0% vs 82.1% cross-evaluation; κ between judges as low as 0.061. `zheng-2023…`: self-enhancement observed (GPT-4 +10%, Claude-v1 +25%) but the authors **cannot conclude**. → separate `JUDGE_MODEL`, from **another family**.
+  **New discovery (C-2):** the "100 human labels" reviewed the golden set, **not generated answers**. ARES uses ≥150 points labeling **system outputs** and shows that with 100–150 the discriminative power is limited (Tab. 3). To calibrate judges (κ) **you need to label real answers** after the baseline (~100–150, faithfulness + abstention + citation). Magesh gives a reference point: κ 0.77 on 48 items (legal domain).
 
-### Pontos novos surgidos das fichas (triagem pendente)
-| ID | Ponto | Fonte | Resumo |
+### New points arising from the reading notes (triage pending)
+| ID | Point | Source | Summary |
 |---|---|---|---|
-| P12 | `citation_accuracy` incompleto | `magesh…`, `gao-2023-alce.md` | Cobre só *misgrounded* (citação não sustenta). Faltam *ungrounded* (afirmação sem citação) e *fabricated* (ID não recuperado). ALCE: citation **recall** (a afirmação é sustentada pelas citações?) e **precision** (cada citação é necessária?) por sentença; κ humano×ALCE 0,698 / 0,525. Abstenção sem citação daria recall 0 → isentar. Citação isolada é gameável (no atalho "top-1 passage" a correção cai só 5 pts; quem denuncia é a fluência) → reportar junto de correção. |
-| P13 | Mapeamento FP→métrica | `barnett-2024…` | C-3. Evidência do Barnett é fraca (3 estudos de caso, sem contagem por FP): usar como **taxonomia de cobertura**, não prova de prevalência. |
-| P14 | Formato e ordem do prompt dos juízes | `zheng…`, `qa-eval…` | C-8. Testar explicar-antes-de-pontuar, incluir gold answer (Zheng Tab. 4: 70% → 15% de falhas em matemática com reference-guided). |
-| P15 | Significância estatística dos gates (≥15%/≥10%) | `ir-pooling…`, `bassani…` | B&V: δ de ~8–18% para 95% de confiança com 50–100 tópicos e muitos relevantes; com ~50 exemplos binários o δ tende a ser maior. `ranx.compare` oferece t/Fisher/Tukey mas **sem correção para comparações múltiplas**. Propor IC/bootstrap pareado. |
-| P16 | Viés lexical do gold sintético | `thakur…` (analogia), `ir-pooling…` | Perguntas geradas do chunk compartilham vocabulário com ele; pode favorecer BM25/híbrido contra denso em CKPT-1/4. **Nenhuma fonte estuda gold sintético** — extrapolação. Mitigação: D-3 (BM25 em paralelo) + perguntas parafraseadas. |
-| P17 | Diagnósticos novos de RAGChecker | `ru-2024-ragchecker.md` | *Context utilization* (achou mas não usou) ≈ acurácia condicionada a hit@k=1 vs 0 (barata); *noise sensitivity*; *hallucination vs self-knowledge*; trilema utilização/ruído/fidelidade ao otimizar prompt (CKPT-6). Métricas diagnósticas **não validadas** com humanos no paper. |
+| P12 | `citation_accuracy` is incomplete | `magesh…`, `gao-2023-alce.md` | Covers only *misgrounded* (the citation does not support the claim). Missing: *ungrounded* (claim without a citation) and *fabricated* (ID not retrieved). ALCE: citation **recall** (is the claim supported by the citations?) and **precision** (is each citation necessary?) per sentence; human×ALCE κ 0.698 / 0.525. Abstention without a citation would give recall 0 → exempt it. Citation alone is gameable (with the "top-1 passage" shortcut correctness drops only 5 pts; what gives it away is fluency) → report it together with correctness. |
+| P13 | FP→metric mapping | `barnett-2024…` | C-3. Barnett's evidence is weak (3 case studies, no counts per FP): use it as a **coverage taxonomy**, not as proof of prevalence. |
+| P14 | Format and order of the judges' prompt | `zheng…`, `qa-eval…` | C-8. Test explain-before-scoring, include the gold answer (Zheng Tab. 4: 70% → 15% failures in math with reference-guided). |
+| P15 | Statistical significance of the gates (≥15%/≥10%) | `ir-pooling…`, `bassani…` | B&V: δ of ~8–18% for 95% confidence with 50–100 topics and many relevant documents; with ~50 binary examples δ tends to be larger. `ranx.compare` offers t/Fisher/Tukey but **without correction for multiple comparisons**. Propose a paired CI/bootstrap. |
+| P16 | Lexical bias of the synthetic gold | `thakur…` (analogy), `ir-pooling…` | Questions generated from the chunk share vocabulary with it; this may favor BM25/hybrid over dense in CKPT-1/4. **No source studies synthetic gold** — extrapolation. Mitigation: D-3 (BM25 in parallel) + paraphrased questions. |
+| P17 | New RAGChecker diagnostics | `ru-2024-ragchecker.md` | *Context utilization* (found it but did not use it) ≈ accuracy conditioned on hit@k=1 vs 0 (cheap); *noise sensitivity*; *hallucination vs self-knowledge*; utilization/noise/faithfulness trilemma when optimizing the prompt (CKPT-6). Diagnostic metrics **not validated** with humans in the paper. |
 
 ---
 
-## 8. Registro histórico: planos originais P1–P4 (executados) e rascunhos P9–P11
+## 8. Historical record: original plans P1–P4 (executed) and drafts P9–P11
 
-> Mantidos como estavam na versão 1 para rastreabilidade. P5–P8 foram **substituídos** pela §6; a antiga seção
-> "Fundamentação científica (resumos)" foi **substituída pelas fichas** (§4).
+> Kept as they were in version 1 for traceability. P5–P8 were **replaced** by §6; the old section
+> "Scientific grounding (summaries)" was **replaced by the reading notes** (§4).
 
-## P1 + P2 + P3 — Normalizar o nível de comparação (chunk × paper) — ✅ EXECUTADO
+## P1 + P2 + P3 — Normalize the comparison level (chunk × paper) — ✅ EXECUTED
 
-### O que está implementado
-`evaluators.py` recebe `retrieved_chunk_ids` e `retrieved_arxiv_ids` e o gold pode ser `gold_chunk_ids`
-(slice `answerable`) **ou** `gold_arxiv_ids` (multi-doc, persona). As quatro funções fazem
-`gold = chunk_gold or arxiv_gold` e depois tratam as duas listas de recuperados como um só universo:
-- `recall_at_k` / `hit_rate`: `set(chunk) | set(arxiv)` — funciona por acaso (IDs de formatos distintos não colidem).
-- `mrr`: `enumerate([*chunk_ids, *arxiv_ids], 1)` — **concatena** as duas listas.
-- `precision_at_k`: `retrieved = chunk_ids if chunk_ids else arxiv_ids` — escolhe a lista pela presença, não pelo tipo do gold.
+### What is implemented
+`evaluators.py` receives `retrieved_chunk_ids` and `retrieved_arxiv_ids` and the gold can be `gold_chunk_ids`
+(slice `answerable`) **or** `gold_arxiv_ids` (multi-doc, persona). The four functions do
+`gold = chunk_gold or arxiv_gold` and then treat the two lists of retrieved items as a single universe:
+- `recall_at_k` / `hit_rate`: `set(chunk) | set(arxiv)` — works by accident (IDs of different formats do not collide).
+- `mrr`: `enumerate([*chunk_ids, *arxiv_ids], 1)` — **concatenates** the two lists.
+- `precision_at_k`: `retrieved = chunk_ids if chunk_ids else arxiv_ids` — picks the list by presence, not by the gold's type.
 
-### Evidência do erro (reproduzido offline)
+### Evidence of the error (reproduced offline)
 ```
-ids=[a..e]; chunks=["a:h",...]; ref={"gold_arxiv_ids":["a"]}   # paper gold em 1º lugar
-mrr(chunks, ids, ref)            -> 0.1667   (esperado 1.0 — rank 6 em vez de 1)
-precision_at_k(chunks, ids, ref) -> 0.0      (esperado 0.2 — compara chunk IDs com gold de paper)
+ids=[a..e]; chunks=["a:h",...]; ref={"gold_arxiv_ids":["a"]}   # gold paper in 1st place
+mrr(chunks, ids, ref)            -> 0.1667   (expected 1.0 — rank 6 instead of 1)
+precision_at_k(chunks, ids, ref) -> 0.0      (expected 0.2 — compares chunk IDs against paper gold)
 ```
-Cobertura: `tests/test_evaluators.py` tem `test_recall_uses_arxiv_ids_for_multidoc`, mas
-**nenhum teste de MRR/precision com gold por `arxiv_id`** — por isso passou.
-Agravante (decisions.md, 2026-09-27): o top-5 baseline devolve o mesmo paper até 3×, então o rank
-em nível de paper precisa de **dedup preservando ordem** (caso contrário MRR/precision em paper ficam inflados/deflacionados).
+Coverage: `tests/test_evaluators.py` has `test_recall_uses_arxiv_ids_for_multidoc`, but
+**no MRR/precision test with gold by `arxiv_id`** — that is why it passed.
+Aggravating factor (decisions.md, 2026-09-27): the baseline top-5 returns the same paper up to 3×, so the rank
+at paper level needs an **order-preserving dedup** (otherwise MRR/precision at paper level end up inflated/deflated).
 
-### Solução (passo a passo)
-1. Escrever o helper `_ranked_at_gold_level(retrieved_chunk_ids, retrieved_arxiv_ids, reference_outputs) -> tuple[list[str], set[str]] | None`:
-   - gold de chunk não vazio → `(retrieved_chunk_ids, gold_chunks)` (nível chunk);
-   - senão gold de paper não vazio → `(dedup_ordenado(retrieved_arxiv_ids), gold_papers)` (nível paper, `dict.fromkeys` p/ preservar rank);
-   - senão `None`.
-2. Se o runner (0.7) passar só `retrieved_chunk_ids`, derivar `arxiv_id` com `chunk_id.split(":")[0]` quando `retrieved_arxiv_ids` vier vazio (contrato do 0.6 §2 documentado no docstring).
-3. Reescrever as quatro métricas sobre o helper: recall = `|gold ∩ ranked| / |gold|`; hit = `any`; MRR = `1/rank` do 1º gold em `ranked`; precision = `|gold ∩ ranked| / len(ranked)` (P6 refina o denominador).
-4. Testes novos (offline, em `tests/test_evaluators.py`): MRR e precision com gold de paper em 1º/3º/ausente; top-k com o mesmo paper 3× (dedup); fallback de `arxiv_id` derivado do chunk ID; gold misto (chunk tem precedência).
-5. **Oráculo independente**: adicionar `ranx` (ou `ir_measures`) como dependência **dev** e um teste de propriedade que gera runs/qrels aleatórios e confere `recall/mrr/hit/precision` contra a lib. Não usar a lib em runtime: os avaliadores do LangSmith chamam por exemplo (1 query), e montar `Qrels/Run` por chamada é overhead sem ganho; a lib entra como prova de correção.
+### Solution (step by step)
+1. Write the helper `_ranked_at_gold_level(retrieved_chunk_ids, retrieved_arxiv_ids, reference_outputs) -> tuple[list[str], set[str]] | None`:
+   - non-empty chunk gold → `(retrieved_chunk_ids, gold_chunks)` (chunk level);
+   - else non-empty paper gold → `(dedup_ordenado(retrieved_arxiv_ids), gold_papers)` (paper level, `dict.fromkeys` to preserve rank);
+   - else `None`.
+2. If the runner (0.7) passes only `retrieved_chunk_ids`, derive `arxiv_id` with `chunk_id.split(":")[0]` when `retrieved_arxiv_ids` comes empty (0.6 §2 contract documented in the docstring).
+3. Rewrite the four metrics on top of the helper: recall = `|gold ∩ ranked| / |gold|`; hit = `any`; MRR = `1/rank` of the 1st gold in `ranked`; precision = `|gold ∩ ranked| / len(ranked)` (P6 refines the denominator).
+4. New tests (offline, in `tests/test_evaluators.py`): MRR and precision with paper gold at 1st/3rd/absent; top-k with the same paper 3× (dedup); `arxiv_id` fallback derived from the chunk ID; mixed gold (chunk takes precedence).
+5. **Independent oracle**: add `ranx` (or `ir_measures`) as a **dev** dependency and a property test that generates random runs/qrels and checks `recall/mrr/hit/precision` against the lib. Do not use the lib at runtime: LangSmith evaluators are called per example (1 query), and building `Qrels/Run` per call is overhead with no gain; the lib comes in as proof of correctness.
 
-### Por que melhora
-- Remove a causa (granularidade misturada), não só os dois sintomas — qualquer métrica nova (nDCG no CKPT-4) herda o comportamento certo.
-- O baseline de multi-doc/persona deixa de ser subestimado ~6× em MRR; o gate do rerank (CKPT-4) mede o efeito real.
-- O oráculo `ranx` torna a defesa simples: "implementação conferida contra a lib de referência".
+### Why it improves
+- Removes the cause (mixed granularity), not just the two symptoms — any new metric (nDCG in CKPT-4) inherits the correct behavior.
+- The multi-doc/persona baseline stops being underestimated ~6× in MRR; the rerank gate (CKPT-4) measures the real effect.
+- The `ranx` oracle makes the defense simple: "implementation checked against the reference lib".
 
-### Verificação
-`uv run pytest tests/test_evaluators.py` verde; os dois comandos da evidência retornam `1.0` e `0.2`; teste de propriedade com ≥200 casos aleatórios concorda com `ranx`.
-
----
-
-## P4 — `f1_summary_evaluator` com formato de retorno inválido para o LangSmith — ✅ EXECUTADO
-
-> **Correção (2026-10-03):** o texto original abaixo diz que a chave extra é "ignorada". Verificado no `langsmith` 0.13.0: ela é **rejeitada** (`EvaluationResult` tem `extra="forbid"`), o runner captura a exceção e **descarta o evaluator inteiro**; além disso a assinatura `(results)` nem passava na validação de `summary_evaluators=`.
-
-### O que está implementado
-Retorna `{"key": "f1_summary", "score": ..., "abstention_accuracy": ...}` (uma chave extra num dict).
-
-### Evidência do erro
-Saída real do teste: `{'key': 'f1_summary', 'score': 0.33, 'abstention_accuracy': 0.0}`. Summary evaluators do LangSmith
-consomem `key`/`score` (ou `{"results": [...]}`); a chave extra **não vira métrica** no experimento — a abstenção seria
-calculada e descartada silenciosamente. (Confirmar o formato exato na versão instalada do `langsmith` via context7 antes de codar.)
-
-### Solução
-1. Ler a doc da versão instalada (`uv pip show langsmith`; context7) para o formato de retorno de summary evaluators com múltiplas métricas.
-2. Quebrar em **evaluators de resumo separados e de responsabilidade única**: `token_f1_summary` (P9), `abstention_summary` (P8) — ou um único retornando `{"results": [{"key":..., "score":...}, ...]}` se for o formato suportado.
-3. Teste que valida o *shape* (lista/dict com `key` e `score` numéricos) e, de preferência, um teste de integração mínimo com `langsmith.evaluate` sobre dataset em memória (sem rede, via `upload_results=False` se disponível).
-
-### Por que melhora
-Cada métrica vira uma coluna visível/comparável no LangSmith — requisito do `decisions.md` ("metric before → after"). Hoje a abstenção, release-blocking (gate 90%), não apareceria.
-
-### Verificação
-Rodar o evaluator num experimento local e ver as duas métricas listadas; teste de shape verde.
+### Verification
+`uv run pytest tests/test_evaluators.py` green; the two evidence commands return `1.0` and `0.2`; property test with ≥200 random cases agrees with `ranx`.
 
 ---
 
+## P4 — `f1_summary_evaluator` with a return format invalid for LangSmith — ✅ EXECUTED
 
-## P9 — Token-F1 vs gold answer como métrica de qualidade
+> **Correction (2026-10-03):** the original text below says the extra key is "ignored". Verified in `langsmith` 0.13.0: it is **rejected** (`EvaluationResult` has `extra="forbid"`), the runner catches the exception and **discards the whole evaluator**; moreover the signature `(results)` did not even pass the validation of `summary_evaluators=`.
 
-### O que está implementado
-`_token_f1(pred, ref)` estilo SQuAD (bag-of-words) comparando resposta gerada com o gold answer, agregada em `f1_summary`. O plano (`ckpt-0.6-plan.md` §3.3) descreve outra coisa ("F1 entre substantivo × alucinado"), então **código e plano divergem**.
+### What is implemented
+Returns `{"key": "f1_summary", "score": ..., "abstention_accuracy": ...}` (an extra key in a dict).
 
-### Evidência
-"Agents hallucinate tools [2609.12345]." vs "LLM agents often hallucinate tool calls." (resposta correta) → **0.36**. Paráfrase é punida; os tokens da citação `[2609.12345]` inflam o denominador; o prompt limita a 3 frases, o que torna o F1 sensível a comprimento.
+### Evidence of the error
+Real test output: `{'key': 'f1_summary', 'score': 0.33, 'abstention_accuracy': 0.0}`. LangSmith summary evaluators
+consume `key`/`score` (or `{"results": [...]}`); the extra key **does not become a metric** in the experiment — abstention would be
+computed and silently discarded. (Confirm the exact format in the installed `langsmith` version via context7 before coding.)
 
-### Solução
-1. Decidir e corrigir a divergência: o plano passa a dizer "token-F1 = métrica **diagnóstica de cobertura lexical**", não de qualidade.
-2. Pré-processar antes de comparar: remover citações (`\[\d{4}\.\d{4,5}v\d+\]`) e stopwords; renomear `f1_summary` → `token_f1_summary`.
-3. Qualidade passa a vir de **dois sinais semânticos**: (a) `correctness_judge` reference-based (LLM, resposta vs gold answer; via `openevals.create_llm_as_judge` ou prompt próprio no 0.6.3) e (b) similaridade de embedding (`compare_semantic_similarity`, já citado no plano §2b) como alternativa barata.
-4. Calibrar contra as labels humanas do golden set (100/100 revisados): correlação (Spearman) token-F1 × julgamento humano vs correctness_judge × humano — o resultado decide se o token-F1 sai do relatório principal.
+### Solution
+1. Read the docs for the installed version (`uv pip show langsmith`; context7) for the return format of summary evaluators with multiple metrics.
+2. Split into **separate, single-responsibility summary evaluators**: `token_f1_summary` (P9), `abstention_summary` (P8) — or a single one returning `{"results": [{"key":..., "score":...}, ...]}` if that is the supported format.
+3. A test that validates the *shape* (list/dict with a `key` and a numeric `score`) and, preferably, a minimal integration test with `langsmith.evaluate` over an in-memory dataset (no network, via `upload_results=False` if available).
 
-### Por que melhora
-Troca uma métrica que pune respostas corretas por uma que mede o que o produto promete; a calibração humana transforma a escolha numa decisão empírica defensável.
+### Why it improves
+Each metric becomes a visible/comparable column in LangSmith — a requirement of `decisions.md` ("metric before → after"). Today abstention, which is release-blocking (90% gate), would not show up.
 
-### Verificação
-Testes de normalização (citação removida, caixa, pontuação); correlação reportada em `results/`.
-
----
-
-## P10 — `format_validator` acoplado ao texto da pergunta
-
-### O que está implementado
-`format_validator(question, answer)` despacha por substring ("markdown table", "JSON array"…) e extrai colunas/chaves/contagens com regex sobre a pergunta (`_check_*`). Formato desconhecido retorna `{"score": 0, "reason": ...}` **sem `key`**; há código morto (`if "No other text" ...: pass` em `_check_json`).
-
-### Evidência
-Qualquer reescrita de pergunta (ex.: `regenerated: v2` em `build_golden_dataset.py:635`, ou o `stale`/persona do eixo ADR-004) pode quebrar o parse e virar `score 0` — **falso negativo atribuído ao sistema**. O fallback de "formato não detectado" pontua 0 em vez de ser excluído, contaminando o slice `format`.
-
-### Solução
-1. Em `build_golden_dataset.format_examples`, gravar uma **spec estruturada** em `metadata.format_spec`, ex.: `{"type":"json_object","keys":["title","year"],"exact_keys":true}` / `{"type":"markdown_table","columns":[...],"rows":3}` / `{"type":"bullets","count":3,"max_words":12}`.
-2. `format_validator(answer, format_spec)` valida só contra a spec (sem regex de pergunta); a pergunta fica apenas para exibição.
-3. Spec ausente/desconhecida ⇒ `score=None` (pulado, como `is_retrieval_evaluable`) e sempre com `key="format_valid"`.
-4. Migração idempotente do dataset (o builder já é idempotente — adicionar atualização de metadata nos 10 exemplos existentes) + remover o código morto.
-5. Manter `test_format_golds_dogfood_all_pass` (10/10) e adicionar caso "spec ausente ⇒ None".
-
-### Por que melhora
-Valida o contrato que o dataset declara, não uma interpretação de texto livre; elimina falsos negativos por reescrita e alinha com o padrão IFEval ("instrução verificável programaticamente").
-
-### Verificação
-Dogfood 10/10 com specs; teste de reescrita de pergunta não altera o resultado.
+### Verification
+Run the evaluator in a local experiment and see both metrics listed; shape test green.
 
 ---
 
-## P11 — Juiz e gerador usam o mesmo modelo (gpt-4o-mini)
 
-### O que está implementado
-`config.GENERATION_MODEL` (`gpt-4o-mini`) gera as respostas; o plano (`ckpt-0.6-plan.md` §4) define o **mesmo modelo** como juiz, `temperature=0`. `config.RERANK_MODEL` também é o mesmo.
+## P9 — Token-F1 vs gold answer as a quality metric
 
-### Evidência
-Não há erro numérico a reproduzir — é um risco metodológico conhecido (autopreferência/self-enhancement bias de LLM-judges). O plano já prevê medir variância entre rodadas e calibrar com kappa no 0.8, mas **não** separa o modelo do juiz.
+### What is implemented
+SQuAD-style (bag-of-words) `_token_f1(pred, ref)` comparing the generated answer with the gold answer, aggregated in `f1_summary`. The plan (`ckpt-0.6-plan.md` §3.3) describes something else ("F1 between noun × hallucinated"), so **code and plan diverge**.
 
-### Solução
-1. Nova variável `JUDGE_MODEL = os.getenv("JUDGE_MODEL", ...)` em `config.py`, **distinta** de `GENERATION_MODEL`; default: modelo mais forte ou de outra família (decisão do usuário, ver pergunta aberta).
-2. Todos os juízes (0.6.3) leem `JUDGE_MODEL`; registrar `judge_model` na metadata do experimento.
-3. Calibração (0.8): kappa juiz×humano **por juiz** nas 100 labels; critério de aceite documentado (ex.: κ ≥ 0.6) antes de congelar o baseline.
-4. Rodada de sensibilidade: reavaliar o mesmo conjunto de respostas com 2 juízes e reportar a diferença no relatório do EXP-0.
+### Evidence
+"Agents hallucinate tools [2609.12345]." vs "LLM agents often hallucinate tool calls." (the correct answer) → **0.36**. Paraphrase is punished; the tokens of the citation `[2609.12345]` inflate the denominator; the prompt limits answers to 3 sentences, which makes F1 sensitive to length.
 
-### Por que melhora
-Remove a objeção mais comum a evals com LLM-judge ("o modelo avalia a si mesmo") e torna as deltas dos gates atribuíveis ao sistema, não ao viés do juiz.
+### Solution
+1. Decide and fix the divergence: the plan now says "token-F1 = **diagnostic metric of lexical coverage**", not of quality.
+2. Pre-process before comparing: remove citations (`\[\d{4}\.\d{4,5}v\d+\]`) and stopwords; rename `f1_summary` → `token_f1_summary`.
+3. Quality now comes from **two semantic signals**: (a) a reference-based `correctness_judge` (LLM, answer vs gold answer; via `openevals.create_llm_as_judge` or an own prompt in 0.6.3) and (b) embedding similarity (`compare_semantic_similarity`, already cited in plan §2b) as a cheap alternative.
+4. Calibrate against the golden set's human labels (100/100 reviewed): correlation (Spearman) token-F1 × human judgment vs correctness_judge × human — the result decides whether token-F1 leaves the main report.
 
-### Verificação
-`config.JUDGE_MODEL` aparece na metadata das runs; relatório de calibração com κ por juiz.
+### Why it improves
+It swaps a metric that punishes correct answers for one that measures what the product promises; human calibration turns the choice into a defensible empirical decision.
+
+### Verification
+Normalization tests (citation removed, case, punctuation); correlation reported in `results/`.
 
 ---
 
-## Critérios de pronto do lote
-1. `uv run pytest` verde, incluindo o oráculo `ranx` (P3) e os testes de P4/P7/P8/P10.
-2. Reprodução dos 5 comandos de evidência retorna os valores esperados (1.0, 0.2, shape válido, abstenção por paráfrase, token-F1 normalizado).
-3. `docs/plan.md` §3/§4 e `ckpt-0.6-plan.md` §3 atualizados para refletir as novas semânticas (recall×hit, precision, F1/abstenção, token-F1).
-4. ADR-005 (semântica de precision) e uma entrada em `docs/decisions.md` → Observações descrevendo a correção dos bugs de IR **antes** do EXP-0.
-5. Um commit por ponto (mensagens `fix(evaluators): ...`), sem misturar com o trabalho não commitado do CKPT-0.6.
+## P10 — `format_validator` coupled to the question text
+
+### What is implemented
+`format_validator(question, answer)` dispatches by substring ("markdown table", "JSON array"…) and extracts columns/keys/counts with regex over the question (`_check_*`). An unknown format returns `{"score": 0, "reason": ...}` **without `key`**; there is dead code (`if "No other text" ...: pass` in `_check_json`).
+
+### Evidence
+Any question rewrite (e.g., `regenerated: v2` in `build_golden_dataset.py:635`, or the `stale`/persona of the ADR-004 axis) can break the parse and become `score 0` — a **false negative attributed to the system**. The "format not detected" fallback scores 0 instead of being excluded, contaminating the `format` slice.
+
+### Solution
+1. In `build_golden_dataset.format_examples`, write a **structured spec** in `metadata.format_spec`, e.g.: `{"type":"json_object","keys":["title","year"],"exact_keys":true}` / `{"type":"markdown_table","columns":[...],"rows":3}` / `{"type":"bullets","count":3,"max_words":12}`.
+2. `format_validator(answer, format_spec)` validates only against the spec (no regex over the question); the question remains only for display.
+3. Missing/unknown spec ⇒ `score=None` (skipped, like `is_retrieval_evaluable`) and always with `key="format_valid"`.
+4. Idempotent dataset migration (the builder is already idempotent — add a metadata update on the 10 existing examples) + remove the dead code.
+5. Keep `test_format_golds_dogfood_all_pass` (10/10) and add a "missing spec ⇒ None" case.
+
+### Why it improves
+It validates the contract the dataset declares, not an interpretation of free text; eliminates false negatives from rewrites and aligns with the IFEval standard ("programmatically verifiable instruction").
+
+### Verification
+Dogfood 10/10 with specs; a question-rewrite test does not change the result.
+
+---
+
+## P11 — Judge and generator use the same model (gpt-4o-mini)
+
+### What is implemented
+`config.GENERATION_MODEL` (`gpt-4o-mini`) generates the answers; the plan (`ckpt-0.6-plan.md` §4) defines the **same model** as the judge, `temperature=0`. `config.RERANK_MODEL` is also the same.
+
+### Evidence
+There is no numeric error to reproduce — it is a known methodological risk (self-preference/self-enhancement bias of LLM judges). The plan already foresees measuring variance between rounds and calibrating with kappa in 0.8, but does **not** separate the judge's model.
+
+### Solution
+1. New variable `JUDGE_MODEL = os.getenv("JUDGE_MODEL", ...)` in `config.py`, **distinct** from `GENERATION_MODEL`; default: a stronger model or one from another family (the user's decision, see open question).
+2. All judges (0.6.3) read `JUDGE_MODEL`; record `judge_model` in the experiment metadata.
+3. Calibration (0.8): judge×human kappa **per judge** on the 100 labels; acceptance criterion documented (e.g., κ ≥ 0.6) before freezing the baseline.
+4. Sensitivity round: re-evaluate the same set of answers with 2 judges and report the difference in the EXP-0 report.
+
+### Why it improves
+It removes the most common objection to evals with an LLM judge ("the model evaluates itself") and makes the gates' deltas attributable to the system, not to the judge's bias.
+
+### Verification
+`config.JUDGE_MODEL` appears in the runs' metadata; calibration report with κ per judge.
+
+---
+
+## Done criteria for the batch
+1. `uv run pytest` green, including the `ranx` oracle (P3) and the tests for P4/P7/P8/P10.
+2. Reproduction of the 5 evidence commands returns the expected values (1.0, 0.2, valid shape, abstention by paraphrase, normalized token-F1).
+3. `docs/plan.md` §3/§4 and `ckpt-0.6-plan.md` §3 updated to reflect the new semantics (recall×hit, precision, F1/abstention, token-F1).
+4. ADR-005 (precision semantics) and an entry in `docs/decisions.md` → Observations describing the correction of the IR bugs **before** EXP-0.
+5. One commit per point (messages `fix(evaluators): ...`), without mixing with the uncommitted work of CKPT-0.6.
 
 ---
 

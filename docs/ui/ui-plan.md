@@ -1,95 +1,95 @@
-# Plano — Interface web minimalista para o arXiv Research Copilot
+# Plan — Minimalist web interface for the arXiv Research Copilot
 
-## Contexto
+## Context
 
-Hoje o RAG (`app.arxiv_copilot`) só roda via `main.py` (uma pergunta fixa) ou pelo REPL
-(`docs/manual-usage.md`). Falta uma forma rápida e agradável de **conversar com o copiloto,
-ver as fontes citadas e gerar traces reais com thread** para inspeção manual. Isso vem antes
-do `server.py` (FastAPI, CKPT-8) e não substitui ele: é uma ferramenta local de demo e debug.
+Today the RAG (`app.arxiv_copilot`) only runs via `main.py` (one fixed question) or via the REPL
+(`docs/manual-usage.md`). We lack a fast and pleasant way to **chat with the copilot,
+see the cited sources, and generate real traces with a thread** for manual inspection. This comes before
+`server.py` (FastAPI, CKPT-8) and does not replace it: it is a local demo and debug tool.
 
-Objetivo: um chat clean, de uma página, que:
-- responde perguntas usando o pipeline baseline (`config.BASELINE`) sem alterar o comportamento;
-- mostra as fontes recuperadas (arXiv ID, título, data, link) num bloco recolhível;
-- mantém conversa multi-turn (Feature F) com `thread_id` por sessão no LangSmith.
+Goal: a clean, single-page chat that:
+- answers questions using the baseline pipeline (`config.BASELINE`) without changing its behavior;
+- shows the retrieved sources (arXiv ID, title, date, link) in a collapsible block;
+- keeps a multi-turn conversation (Feature F) with a per-session `thread_id` in LangSmith.
 
-**Framework: Gradio** (não Streamlit). `gr.ChatInterface(type="messages")` já entrega o
-histórico no formato `[{"role", "content"}]` que `generate_response` espera, tem streaming
-de UI, exemplos e botão de limpar prontos, e `gr.ChatMessage(metadata={"title": ...})`
-renderiza um acordeão nativo — ideal para as fontes sem poluir a tela. Streamlit exigiria
-gerenciar `session_state` e re-execução do script na mão para o mesmo resultado.
+**Framework: Gradio** (not Streamlit). `gr.ChatInterface(type="messages")` already delivers the
+history in the `[{"role", "content"}]` format that `generate_response` expects, and comes with UI streaming,
+examples, and a clear button out of the box, and `gr.ChatMessage(metadata={"title": ...})`
+renders a native accordion — ideal for the sources without cluttering the screen. Streamlit would require
+managing `session_state` and script re-execution by hand for the same result.
 
-## Mudanças
+## Changes
 
-### 1. `app.py` — expor as fontes sem mudar o contrato existente
-`arxiv_copilot` devolve só a string; a UI precisa dos documentos. Para não duplicar a
-orquestração nem recuperar duas vezes:
+### 1. `app.py` — expose the sources without changing the existing contract
+`arxiv_copilot` returns only the string; the UI needs the documents. To avoid duplicating
+the orchestration or retrieving twice:
 
-- Extrair o corpo de `arxiv_copilot` para um helper **não traceado**
+- Extract the body of `arxiv_copilot` into an **untraced** helper
   `_run_pipeline(question, run_config, conversation) -> tuple[str, list[Document]]`
-  (rewrite → retrieve → rerank → generate, com os mesmos `langsmith_extra` de metadata).
-- `arxiv_copilot` continua `@traceable(run_type="chain")`, mesma assinatura, chama o
-  helper e retorna só `answer` → árvore de trace, `main.py` e futuros evaluators intactos.
-- Nova `arxiv_copilot_with_sources(...)` com
+  (rewrite → retrieve → rerank → generate, with the same `langsmith_extra` metadata).
+- `arxiv_copilot` remains `@traceable(run_type="chain")`, same signature, calls the
+  helper and returns only `answer` → trace tree, `main.py`, and future evaluators intact.
+- New `arxiv_copilot_with_sources(...)` with
   `@traceable(run_type="chain", name="arxiv_copilot", process_outputs=lambda o: {"output": o[0]})`
-  → no LangSmith o run raiz fica idêntico (mesmo nome, mesmo output), mas o chamador
-  recebe `(answer, documents)`. (Confirmar `process_outputs` na versão instalada do
-  `langsmith` via context7 antes de implementar.)
+  → in LangSmith the root run is identical (same name, same output), but the caller
+  receives `(answer, documents)`. (Confirm `process_outputs` in the installed version of
+  `langsmith` via context7 before implementing.)
 
-### 2. `ui.py` (novo, raiz do projeto, ~80 linhas)
+### 2. `ui.py` (new, project root, ~80 lines)
 - `respond(message, history, request)`:
-  - `conversation` = histórico filtrado: só `role`/`content`, **descartando** as mensagens
-    de fontes (as que têm `metadata.title`) — senão o bloco de fontes vaza pro prompt.
-  - chama `app.arxiv_copilot_with_sources(message, config.BASELINE, conversation,
+  - `conversation` = filtered history: only `role`/`content`, **discarding** the sources
+    messages (those with `metadata.title`) — otherwise the sources block leaks into the prompt.
+  - calls `app.arxiv_copilot_with_sources(message, config.BASELINE, conversation,
     langsmith_extra={"metadata": app._run_metadata(config.BASELINE) | {"thread_id": tid}})`
-    — mesmo padrão de `main.py:run_pipeline`.
-  - retorna `[gr.ChatMessage(answer), gr.ChatMessage(sources_md, metadata={"title": "Fontes (N)"})]`.
-- `thread_id`: um `uuid4` por sessão em `gr.State`; renovado quando o usuário limpa o chat
+    — same pattern as `main.py:run_pipeline`.
+  - returns `[gr.ChatMessage(answer), gr.ChatMessage(sources_md, metadata={"title": "Fontes (N)"})]`.
+- `thread_id`: one `uuid4` per session in `gr.State`; renewed when the user clears the chat
   (`chatbot.clear`).
-- `format_sources(documents) -> str` (função pura, testável): dedup por `arxiv_id`
-  preservando ordem de rank; cada linha `**[2609.12345]** Título · 2026-09-10 — [abs](source)`.
-- Layout minimalista:
+- `format_sources(documents) -> str` (pure, testable function): dedup by `arxiv_id`
+  preserving rank order; each line `**[2609.12345]** Title · 2026-09-10 — [abs](source)`.
+- Minimalist layout:
   - `gr.Blocks(theme=gr.themes.Base(primary_hue="slate", font=gr.themes.GoogleFont("Inter")),
-    fill_height=True)`, coluna central `max-width ~760px` via `css` curto.
-  - Cabeçalho de 1 linha: "arXiv Copilot" + subtítulo discreto "~250 papers cs.AI · snapshot
+    fill_height=True)`, central column `max-width ~760px` via a short `css`.
+  - 1-line header: "arXiv Copilot" + discreet subtitle "~250 cs.AI papers · snapshot
     `CORPUS_SNAPSHOT_DATE`".
-  - `gr.ChatInterface` com 3 exemplos (um respondível, um multi-doc, um fora do corpus para
-    mostrar a abstenção).
-  - Rodapé em cinza pequeno: `app_version · k · GENERATION_MODEL` (lido de `config`).
-  - Sem sidebar, sem controles de config — o baseline é fixo nesta versão.
-- `if __name__ == "__main__": demo.launch()` (localhost apenas, sem `share=True`).
-- Aquecer o vector store no import (`utils.get_vector_store(config.BASELINE)`) para a 1ª
-  pergunta não pagar o load do parquet.
+  - `gr.ChatInterface` with 3 examples (one answerable, one multi-doc, one outside the corpus to
+    show abstention).
+  - Small gray footer: `app_version · k · GENERATION_MODEL` (read from `config`).
+  - No sidebar, no config controls — the baseline is fixed in this version.
+- `if __name__ == "__main__": demo.launch()` (localhost only, no `share=True`).
+- Warm up the vector store at import (`utils.get_vector_store(config.BASELINE)`) so the 1st
+  question does not pay for the parquet load.
 
 ### 3. `pyproject.toml`
-Adicionar `gradio>=5` às dependências (`uv add gradio`).
+Add `gradio>=5` to the dependencies (`uv add gradio`).
 
-### 4. Testes — `tests/test_ui.py`
-- `format_sources`: dedup por paper, ordem de rank preservada, lista vazia → mensagem neutra.
-- filtro do histórico: mensagens com `metadata.title` são removidas; chaves extras somem.
-Sem chamadas a OpenAI/LangSmith (funções puras, no estilo de `tests/test_evaluators.py`).
+### 4. Tests — `tests/test_ui.py`
+- `format_sources`: dedup by paper, rank order preserved, empty list → neutral message.
+- history filter: messages with `metadata.title` are removed; extra keys disappear.
+No calls to OpenAI/LangSmith (pure functions, in the style of `tests/test_evaluators.py`).
 
 ### 5. Docs
-Nova seção em `docs/manual-usage.md`: "Interface web" com `uv run python ui.py` e o que
-observar no LangSmith (runs agrupados por `thread_id`).
+New section in `docs/manual-usage.md`: "Web interface" with `uv run python ui.py` and what
+to look at in LangSmith (runs grouped by `thread_id`).
 
-## Fora de escopo
-- 👍/👎 e feedback URLs (CKPT-8, `feedback.py`) — `ChatInterface` aceita `.like()` depois.
-- Trocar config/arm pela UI (k, rerank etc.) — entra quando houver mais de um arm funcional.
+## Out of scope
+- 👍/👎 and feedback URLs (CKPT-8, `feedback.py`) — `ChatInterface` accepts `.like()` later.
+- Switching config/arm via the UI (k, rerank, etc.) — comes in when there is more than one functional arm.
 - Deploy/`share=True`.
 
-## Observação de git
-O working tree tem mudanças não commitadas do CKPT-0.6 (`evaluators.py`, testes,
-`build_golden_dataset.py`). Implementar a UI em commit separado (ou branch própria) para
-não misturar com esse trabalho.
+## Git note
+The working tree has uncommitted CKPT-0.6 changes (`evaluators.py`, tests,
+`build_golden_dataset.py`). Implement the UI in a separate commit (or its own branch) so as not
+to mix it with that work.
 
-## Verificação
-1. `uv run pytest tests/test_ui.py tests/test_evaluators.py` — tudo verde.
-2. `uv run python main.py` — `Q:`/`A:` continua igual (contrato de `arxiv_copilot` preservado).
-3. `uv run python ui.py` → abrir `http://127.0.0.1:7860`:
-   - pergunta de exemplo responde com citações `[arxiv_id]` e acordeão "Fontes (N)";
-   - follow-up ("e quais as limitações?") usa o contexto da conversa;
-   - pergunta fora do corpus → resposta de abstenção;
-   - limpar chat → próxima pergunta gera novo `thread_id`.
-4. LangSmith, projeto `capstone-arxiv-copilot`: run raiz `arxiv_copilot` com output string,
-   filhos retriever/chain como antes, e as mensagens da sessão agrupadas na aba Threads.
-5. Screenshot via Playwright em largura desktop e mobile (~390px) para checar o layout.
+## Verification
+1. `uv run pytest tests/test_ui.py tests/test_evaluators.py` — all green.
+2. `uv run python main.py` — `Q:`/`A:` remains the same (`arxiv_copilot` contract preserved).
+3. `uv run python ui.py` → open `http://127.0.0.1:7860`:
+   - the example question is answered with `[arxiv_id]` citations and a "Fontes (N)" accordion;
+   - follow-up ("and what are the limitations?") uses the conversation context;
+   - question outside the corpus → abstention answer;
+   - clear chat → the next question generates a new `thread_id`.
+4. LangSmith, project `capstone-arxiv-copilot`: root run `arxiv_copilot` with string output,
+   retriever/chain children as before, and the session's messages grouped in the Threads tab.
+5. Screenshot via Playwright at desktop and mobile width (~390px) to check the layout.

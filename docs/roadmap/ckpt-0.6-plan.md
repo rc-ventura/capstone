@@ -1,169 +1,168 @@
-# CKPT-0.6 Plan — `evaluators.py` (catálogo de avaliadores)
+# CKPT-0.6 Plan — `evaluators.py` (evaluator catalog)
 
-> Status: **aguardando aprovação**. Nenhum código será alterado antes do "go".
-> Parent plan: `docs/plan.md` §2b (ground-truth map) + §4 (catálogo).
-> Dependências já prontas: golden set revisado (100 ex), `utils.chunk_id`, ADR-001.
+> Status: **awaiting approval**. No code will be changed before the "go".
+> Parent plan: `docs/plan.md` §2b (ground-truth map) + §4 (catalog).
+> Dependencies already in place: reviewed golden set (100 ex), `utils.chunk_id`, ADR-001.
 
-## 1. Contexto
+## 1. Context
 
-O EXP-0 (CKPT-0.8) precisa de avaliadores para medir as duas superfícies do plano §3:
-**retrieval** (recall@k, hit@k, MRR, precision@k) e **geração** (faithfulness,
-citation accuracy, completeness, format, abstention, specificity, relevance). Sem eles,
-o golden set não produz métrica nenhuma — é o instrumento de medida do capstone.
+EXP-0 (CKPT-0.8) needs evaluators to measure the two surfaces of plan §3:
+**retrieval** (recall@k, hit@k, MRR, precision@k) and **generation** (faithfulness,
+citation accuracy, completeness, format, abstention, specificity, relevance). Without them,
+the golden set produces no metric at all — it is the capstone's measuring instrument.
 
-## 2. Contrato de dados (o que o runner do 0.7 vai produzir)
+## 2. Data contract (what the 0.7 runner will produce)
 
-Cada exemplo avaliado chega ao avaliador com:
+Each evaluated example reaches the evaluator with:
 
-- `outputs` (do target/runner): `{"answer": str, "retrieved_chunk_ids": list[str],
+- `outputs` (from the target/runner): `{"answer": str, "retrieved_chunk_ids": list[str],
   "retrieved_context": list[str], "retrieved_arxiv_ids": list[str]}`
-  (`app.arxiv_copilot` hoje retorna só `answer`; o runner (0.7) expõe os docs recuperados)
-- `reference` (do golden set): `outputs.{answer, gold_chunk_ids, gold_arxiv_ids,
+  (`app.arxiv_copilot` currently returns only `answer`; the runner (0.7) exposes the retrieved docs)
+- `reference` (from the golden set): `outputs.{answer, gold_chunk_ids, gold_arxiv_ids,
   should_abstain}` + `metadata.slice`
 
-## 3. Escopo exato — o que cada avaliador mede e por quê
+## 3. Exact scope — what each evaluator measures and why
 
-### 3.1 Superfície 1 — Retrieval (code, reference-based)
+### 3.1 Surface 1 — Retrieval (code, reference-based)
 
-**`retrieval_recall_at_k`** — *cobertura dos documentos necessários.*
-O que é: fração dos documentos-gold que aparecem no top-k recuperado.
-Mede: responder completamente exige os docs certos presentes; se o sistema nunca os
-recupera, a geração está condenada antes de começar.
-Por quê (FP2 — retrieval loss / R5 ranking fraco): é a métrica central dos gates
-CKPT-1/2/3 ("o k/modelo/chunk novo cobre mais os docs necessários?").
+**`retrieval_recall_at_k`** — *coverage of the required documents.*
+What it is: fraction of the gold documents that appear in the retrieved top-k.
+Measures: answering completely requires the right docs to be present; if the system never
+retrieves them, generation is doomed before it starts.
+Why (FP2 — retrieval loss / R5 weak ranking): it is the central metric of the CKPT-1/2/3 gates
+("does the new k/model/chunk cover more of the required docs?").
 
-**`retrieval_hit_rate`** — *achou pelo menos um?*
-O que é: 1 se ≥1 doc-gold está no top-k, senão 0.
-Mede: casos em que parte da evidência basta (fallback), e dá uma métrica binária barata
-de leitura.
-Por quê: complemento do recall — distingue "não achou nada" de "achou parte".
+**`retrieval_hit_rate`** — *did it find at least one?*
+What it is: 1 if ≥1 gold doc is in the top-k, else 0.
+Measures: cases where part of the evidence suffices (fallback), and gives a cheap binary metric
+that is easy to read.
+Why: complements recall — distinguishes "found nothing" from "found part".
 
-**`retrieval_mrr`** — *quão alto no ranking o primeiro doc-gold aparece.*
-O que é: Mean Reciprocal Rank = 1/(posição do 1º doc-gold). MRR=1 se gold em 1º,
-1/2 se em 2º, etc.
-Mede: posição, não apenas presença — docs no fundo da página tendem a ser ignorados
-pelo gerador.
-Por quê (R5 — ranking fraco): é o alvo direto do gate do reranker (CKPT-4) e do
-slice `deep-hit` (docs que ranqueiam baixo).
+**`retrieval_mrr`** — *how high in the ranking the first gold doc appears.*
+What it is: Mean Reciprocal Rank = 1/(position of the 1st gold doc). MRR=1 if gold is 1st,
+1/2 if 2nd, etc.
+Measures: position, not just presence — docs at the bottom of the page tend to be ignored
+by the generator.
+Why (R5 — weak ranking): it is the direct target of the reranker gate (CKPT-4) and of the
+`deep-hit` slice (docs that rank low).
 
-**`retrieval_precision_at_k`** — *fração do top-k que é gold.*
-O que é: dos k recuperados, quantos são gold-label.
-Mede: ruído — quanta coisa irrelevante compete pela atenção do gerador.
-Por quê (FP3 — retorno irrelevante/noise): expõe inject de ruído (ex.: o colapso de
-dedup notado em decisions.md). **Restrição de honestidade (viés de pooling)**: só
-computado onde há gold não-vazio adjudicável; em exemplos sem julgamento de
-irrelevância dos outros docs, tratar não-gold como erro seria falso.
+**`retrieval_precision_at_k`** — *fraction of the top-k that is gold.*
+What it is: of the k retrieved, how many are gold-labeled.
+Measures: noise — how much irrelevant material competes for the generator's attention.
+Why (FP3 — irrelevant retrieval/noise): exposes noise injection (e.g. the dedup collapse noted in decisions.md). **Honesty constraint (pooling bias)**: only
+computed where there is a non-empty, adjudicable gold; in examples with no judgment of
+irrelevance for the other docs, treating non-gold as an error would be false.
 
-### 3.2 Superfície 2 — Geração
+### 3.2 Surface 2 — Generation
 
-**`faithfulness_judge`** (LLM, ref-free) — *a resposta é sustentada pelo contexto
-recuperado?*
-O que é: juiz verifica claim a claim da resposta contra `retrieved_context` (não contra
-o gabarito).
-Mede: alucinação-em-resposta-do-RAG — o modo mais perigoso quando o sistema parece
-"citar" mas inventa.
-Por quê (FP4): métrica estilo RAGAS; independente de gabarito certo — mesmo com
-gold errado, uma resposta fiel ao contexto é comportamento correto do componente.
+**`faithfulness_judge`** (LLM, ref-free) — *is the answer supported by the retrieved
+context?*
+What it is: a judge verifies the answer claim by claim against `retrieved_context` (not against
+the reference answer).
+Measures: hallucination in the RAG answer — the most dangerous mode, when the system appears to
+"cite" but invents.
+Why (FP4): RAGAS-style metric; independent of a correct reference answer — even with a wrong
+gold, an answer faithful to the context is correct behavior of the component.
 
-**`citation_accuracy`** (code + LLM, ref-free) — *a citação existe E sustenta a claim?*
-O que é: regex extrai `[2609.xxxxvN]` da resposta (code); para cada citação, juiz
-checa se o chunk daquele `arxiv_id` no contexto recuperado sustenta a frase citada.
-Mede: misgrounding — o sistema cita uma fonte que não diz o que a resposta afirma
+**`citation_accuracy`** (code + LLM, ref-free) — *does the citation exist AND support the claim?*
+What it is: a regex extracts `[2609.xxxxvN]` from the answer (code); for each citation, a judge
+checks whether the chunk of that `arxiv_id` in the retrieved context supports the cited sentence.
+Measures: misgrounding — the system cites a source that does not say what the answer asserts
 (Magesh et al. 2025, §4).
-Por quê (FP4 em sua forma mais específica): produto promete "cited Q&A" — citação
-falsa quebra a proposta de valor.
+Why (FP4 in its most specific form): the product promises "cited Q&A" — a false citation
+breaks the value proposition.
 
-**`completeness_judge`** (LLM, híbrido) — *todas as partes da pergunta foram cobertas?*
-O que é: ref-free nos demais slices (todas as sub-perguntas respondidas?);
-reference-based em `multi-doc` (todos os pontos do gold synthesis presentes?).
-Mede: consolidação incompleta — respondeu parcialmente.
-Por quê (FP7): é o disco-alvo dos experimentos de decomposição (CKPT-5).
+**`completeness_judge`** (LLM, hybrid) — *were all parts of the question covered?*
+What it is: ref-free in the other slices (were all sub-questions answered?);
+reference-based in `multi-doc` (are all the points of the gold synthesis present?).
+Measures: incomplete consolidation — answered only partially.
+Why (FP7): it is the target of the decomposition experiments (CKPT-5).
 
-**`abstention_quality`** (LLM, ref-based) — *absteve quando devia / respondeu quando podia?*
-O que é: juiz compara o comportamento da resposta com `should_abstain` do gold.
-Mede: hedge de segurança vs utilidade — abster demais é tão ruim quanto alucinar.
-Por quê (FP1): abstenção correta em `unanswerable`/`stale` é release-blocking
-(plano §5 CKPT-6: gate de 90%).
+**`abstention_quality`** (LLM, ref-based) — *abstained when it should / answered when it could?*
+What it is: a judge compares the answer's behavior with the gold's `should_abstain`.
+Measures: safety hedge vs. usefulness — over-abstaining is as bad as hallucinating.
+Why (FP1): correct abstention on `unanswerable`/`stale` is release-blocking
+(plan §5 CKPT-6: 90% gate).
 
-**`specificity_judge`** (LLM, ref-based) — *nível de detalhe bate com a audiência pedida?*
-O que é: juiz compara a resposta com o gold da audiência requerida (`lay` vs `phd`).
-Mede: calibração de densidade — nem vago demais nem denso demais.
-Por quê (FP6): mira diretamente no produto Feature C.
+**`specificity_judge`** (LLM, ref-based) — *does the level of detail match the requested audience?*
+What it is: a judge compares the answer with the gold for the required audience (`lay` vs `phd`).
+Measures: density calibration — neither too vague nor too dense.
+Why (FP6): aims directly at the Feature C product.
 
-**`answer_relevance`** (LLM, ref-free) — *a resposta endereça a pergunta feita?*
-O que é: juiz avalia relevância/on-topic da resposta vs a pergunta (estilo RAGAS).
-Mede: deriva — resposta correta mas sobre outra coisa.
-Por quê: métrica de monitoramento transversal (CKPT-8 usa em produção).
+**`answer_relevance`** (LLM, ref-free) — *does the answer address the question asked?*
+What it is: a judge evaluates the answer's relevance/on-topic-ness vs. the question (RAGAS-style).
+Measures: drift — a correct answer but about something else.
+Why: cross-cutting monitoring metric (CKPT-8 uses it in production).
 
-### 3.3 Formatos e agregados
+### 3.3 Formats and aggregates
 
-**`format_validator`** (code, ref-based) — *a saída obedece ao formato pedido?*
-O que é: validação determinística por tipo — tabela markdown (colunas certas), JSON
-(chaves exatas), CSV parseável, YAML, nº exato de bullets/palavras/frases+citação.
-Mede: aderência a instrução de formato (sem juiz — código puro).
-Por quê (FP5): Feature B/D prometem saídas estruturadas (tabelas de comparação).
+**`format_validator`** (code, ref-based) — *does the output obey the requested format?*
+What it is: deterministic validation by type — markdown table (right columns), JSON
+(exact keys), parseable CSV, YAML, exact number of bullets/words/sentences + citation.
+Measures: adherence to the format instruction (no judge — pure code).
+Why (FP5): Features B/D promise structured outputs (comparison tables).
 
-**`f1_summary_evaluator`** (code, summary, ref-based) — *agregado substantivo×alucinado.*
-O que é: evaluator de resumo (P5 do curso): computa F1 agregado entre o conjunto de
-respostas substantivas vs. alucinadas/abstenções sobre as labels gold coletadas do
-experimento inteiro.
-Mede: balanço global entre utilidade e segurança num experimento.
-Por quê: uma leitura única de "qualidade substantiva vs. risco" por configuração de
-experimento — usada no relatório EXP-0-baseline.
+**`f1_summary_evaluator`** (code, summary, ref-based) — *substantive vs. hallucinated aggregate.*
+What it is: a summary evaluator (P5 of the course): computes an aggregate F1 between the set of
+substantive answers vs. hallucinated answers/abstentions over the gold labels collected from the
+whole experiment.
+Measures: global balance between usefulness and safety in an experiment.
+Why: a single reading of "substantive quality vs. risk" per experiment
+configuration — used in the EXP-0-baseline report.
 
 ---
 
-**Matriz evaluador × slice** (quem roda onde — do §2b ground-truth map):
+**Evaluator × slice matrix** (who runs where — from the §2b ground-truth map):
 
-| Slice | Retrieval | Geração |
+| Slice | Retrieval | Generation |
 |---|---|---|
 | `answerable` | recall, hit, MRR, precision | faithfulness, citation, relevance |
-| `unanswerable` | (n/a — gold vazio por design) | abstention, faithfulness |
+| `unanswerable` | (n/a — empty gold by design) | abstention, faithfulness |
 | `multi-doc` known | recall, hit, precision | completeness, faithfulness, citation |
-| `multi-doc` open | **skip até adjudicação** | completeness, faithfulness, citation |
+| `multi-doc` open | **skip until adjudication** | completeness, faithfulness, citation |
 | `format` | n/a | format_validator |
-| `persona` | recall (fonte compartilhada) | specificity, faithfulness |
-| `stale` | (gold vazio pré-refresh) | abstention |
+| `persona` | recall (shared source) | specificity, faithfulness |
+| `stale` | (empty gold pre-refresh) | abstention |
 
-**Semântica de retrieval (decisão já documentada no adendo da revisão / lesson L1):**
-recall/hit/MRR contam apenas rótulos-gold; docs recuperados fora do gold são
-**não-julgados**, nunca irrelevantes automáticos — elimina o viés de pooling.
-`precision_at_k` só computável onde o gold é não-vazio. Exemplos `open_topic`
-(`retrieval_gold=pending-adjudication`) são **pulados** dos retrieval metrics até o
-mini-pooling do EXP-0.
+**Retrieval semantics (decision already documented in the review addendum / lesson L1):**
+recall/hit/MRR count only gold labels; retrieved docs outside the gold are
+**unjudged**, never automatically irrelevant — this eliminates pooling bias.
+`precision_at_k` is only computable where the gold is non-empty. `open_topic` examples
+(`retrieval_gold=pending-adjudication`) are **skipped** from the retrieval metrics until the
+EXP-0 mini-pooling.
 
-## 4. Juízes LLM — configuração
+## 4. LLM judges — configuration
 
-- Modelo do juiz: `GENERATION_MODEL` (gpt-4o-mini), `temperature=0`, saída estruturada
-  (JSON com `{"score": bool|float, "reason": str}`). Barato; variância será medida no
-  EXP-0 rodada 2 (pra isso o prompt precisa ser determinístico).
-- Cada juiz = 1 função `(question, answer, context, reference) -> EvaluationResult`.
-- `citation_accuracy`: passo 1 code (extrai `[2609.xxxxvN]` da resposta via regex),
-  passo 2 juiz por citação (o chunk `arxiv_id` suporta a claim?).
+- Judge model: `GENERATION_MODEL` (gpt-4o-mini), `temperature=0`, structured output
+  (JSON with `{"score": bool|float, "reason": str}`). Cheap; variance will be measured in
+  EXP-0 round 2 (for that, the prompt must be deterministic).
+- Each judge = 1 function `(question, answer, context, reference) -> EvaluationResult`.
+- `citation_accuracy`: step 1 code (extracts `[2609.xxxxvN]` from the answer via regex),
+  step 2 judge per citation (does the `arxiv_id` chunk support the claim?).
 
-## 5. Mini-checkpoints internos (um commit cada, você revisa entre eles)
+## 5. Internal mini-checkpoints (one commit each, you review between them)
 
-| Lote | Conteúdo | Teste |
+| Batch | Content | Test |
 |---|---|---|
-| **0.6.1** | 4 avaliadores code de retrieval | testes offline puros (sem nenhuma chamada LLM): slices de exemplos sintéticos com golds controlados, cobrindo edge cases (gold vazio, open-topic skip, dedup, top-k parcial) |
-| **0.6.2** | `format_validator` + `f1_summary_evaluator` | testes offline; dogfood contra os 10 golds do slice `format` (devem passar 10/10) |
-| **0.6.3** | 6 juízes LLM | testes com casos-canais pass/fail ambos (ex.: resposta fiel × resposta alucinada) — ~12 chamadas LLM no total |
+| **0.6.1** | 4 code-based retrieval evaluators | pure offline tests (no LLM calls at all): slices of synthetic examples with controlled golds, covering edge cases (empty gold, open-topic skip, dedup, partial top-k) |
+| **0.6.2** | `format_validator` + `f1_summary_evaluator` | offline tests; dogfood against the 10 golds of the `format` slice (must pass 10/10) |
+| **0.6.3** | 6 LLM judges | tests with canary pass/fail cases on both sides (e.g. faithful answer × hallucinated answer) — ~12 LLM calls in total |
 
-## 6. Fora de escopo
+## 6. Out of scope
 
-- Runner (`experiments/run_experiment.py`) → 0.7. Rodada real → EXP-0 (0.8).
-- Calibração formal dos juízes com concordância humana (kappa) → 0.8, antes de congelar
-  o baseline (usa suas labels da revisão).
+- Runner (`experiments/run_experiment.py`) → 0.7. Real run → EXP-0 (0.8).
+- Formal judge calibration with human agreement (kappa) → 0.8, before freezing
+  the baseline (uses your review labels).
 
-## 7. Verificação
+## 7. Verification
 
-1. Suite de testes offline: `python -m pytest tests/test_evaluators.py -q` (ou script
-   único se preferir não adicionar pytest ao projeto — decisão abaixo).
-2. Cada juiz validado num caso pass E num caso fail reais (falha = score errado é bug).
-3. `format_validator` dogfood: 10/10 dos golds do slice `format` passam.
-4. Zero chamadas rastreadas de juiz fora dos testes (controle de custo).
+1. Offline test suite: `python -m pytest tests/test_evaluators.py -q` (or a
+   single script if you prefer not to add pytest to the project — decision below).
+2. Each judge validated on a real pass case AND a real fail case (failure = wrong score is a bug).
+3. `format_validator` dogfood: 10/10 of the `format` slice golds pass.
+4. Zero traced judge calls outside the tests (cost control).
 
-## 8. Decisão aberta (pequena)
+## 8. Open decision (small)
 
-- **Testes**: adicionar `pytest` como dev-dependency, ou manter o padrão atual de
-  scripts de validação inline? Recomendo pytest (o catálogo vai crescer até CKPT-8).
+- **Tests**: add `pytest` as a dev-dependency, or keep the current pattern of inline
+  validation scripts? I recommend pytest (the catalog will grow until CKPT-8).

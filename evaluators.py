@@ -34,42 +34,66 @@ def _arxiv_id_of_chunk(chunk_id: str) -> str:
     return chunk_id.split(":", 1)[0]
 
 
+def _gold_papers(reference_outputs: dict[str, Any]) -> set[str]:
+    """Paper-level gold: gold_arxiv_ids, else the papers of gold_chunk_ids."""
+    papers = _gold_arxiv_ids(reference_outputs)
+    if papers:
+        return papers
+    return {_arxiv_id_of_chunk(c) for c in _gold_chunk_ids(reference_outputs)}
+
+
 def _ranked_and_gold(
     retrieved_chunk_ids: list[str],
     retrieved_arxiv_ids: list[str],
     reference_outputs: dict[str, Any],
+    *,
+    level: str = "paper",
+    k: int | None = None,
 ) -> tuple[list[str], set[str]] | None:
-    """Pick ONE comparison level from the gold, then rank retrieved items at that level.
+    """Rank retrieved items at ONE comparison level and pair them with the gold at that level.
 
-    - gold_chunk_ids present  -> chunk level: rank = order of retrieved chunk ids.
-    - else gold_arxiv_ids     -> paper level: rank = first occurrence of each paper
-      in the retrieved list (duplicate chunks of one paper collapse, order kept).
-      Papers come from `retrieved_arxiv_ids`, or are derived from the chunk ids.
-    - neither                 -> None (no judged gold; metric undefined).
+    - level="paper" (default, roadmap D-1): gold = gold_arxiv_ids, or the papers of
+      gold_chunk_ids. Rank = first occurrence of each paper in the retrieved list
+      (duplicate chunks of one paper collapse, order kept). Papers come from
+      `retrieved_arxiv_ids`, or are derived from the chunk ids.
+    - level="chunk" (diagnostic: "did we retrieve the exact source chunk?"): gold =
+      gold_chunk_ids only. Meaningless across chunking configs: chunk ids hash the text.
+    - no gold at the requested level -> None (metric undefined; skipped).
 
-    Never mixes chunk ids and arxiv ids in one list: that inflated MRR ranks by k and
-    zeroed precision for paper-level gold (CKPT-0.6.1b, P1-P3).
+    `k` cuts the RAW retrieved list (the retriever's top-k) before de-duplication.
+    Never mixes chunk ids and arxiv ids in one list (CKPT-0.6.1b P1-P3).
     """
-    gold_chunks = _gold_chunk_ids(reference_outputs)
-    if gold_chunks:
-        return list(dict.fromkeys(retrieved_chunk_ids)), gold_chunks
-    gold_papers = _gold_arxiv_ids(reference_outputs)
-    if gold_papers:
-        papers = retrieved_arxiv_ids or [_arxiv_id_of_chunk(c) for c in retrieved_chunk_ids]
-        return list(dict.fromkeys(papers)), gold_papers
-    return None
+    if level not in ("paper", "chunk"):
+        raise ValueError(f"level must be 'paper' or 'chunk', got {level!r}")
+    if level == "chunk":
+        gold = _gold_chunk_ids(reference_outputs)
+        raw = list(retrieved_chunk_ids)
+    else:
+        gold = _gold_papers(reference_outputs)
+        raw = list(retrieved_arxiv_ids or [_arxiv_id_of_chunk(c) for c in retrieved_chunk_ids])
+    if not gold:
+        return None
+    if k is not None:
+        raw = raw[:k]
+    return list(dict.fromkeys(raw)), gold
 
 
 def recall_at_k(
     retrieved_chunk_ids: list[str],
     retrieved_arxiv_ids: list[str],
     reference_outputs: dict[str, Any],
+    *,
+    level: str = "paper",
+    k: int | None = None,
 ) -> float | None:
-    """Fraction of gold documents present in the retrieved top-k (FP2)."""
-    level = _ranked_and_gold(retrieved_chunk_ids, retrieved_arxiv_ids, reference_outputs)
-    if level is None:
+    """Recall@k (coverage): fraction of the gold documents present in the retrieved top-k (FP2).
+    With a single gold document it is identical to hit_rate (use hit + MRR there; roadmap D-2)."""
+    ranked_gold = _ranked_and_gold(
+        retrieved_chunk_ids, retrieved_arxiv_ids, reference_outputs, level=level, k=k
+    )
+    if ranked_gold is None:
         return None
-    ranked, gold = level
+    ranked, gold = ranked_gold
     return len(gold & set(ranked)) / len(gold)
 
 
@@ -77,12 +101,17 @@ def hit_rate(
     retrieved_chunk_ids: list[str],
     retrieved_arxiv_ids: list[str],
     reference_outputs: dict[str, Any],
+    *,
+    level: str = "paper",
+    k: int | None = None,
 ) -> float | None:
-    """1 if at least one gold document is in the retrieved top-k, else 0."""
-    level = _ranked_and_gold(retrieved_chunk_ids, retrieved_arxiv_ids, reference_outputs)
-    if level is None:
+    """Hit@k (success): 1 if at least one gold document is in the retrieved top-k, else 0."""
+    ranked_gold = _ranked_and_gold(
+        retrieved_chunk_ids, retrieved_arxiv_ids, reference_outputs, level=level, k=k
+    )
+    if ranked_gold is None:
         return None
-    ranked, gold = level
+    ranked, gold = ranked_gold
     return 1.0 if gold & set(ranked) else 0.0
 
 
@@ -90,12 +119,18 @@ def mrr(
     retrieved_chunk_ids: list[str],
     retrieved_arxiv_ids: list[str],
     reference_outputs: dict[str, Any],
+    *,
+    level: str = "paper",
+    k: int | None = None,
 ) -> float | None:
-    """1/rank of the first gold document in the retrieved list (0 if absent)."""
-    level = _ranked_and_gold(retrieved_chunk_ids, retrieved_arxiv_ids, reference_outputs)
-    if level is None:
+    """Reciprocal rank (1 / position of the first gold document; 0 if absent). Averaged
+    over examples it is the MRR (Mean Reciprocal Rank)."""
+    ranked_gold = _ranked_and_gold(
+        retrieved_chunk_ids, retrieved_arxiv_ids, reference_outputs, level=level, k=k
+    )
+    if ranked_gold is None:
         return None
-    ranked, gold = level
+    ranked, gold = ranked_gold
     for rank, rid in enumerate(ranked, 1):
         if rid in gold:
             return 1.0 / rank
@@ -106,21 +141,54 @@ def precision_at_k(
     retrieved_chunk_ids: list[str],
     retrieved_arxiv_ids: list[str],
     reference_outputs: dict[str, Any],
+    *,
+    level: str = "paper",
+    k: int | None = None,
 ) -> float | None:
     """Fraction of the retrieved top-k (at the gold's level) that is gold-labeled (FP3 noise).
 
     Meaningful only where the gold is the complete relevant set (or adjudicated);
     by design we currently call it only on examples with non-empty gold. At paper
     level the denominator is the number of DISTINCT papers retrieved. Whether this
-    metric should run at all for single-chunk gold is open (CKPT-0.6.1b, P6).
+    metric should run at all for single-document gold is open (roadmap P6).
     """
-    level = _ranked_and_gold(retrieved_chunk_ids, retrieved_arxiv_ids, reference_outputs)
-    if level is None:
+    ranked_gold = _ranked_and_gold(
+        retrieved_chunk_ids, retrieved_arxiv_ids, reference_outputs, level=level, k=k
+    )
+    if ranked_gold is None:
         return None
-    ranked, gold = level
+    ranked, gold = ranked_gold
     if not ranked:
         return 0.0
     return sum(1 for rid in ranked if rid in gold) / len(ranked)
+
+
+def hit_at_ks(
+    retrieved_chunk_ids: list[str],
+    retrieved_arxiv_ids: list[str],
+    reference_outputs: dict[str, Any],
+    ks: tuple[int, ...] = (1, 3, 5),
+    *,
+    level: str = "paper",
+) -> dict[int, float | None]:
+    """Hit curve: hit@k for several cutoffs (how much each extra position buys; feeds CKPT-1's k sweep)."""
+    return {
+        k: hit_rate(retrieved_chunk_ids, retrieved_arxiv_ids, reference_outputs, level=level, k=k)
+        for k in ks
+    }
+
+
+def primary_retrieval_metrics(reference_outputs: dict[str, Any]) -> list[str]:
+    """Which retrieval metrics to REPORT for an example (roadmap D-2).
+
+    1 gold paper  -> ["hit", "mrr"]            (recall would just repeat hit)
+    2+ gold papers -> ["recall", "hit", "mrr"]  (recall = coverage of all needed papers)
+    no gold        -> []                        (unanswerable/stale/open-topic: nothing to score)
+    """
+    n_gold = len(_gold_papers(reference_outputs))
+    if n_gold == 0:
+        return []
+    return ["hit", "mrr"] if n_gold == 1 else ["recall", "hit", "mrr"]
 
 
 # =====================================================================
