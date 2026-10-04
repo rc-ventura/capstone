@@ -47,7 +47,10 @@ def _ours(
         "recall": ev.recall_at_k(chunks, papers, reference, level=level, k=k),
         "hit": ev.hit_rate(chunks, papers, reference, level=level, k=k),
         "mrr": ev.mrr(chunks, papers, reference, level=level, k=k),
-        "precision": ev.precision_at_k(chunks, papers, reference, level=level, k=k),
+        # the oracle checks the formula, so use metadata under which the gold counts as complete
+        "precision": ev.precision_at_k(
+            chunks, papers, reference, level=level, k=k, metadata={"review": {"state": "adjudicated"}}
+        ),
     }
 
 

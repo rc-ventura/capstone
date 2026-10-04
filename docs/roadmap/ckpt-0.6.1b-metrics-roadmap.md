@@ -1,20 +1,21 @@
 # Living Roadmap — CKPT-0.6.1b: fixing and hardening the metrics
 
-> **Iterative document (version 2, 2026-10-03).** Rewritten at every discussion round; the current version is always this one.
+> **Iterative document (version 3, 2026-10-04).** Rewritten at every discussion round; the current version is always this one.
 > Writing rules: every metric cited comes with what it measures in parentheses when that is not obvious; every "design
 > error" is explained in plain language, with a numeric example, **alternatives researched before the recommendation**
-> and the decision recorded in the §5 log. Nothing below P5 was implemented: they are **proposals for discussion**.
+> and the decision recorded in the §5 log. P6 was decided on 2026-10-04 (§6); P7 and later are **proposals for discussion**.
 
 ## 1. Current state
 
 | Point | Status | Notes |
 |---|---|---|
-| P1 Shifted MRR (gold per paper) | ✅ done, **not committed** | `evaluators.py` |
-| P2 precision = 0 (gold per paper) | ✅ done, **not committed** | same |
-| P3 chunk × paper levels mixed (cause of P1/P2) | ✅ done, **not committed** | helper `_ranked_and_gold`; `ir-measures` oracle in tests (L-3) |
-| P4 `f1_summary_evaluator` with invalid format | ✅ done, **not committed** | signature + return `{"results": [...]}` |
-| P5 hit@k ≡ recall@k with 1 gold | ✅ **implemented, not committed** | paper as the default level (D-1), `k`, `hit_at_ks`, `primary_retrieval_metrics` (D-2) |
-| P6 `precision_at_k` with a 1-chunk gold | 🟡 **postponed at your request** | the whole-abstract baseline eliminates sibling chunks: reassess the scope (note in §6) |
+| P1 Shifted MRR (gold per paper) | ✅ done, committed (`907fa1a`) | `evaluators.py` |
+| P2 precision = 0 (gold per paper) | ✅ done, committed (`907fa1a`) | same |
+| P3 chunk × paper levels mixed (cause of P1/P2) | ✅ done, committed (`907fa1a`, oracle swap `a9c375a`) | helper `_ranked_and_gold`; `ir-measures` oracle in tests (L-3) |
+| P4 `f1_summary_evaluator` with invalid format | ✅ done, committed (`907fa1a`) | signature + return `{"results": [...]}` |
+| P5 hit@k ≡ recall@k with 1 gold | ✅ **implemented**, committed (`28dd93f`) | paper as the default level (D-1), `k`, `hit_at_ks`, `primary_retrieval_metrics` (D-2) |
+| P6 `precision_at_k` with a 1-paper gold | ✅ **decided 2026-10-04; code + tests implemented, not committed** | `is_gold_complete` (derived, no stored flag) + `precision_at_k` returns `None` unless the gold is complete (D-8). Deferrals D-10; pilot D-9/D-11 (§6) |
+| EXP-0 pilot mini-pooling | 🟡 **planned** (CKPT-0.8) | protocol and decision rule in §6 (P6, "Decision and execution"); runs after P7/P8 |
 | **D-7 baseline = one record per abstract** | ✅ **implemented** (2026-10-04, ADR-005) | `config.BASELINE`/`CHUNKED_500_0`, `utils.chunk_documents(…, 0, 0)`, new cache; golden builder pinned to the 500/0 arm |
 | P7 abstention detection via `startswith` | 🟡 **proposal rewritten** (§6) | awaiting D-5 |
 | P8 abstention as accuracy | 🟡 **proposal rewritten** (§6) | awaiting D-6 |
@@ -118,11 +119,15 @@ section/table · limitations · **reflections anchored in our plan** · confiden
 | L-4 | 2026-10-03 | Retrieval evaluators: **default level = paper** (`level="paper"`), `level="chunk"` as a diagnostic, `k` truncates the raw list before dedup | D-1/D-2 | Implemented |
 | D-1 | 2026-10-03 | Retrieval gold **per paper**; exact chunk only as a diagnostic (config 500/0). No adjudication of siblings in EXP-0. | §3; measurements in the [lesson](../learning-lessons/retrieval_unit_and_gold_granularity.md) | ✅ **Decided** (implemented in P5; recorded in [ADR-006](../adrs/0006-retrieval-gold-granularity-and-metrics.md)) |
 | D-2 | 2026-10-03 | Gold of 1 paper → report **hit@k + MRR** (+ hit@1/3/5 curve); gold of 2+ papers → **recall@k** (primary) + hit@k + MRR | P5 | ✅ **Decided** (`primary_retrieval_metrics`, `hit_at_ks`; recorded in [ADR-006](../adrs/0006-retrieval-gold-granularity-and-metrics.md)) |
-| D-3 | — | Run BM25 in parallel with every new retriever to detect lexical bias of the synthetic gold? | `thakur…` reflection 4 (analogy) | Proposal |
-| D-4 | — | `precision_at_k` only with complete gold + `distinct_papers@k` separately? | P6 | Proposal |
+| D-3 | — | Run BM25 in parallel with every new retriever to detect lexical bias of the synthetic gold? And/or put BM25's top-5 in the EXP-0 pool? | `thakur…` reflection 4 (analogy); NIST §6 (pool from more than one retriever type) | Proposal — **decide after the pilot** (D-9); no second retriever exists until CKPT-1 |
+| D-4 | 2026-10-04 | `precision_at_k` only with complete gold; `distinct_papers@k` separately? | P6 | ✅ **Decided**: first part → D-8 (implemented); second part deferred to EXP-3 (D-10) |
 | D-5 | — | Abstention: LLM judge as ground truth + heuristic as a cheap baseline; structured marker only in CKPT-6? | P7 | Proposal |
 | D-6 | — | Abstention: gate = recall **with** a mandatory over-refusal guardrail, per slice, with CI? | P8 | Proposal |
 | D-7 | 2026-10-03 | **Baseline = one record per abstract**; 500/0 chunking becomes an EXP-3 arm. Measured: retrieval ≈ equal (same hit@5; 5 distinct papers vs 3.8), 2.6× input tokens, 2.2× cost, +8% latency. **Contingency:** if the golden set's bias (generated from chunks) harms the metrics, regenerate `answerable`/`persona` from the whole abstract | [lesson](../learning-lessons/retrieval_unit_and_gold_granularity.md) | ✅ **Approved and implemented** (2026-10-04); recorded in [ADR-005](../adrs/0005-retrieval-unit-whole-abstract.md) |
+| D-8 | 2026-10-04 | `precision_at_k` is defined only where the gold is **complete**: `is_gold_complete` = multi-doc known-item ("relevant = the papers named in the question", by definition) **or** `review.state == "adjudicated"`; otherwise `None`. **Derived from existing metadata, not a stored flag.** | P6; NIST/Büttcher (unjudged ≠ irrelevant; treating it as irrelevant is a floor); ADR-001 (no two sources of truth); the dataset sync only creates missing examples, so a new field would not reach the 100 existing ones without a remote update | ✅ **Decided and implemented** (not committed). For adjudicated examples the gold is complete only **with respect to the judged pool** |
+| D-9 | 2026-10-04 | EXP-0 mini-pooling scope = the 5 open-topic + a **pilot** (10 random `answerable`/`persona`, stratified 8+2, fixed seed, plus up to 4 `answerable` cases where the gold was not rank 1) ≈ 80 judgments, **not** all 50 single-gold examples (≈ 225). Known-item multi-doc is not pooled (D-8 definition). | Facts A/B/C below (§6); `ir-pooling…` (≤ ~200–250 judgments is feasible, so the argument is order of work, not feasibility) | ✅ **Decided** (protocol in §6; runs at CKPT-0.8) |
+| D-10 | 2026-10-04 | `distinct_papers@k` **deferred to EXP-3** (always 5.00 on the whole-abstract baseline; no paper defines it, it is our own diagnostic). `Hole@k` **built together with the mini-pooling**, and the dataset must also store papers judged **irrelevant** (it keeps only positives today). | Measured: 5.00 in all three slices; BEIR §6/Tab. 4 defines Hole@10 (one dataset, 50 queries, top-10, single round); before judgments Hole@5 would be 0.8 on every 1-paper example | ✅ **Decided**. Deadline for `Hole@k`: before the first retriever comparison (CKPT-1) |
+| D-11 | 2026-10-04 | Pilot decision rule, fixed **before** looking at the data. *x* = judged-relevant ÷ judged candidates in the 10-random sample: *x* ≤ 10% → keep the single gold; *x* ≥ 25% → judge the remaining 40 examples (pilot judgments are reused); 10–25% → review the cases and decide. | Engineering judgment, **no source gives these numbers**. Reference: *x* = 25% means one extra answering paper per question on average (true precision@5 ceiling 0.40 instead of 0.20) | ✅ **Decided** |
 
 **L-3 note (empirical test done in a throwaway environment, without touching the project):**
 
@@ -137,13 +142,13 @@ Both agree with our formulas in the tested cases. Recommendation: **switch to `i
 with ~5× fewer dependencies) and keep `ranx` out of the lock file (**done 2026-10-03**; the property test only changed its `_oracle` helper). Only `ranx` provides the paired
 tests (t, Fisher, Tukey) — if you want statistical significance (P15), reassess.
 
-### Corrections to existing documents (proposals; **none applied**)
+### Corrections to existing documents (proposals; **only C-3, partly, applied on 2026-10-04**)
 
 | # | Where | What is there | Correction | Source |
 |---|---|---|---|---|
 | C-1 | `docs/learning-lessons/golden_dataset_…` (§Design consequence) | "bpref-style tolerance" | bpref requires **judged** non-relevant documents (our gold only has positives) and overestimates systems outside the pool; the correct tolerance is "do not penalize unjudged" | `ir-pooling…` reflection 2 |
 | C-2 | same lesson, L3 (line 161) | the human review of the golden set becomes the "judge calibration set" | The review judged **questions/gold**, not **generated answers**; calibrating judges requires labeling real answers (see P11) | `results/ckpt-0.5-review.md`; ARES; Zheng |
-| C-3 | `docs/plan.md` / 0.6 §3.1 | FP3 = "noise"; `faithfulness`/`citation_accuracy` = FP4 | In Barnett, FP3 = consolidation limit (retrieved but did not fit in the context); FP4 = omission (answer in the context, not extracted). `precision_at_k` does not measure FP3 | `barnett-2024…` |
+| C-3 | `docs/plan.md` / 0.6 §3.1 | FP3 = "noise"; `faithfulness`/`citation_accuracy` = FP4 | In Barnett, FP3 = consolidation limit (retrieved but did not fit in the context); FP4 = omission (answer in the context, not extracted). `precision_at_k` does not measure FP3 | `barnett-2024…`. **Partly applied (2026-10-04):** `precision_at_k` relabeled as top-k purity / a cause of FP4 in `docs/plan.md` §4, `ckpt-0.6-plan.md` §3.1/§3.3 and the docstring; the FP4 labels of `faithfulness_judge`/`citation_accuracy` are still pending. FP3 itself returns with the CKPT-4 reranker (measure "gold retrieved but not in the prompt") |
 | C-4 | `docs/research/rag_failure_modes_review.md` | "15k docs"; "17–34%" | Barnett: 4,017 docs in §4.3 (§1 says 15,000: an inconsistency in the paper); Magesh v1: 17–33% | `barnett…`, `magesh…` |
 | C-5 | roadmap §6 (old draft) and plan 0.6 | `ranx` "validated at ECIR/CIKM/SIGIR" | Only ECIR 2022 deals with evaluation; CIKM 2022 = fusion (`ranx.fuse`), SIGIR 2023 = run repository (`ranxhub`) | `bassani…` |
 | C-6 | P9 draft / rationale | "token-F1 punishes the correct answer and rewards the wrong one" | The papers only show that it **underestimates correct answers**; 0.22/0.40/0.85 are Pearson means over 1,288 binary judgments of **extractive** QA | `qa-eval-judge-vs-f1.md` |
@@ -220,7 +225,7 @@ becomes 0 even if the system brings **another chunk of the same paper** that ans
 
 ### P6 — `precision_at_k` with a 1-chunk gold: ceiling of 1/k and penalizes what was not judged
 
-> **Note (2026-10-03):** with the whole-abstract baseline (D-7) there are no sibling chunks, so the central problem of P6 (a sibling counted as an error) disappears **in the baseline**; the remaining scope is precision in `multi-doc` and the 500/0 arm of EXP-3. Reassess when we close P6 (postponed).
+> **Note (2026-10-03, corrected 2026-10-04):** with the whole-abstract baseline (D-7) there are no sibling chunks, so the **sibling** part of P6 disappears in the baseline. The other part does **not**: with a 1-paper gold the other papers of the top-5 are still unjudged, so `precision@5` still cannot exceed 0.2. The earlier note said the remaining scope was only `multi-doc` and the 500/0 arm; that was too optimistic. Closed on 2026-10-04: see "Decision and execution" at the end of this section.
 
 **(1) Implemented.** `precision_at_k` runs on any example with a non-empty gold and counts everything outside the gold as an error. The
 docstring admits the restriction ("meaningful only where the gold is the complete relevant set"), but the code does not enforce it.
@@ -261,6 +266,30 @@ In addition: **rename the metric's role** in the plan from "noise/FP3" to "top-k
 5. Short ADR-007 (ADR-005 and ADR-006 are taken, see §5): "precision semantics" + correction C-3 in the plan. Tests: 1-chunk gold ⇒ `None`; known multi-doc ⇒ a value; same paper 3× ⇒ `distinct_papers@5 = 0.6`.
 
 **(8) What I need from you:** (i) do you agree with renaming precision's role? (ii) do you accept judging the holes in EXP-0 (D-1/C)? (iii) does diversity (B) become an official metric or only a diagnostic?
+
+**Decision and execution (2026-10-04).**
+
+*The problem, restated.* The synthetic gold of `answerable`/`persona` came from generating a question out of one chunk, so the gold is that one source paper. With the whole-abstract baseline (D-7) the sibling-chunk case is gone, but the gold can still be incomplete: other papers may also answer the question and nobody judged them. `precision_at_k` reads "not in gold" as an error, so with a 1-paper gold and k=5 it cannot exceed 1/5 = 0.2. If a fraction *x* of the other four papers does answer, the true ceiling is (1 + 4*x*) / 5: *x* = 10% → 0.28; 25% → 0.40; 50% → 0.60 (own arithmetic). The anti-pooling-bias rule ("unjudged ≠ irrelevant") already protected hit/MRR/recall, which never penalize extra papers; `precision_at_k` was the one metric that broke it. The plans also contradicted themselves ("precision only in `unanswerable`/`stale`", whose gold is empty and therefore skipped).
+
+*Three facts that ground the decisions (what each one is):*
+- **A — observation, bounds the stakes.** Baseline hit@5 is 100% on `answerable` (40/40) and `persona` (10/10) (lesson, whole-abstract table). An incomplete gold therefore cannot hurt hit@5 there; it can only distort the position metrics hit@1 (0.90) and MRR (0.934), e.g. when another valid paper is ranked above the gold. The reason for the 100% is a hypothesis, untested (questions generated from the text itself share its vocabulary; ADR-006 trade-offs). Its value would change if the questions were regenerated (C).
+- **B — structural limit of the method.** Candidates for the mini-pooling come from the baseline's top-5, so a paper that only another retriever would find is never shown to the judge and never enters the gold; the baseline's own picks all get judged. BEIR Tab. 4 shows the effect after judging the holes: nDCG@10 ANCE 0.654 → 0.735 vs BM25 0.656 → 0.668. No choice of scope removes it; only the source of the candidates does (BM25 in the pool, D-3, or judging each new retriever's holes at CKPT-1).
+- **C — sequencing constraint.** A judgment is "this candidate answers *this* question". Regenerating `answerable`/`persona` (the D-7 contingency, open) voids the judgments, so judge a small sample before judging everything.
+
+*Implemented (2026-10-04, not committed).*
+- `evaluators.is_gold_complete(reference_outputs, metadata)` and `precision_at_k(..., metadata=None)`, which returns `None` unless the gold is complete (D-8). Without `metadata` the result is `None` (safe default).
+- Tests: 62 green (new: `None` for a 1-paper gold, `None` without metadata, defined for known-item and adjudicated, `is_gold_complete` rules; the `ir-measures` oracle now passes adjudicated metadata).
+- Text corrections: `docs/plan.md` §4 evaluator catalog, `ckpt-0.6-plan.md` §3.1/§3.3, C-3 row (partly), the note above.
+- **Changed from steps (7):** the completeness flag is derived, not stored (no migration of the 100 LangSmith examples; D-8). Steps 3–4 (`distinct_papers@k`, `hole_rate_at_k`) are deferred (D-10). Step 5 (ADR-007) is still pending: write it together with the adjudication data model (judged-relevant and judged-irrelevant ids), after the pilot.
+
+*Pilot protocol (CKPT-0.8; decisions D-9, D-11).*
+1. Candidates for a question = the baseline's top-5 (whole abstract, k=5) minus the gold; for open-topic all 5 (no gold yet).
+2. Sample: the 5 open-topic (≈ 25 judgments); 10 random `answerable`/`persona`, stratified 8+2, fixed seed (≈ 40); up to 4 `answerable` cases where the gold was not rank 1 (≈ 16). Total ≈ 80 judgments (own estimate: 4 candidates per single-gold example).
+3. For each candidate you read the question and the abstract and mark "answers" / "does not answer". Relevant ones go to `gold_arxiv_ids`; irrelevant ones are stored too (needed by `Hole@k`); the example becomes `review.state = adjudicated`.
+4. Report separately: *x* from the 10 random examples (with a Wilson interval; with 40 judgments the interval is wide, e.g. 4/40 ≈ 4%–23%, own calculation, and the candidates of one question are not independent); the 4 rank>1 cases (is the hit@1 loss real or an artifact of the incomplete gold? it does not tell whether the cause is the whole-abstract index or the question-generation bias); open-topic on their own.
+5. Apply the rule fixed in D-11. If the rule says "judge the remaining 40", the pilot judgments are reused.
+6. D-3 (BM25 in the pool) is decided after the pilot: if almost no baseline candidate answers, that is a sign (inference, not measured) that these questions have few relevant papers beyond the gold, which lowers the weight of the pool bias.
+7. `Hole@k` is built with these judgments and must exist before the first retriever comparison (CKPT-1). Each new dense retriever may need its own holes judged: BEIR measured 6.4% (BM25) to 31.8% (TAS-B) of the top-10 without judgment; applied to our top-5 that is 0.3–1.6 papers per question, i.e. about 15–80 judgments per 50 questions per retriever (own arithmetic; different dataset, may not transfer).
 
 ---
 

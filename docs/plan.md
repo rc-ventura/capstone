@@ -139,7 +139,7 @@ The course (`intro-to-langsmith`) teaches 7 evaluators, none RAG-specific. The e
 | `retrieval_recall_at_k` | code | P1 (code + reference) | IR standard (Respan, Redis) | gold doc in top-k? | FP2, FP3 | Reference (gold doc ID) |
 | `retrieval_hit_rate` | code | P1 | IR standard | ≥1 gold doc in top-k | FP2 | Reference (gold doc ID) |
 | `retrieval_mrr` | code | P1 | IR standard | rank of first gold doc | FP2, R5 | Reference (gold doc ID) |
-| `retrieval_precision_at_k` | code | P1 | IR standard (Redis) | noise ratio in top-k | FP3 | Reference (gold doc ID) |
+| `retrieval_precision_at_k` | code | P1 | IR standard (Redis) | top-k purity, only where the gold is complete (noise reaching the generator; a cause of FP4, **not** FP3 — roadmap C-3) | FP4 (cause) | Reference (complete gold only) |
 | `faithfulness_judge` | LLM-as-judge | P3 (LLM-judge, ref-free) | RAGAS / literature — **not in course** | grounded in retrieved context | FP4 | **Reference-free** |
 | `citation_accuracy` | code + LLM | P1 + P3 hybrid | **Novel** — inspired by Magesh et al. (2025) misgrounding finding | citation exists AND supports claim | FP4 | **Reference-free** |
 | `completeness_judge` | LLM-as-judge | P3 (ref-free) / P2 (ref-based on multi-doc) | **Novel** — extends course P3 to multi-part queries | all sub-questions answered | FP7 | Hybrid: ref-free on single-Q, ref-based on `multi-doc` |

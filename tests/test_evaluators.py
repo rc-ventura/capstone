@@ -14,6 +14,10 @@ def ref(chunk_ids=(), arxiv_ids=()):
     return {"gold_chunk_ids": list(chunk_ids), "gold_arxiv_ids": list(arxiv_ids)}
 
 
+# metadata under which precision is defined (roadmap P6 / D-8): the gold is complete.
+ADJ = {"review": {"state": "adjudicated"}}
+
+
 # --- recall_at_k ---------------------------------------------------------
 
 def test_recall_full():
@@ -62,12 +66,46 @@ def test_mrr_absent():
 
 def test_precision_at_k():
     # 2 of 3 retrieved are gold
-    assert math.isclose(ev.precision_at_k(["a", "b", "x"], [], ref(chunk_ids=["a", "b"])), 2 / 3)
+    r = ref(chunk_ids=["a", "b"])
+    assert math.isclose(ev.precision_at_k(["a", "b", "x"], [], r, metadata=ADJ), 2 / 3)
 
 
 def test_precision_empty_gold_skips():
     # unanswerable/stale: no gold labels -> precision is undefined by design
-    assert ev.precision_at_k(["a"], [], ref()) is None
+    assert ev.precision_at_k(["a"], [], ref(), metadata=ADJ) is None
+
+
+def test_precision_none_for_single_paper_gold():
+    # roadmap P6 / D-8: 1-paper gold of answerable/persona is not known to be complete, so a
+    # perfect retrieval would score 1/k (0.2 at k=5) because the rest is unjudged, not wrong.
+    meta = {"slice": "answerable", "review": {"state": "human_reviewed"}}
+    assert ev.precision_at_k(CHUNKS, PAPERS, ref(arxiv_ids=["p1"]), metadata=meta) is None
+
+
+def test_precision_none_without_metadata():
+    # no evidence of completeness -> undefined (safe default)
+    assert ev.precision_at_k(CHUNKS, PAPERS, ref(arxiv_ids=["p1", "p2"])) is None
+
+
+def test_precision_defined_for_known_item_multidoc():
+    meta = {"slice": "multi-doc", "review": {"state": "human_reviewed"}}
+    got = ev.precision_at_k(CHUNKS, PAPERS, ref(arxiv_ids=["p1", "p2"]), metadata=meta)
+    assert math.isclose(got, 2 / 5)
+
+
+# --- is_gold_complete ----------------------------------------------------
+
+def test_gold_complete_rules():
+    two = ref(arxiv_ids=["p1", "p2"])
+    one_chunk = ref(chunk_ids=["p1:aaa"])
+    assert ev.is_gold_complete(two, {"slice": "multi-doc"})  # known-item: named papers
+    assert not ev.is_gold_complete(ref(), {"slice": "multi-doc", "open_topic": True})
+    assert not ev.is_gold_complete(two, {"slice": "multi-doc", "open_topic": True})  # pending
+    assert not ev.is_gold_complete(one_chunk, {"slice": "answerable"})
+    assert not ev.is_gold_complete(one_chunk, {"slice": "persona"})
+    assert ev.is_gold_complete(one_chunk, ADJ)  # adjudicated: complete w.r.t. the judged pool
+    assert not ev.is_gold_complete(ref(), ADJ)  # no gold at all: nothing to be complete about
+    assert not ev.is_gold_complete(two, None)
 
 
 # --- is_retrieval_evaluable (skip rules) --------------------------------
@@ -195,15 +233,16 @@ def test_mrr_paper_gold_not_shifted_by_chunk_list():
 
 def test_precision_paper_gold_with_chunk_ids_present():
     # Regression: chunk ids were compared against paper gold -> always 0.0.
-    assert math.isclose(ev.precision_at_k(CHUNKS, PAPERS, ref(arxiv_ids=["p1"])), 1 / 5)
-    assert math.isclose(ev.precision_at_k(CHUNKS, PAPERS, ref(arxiv_ids=["p1", "p2"])), 2 / 5)
+    assert math.isclose(ev.precision_at_k(CHUNKS, PAPERS, ref(arxiv_ids=["p1"]), metadata=ADJ), 1 / 5)
+    two = ref(arxiv_ids=["p1", "p2"])
+    assert math.isclose(ev.precision_at_k(CHUNKS, PAPERS, two, metadata=ADJ), 2 / 5)
 
 
 def test_paper_level_rank_dedups_duplicate_chunks_keeping_order():
     # decisions.md 2026-09-27: top-5 can hold 3 chunks of one paper.
     dup_chunks = ["pA:1", "pA:2", "pA:3", "pB:4", "pC:5"]
     assert ev.mrr(dup_chunks, [], ref(arxiv_ids=["pB"])) == 1 / 2  # rank among distinct papers
-    assert math.isclose(ev.precision_at_k(dup_chunks, [], ref(arxiv_ids=["pB"])), 1 / 3)
+    assert math.isclose(ev.precision_at_k(dup_chunks, [], ref(arxiv_ids=["pB"]), metadata=ADJ), 1 / 3)
 
 
 def test_paper_ids_derived_from_chunk_ids_when_not_provided():
@@ -224,7 +263,7 @@ def test_chunk_level_ignores_arxiv_list():
 
 def test_empty_retrieval_with_gold():
     assert ev.mrr([], [], ref(arxiv_ids=["p1"])) == 0.0
-    assert ev.precision_at_k([], [], ref(arxiv_ids=["p1"])) == 0.0
+    assert ev.precision_at_k([], [], ref(arxiv_ids=["p1"]), metadata=ADJ) == 0.0
     assert ev.recall_at_k([], [], ref(arxiv_ids=["p1"])) == 0.0
 
 

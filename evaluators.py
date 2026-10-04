@@ -27,6 +27,25 @@ def is_retrieval_evaluable(reference_outputs: dict[str, Any], metadata: dict[str
     return bool(_gold_chunk_ids(reference_outputs) or _gold_arxiv_ids(reference_outputs))
 
 
+def is_gold_complete(reference_outputs: dict[str, Any], metadata: dict[str, Any] | None) -> bool:
+    """True only where the gold is the COMPLETE relevant set, so "not in gold" may be read as an error.
+
+    Derived from metadata that already exists (no stored flag, no dataset migration; ADR-001
+    avoids two sources of truth), roadmap P6 / D-8:
+    - multi-doc known-item: by definition "relevant = the papers named in the question";
+    - review.state == "adjudicated": a human judged the retrieved candidates (mini-pooling),
+      so the gold is complete with respect to that pool only (roadmap Hole@k, D-10).
+    Everything else (answerable/persona 1-paper gold, open-topic pending, no metadata) is False:
+    other papers may also answer, and nobody judged them.
+    """
+    metadata = metadata or {}
+    if not (_gold_chunk_ids(reference_outputs) or _gold_arxiv_ids(reference_outputs)):
+        return False
+    if (metadata.get("review") or {}).get("state") == "adjudicated":
+        return True
+    return metadata.get("slice") == "multi-doc" and not metadata.get("open_topic")
+
+
 def _arxiv_id_of_chunk(chunk_id: str) -> str:
     # utils.chunk_id() == f"{arxiv_id}:{sha1[:12]}"; kept as a string split so this
     # module stays free of utils/config imports (config needs API keys at import time).
@@ -144,14 +163,20 @@ def precision_at_k(
     *,
     level: str = "paper",
     k: int | None = None,
+    metadata: dict[str, Any] | None = None,
 ) -> float | None:
-    """Fraction of the retrieved top-k (at the gold's level) that is gold-labeled (FP3 noise).
+    """Top-k purity: fraction of the retrieved top-k (at the gold's level) that is gold-labeled.
 
-    Meaningful only where the gold is the complete relevant set (or adjudicated);
-    by design we currently call it only on examples with non-empty gold. At paper
-    level the denominator is the number of DISTINCT papers retrieved. Whether this
-    metric should run at all for single-document gold is open (roadmap P6).
+    Reads "not in gold" as an error, so it is defined ONLY where the gold is complete
+    (`is_gold_complete`, roadmap P6 / D-8); otherwise None. With a 1-paper gold and k=5 the
+    ceiling is 1/5 = 0.2 even for perfect retrieval, because the other papers are unjudged,
+    not wrong. Without `metadata` there is no evidence of completeness -> None.
+    It is a diagnostic of noise reaching the generator (a cause of Barnett's FP4); it does NOT
+    measure FP3, which needs a selection step between retrieval and prompt (roadmap C-3).
+    At paper level the denominator is the number of DISTINCT papers retrieved.
     """
+    if not is_gold_complete(reference_outputs, metadata):
+        return None
     ranked_gold = _ranked_and_gold(
         retrieved_chunk_ids, retrieved_arxiv_ids, reference_outputs, level=level, k=k
     )

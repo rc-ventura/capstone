@@ -48,10 +48,10 @@ Why (R5 — weak ranking): it is the direct target of the reranker gate (CKPT-4)
 
 **`retrieval_precision_at_k`** — *fraction of the top-k that is gold.*
 What it is: of the k retrieved, how many are gold-labeled.
-Measures: noise — how much irrelevant material competes for the generator's attention.
-Why (FP3 — irrelevant retrieval/noise): exposes noise injection (e.g. the dedup collapse noted in decisions.md). **Honesty constraint (pooling bias)**: only
-computed where there is a non-empty, adjudicable gold; in examples with no judgment of
-irrelevance for the other docs, treating non-gold as an error would be false.
+Measures: top-k purity — how much non-gold material competes for the generator's attention.
+Why (noise reaching the generator, a **cause of FP4**; Barnett's FP3 is "retrieved but did not make it into the context" and needs a selection step, so it is not measured here — roadmap C-3): exposes noise injection (e.g. the dedup collapse noted in decisions.md). **Honesty constraint (pooling bias)**: only
+computed where the gold is **complete** (`is_gold_complete`: multi-doc known-item, or `review.state=adjudicated`); in examples with no judgment of
+irrelevance for the other docs, treating non-gold as an error would be false. With a 1-paper gold the ceiling is 1/k (0.2 at k=5), so it returns `None` there (roadmap P6 / D-8).
 
 ### 3.2 Surface 2 — Generation
 
@@ -127,7 +127,7 @@ configuration — used in the EXP-0-baseline report.
 **Retrieval semantics (decision already documented in the review addendum / lesson L1):**
 recall/hit/MRR count only gold labels; retrieved docs outside the gold are
 **unjudged**, never automatically irrelevant — this eliminates pooling bias.
-`precision_at_k` is only computable where the gold is non-empty. `open_topic` examples
+`precision_at_k` is only computable where the gold is complete (`is_gold_complete`; roadmap P6 / D-8): the earlier wording "only in `unanswerable`/`stale`" was inconsistent, because their gold is empty and the metric is skipped there. `open_topic` examples
 (`retrieval_gold=pending-adjudication`) are **skipped** from the retrieval metrics until the
 EXP-0 mini-pooling.
 
