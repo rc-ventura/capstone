@@ -192,6 +192,7 @@ Why decide **before** EXP-0: once the baseline is recorded, switching the unit c
 
 ## Relation to ADRs and next steps
 
+- **ADR-005** ([retrieval unit](../adrs/0005-retrieval-unit-whole-abstract.md)) and **ADR-006** ([gold granularity and metric policy](../adrs/0006-retrieval-gold-granularity-and-metrics.md)) — record the decisions taken from this lesson.
 - **ADR-001 / ADR-003** — origin of the two gold types (chunk vs. paper): `answerable`/`persona` by chunk; `multi-doc` by paper.
 - **`docs/roadmap/ckpt-0.6.1b-metrics-roadmap.md`** — decisions **D-1**, **D-2**, **D-7** (new), **P5**, **P6**; log §5.
 - **`docs/plan.md`** — CKPT-3 (chunking) and §2b (gold map) with a note pointing to this lesson.

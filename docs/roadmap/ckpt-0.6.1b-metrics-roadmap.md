@@ -11,7 +11,7 @@
 |---|---|---|
 | P1 Shifted MRR (gold per paper) | ✅ done, **not committed** | `evaluators.py` |
 | P2 precision = 0 (gold per paper) | ✅ done, **not committed** | same |
-| P3 chunk × paper levels mixed (cause of P1/P2) | ✅ done, **not committed** | helper `_ranked_and_gold`; `ranx` oracle in tests |
+| P3 chunk × paper levels mixed (cause of P1/P2) | ✅ done, **not committed** | helper `_ranked_and_gold`; `ir-measures` oracle in tests (L-3) |
 | P4 `f1_summary_evaluator` with invalid format | ✅ done, **not committed** | signature + return `{"results": [...]}` |
 | P5 hit@k ≡ recall@k with 1 gold | ✅ **implemented, not committed** | paper as the default level (D-1), `k`, `hit_at_ks`, `primary_retrieval_metrics` (D-2) |
 | P6 `precision_at_k` with a 1-chunk gold | 🟡 **postponed at your request** | the whole-abstract baseline eliminates sibling chunks: reassess the scope (note in §6) |
@@ -24,7 +24,7 @@
 
 Verification of the batch already done: `uv run pytest` → 35 green tests; MRR (Mean Reciprocal Rank: 1 ÷ position of the first
 relevant document) from 0.167 → 1.0 and precision@k (fraction of the top-k that is relevant) from 0.0 → 0.2 in the cases that
-reproduced the bug; 600 random cases agree with `ranx`.
+reproduced the bug; 600 random cases agreed with the reference oracle (`ranx` at the time; now `ir-measures`, see L-3).
 
 ## 2. Metrics glossary (what each one measures)
 
@@ -114,15 +114,15 @@ section/table · limitations · **reflections anchored in our plan** · confiden
 |---|---|---|---|---|
 | L-1 | 2026-10-03 | Always compare **at the gold level**; deduplicate papers preserving order | Bugs P1–P3; `decisions.md` (same paper 3× in the top-5) | Implemented |
 | L-2 | 2026-10-03 | The summary evaluator follows the LangSmith contract: `(outputs, reference_outputs)` → `{"results":[{key,score}]}` | `langsmith` 0.13.0 (`extra="forbid"`) + course | Implemented |
-| L-3 | 2026-10-03 | `ranx` as a **test oracle (dev)** | `bassani-2022-ranx.md` (partial) + empirical test below | **Awaiting you** (see note) |
+| L-3 | 2026-10-03 | Test oracle for the retrieval formulas: **`ir-measures`** (wraps `trec_eval`; dev-only). `ranx` removed (22 extra packages vs 4; `uv.lock` −469/+27 lines). Oracle test extended to the `k` cutoff and to paper gold derived from chunk ids. | `bassani-2022-ranx.md` (partial) + empirical test below | ✅ **Decided and implemented** (user approved 2026-10-03; not an ADR: dev-only tooling) |
 | L-4 | 2026-10-03 | Retrieval evaluators: **default level = paper** (`level="paper"`), `level="chunk"` as a diagnostic, `k` truncates the raw list before dedup | D-1/D-2 | Implemented |
-| D-1 | 2026-10-03 | Retrieval gold **per paper**; exact chunk only as a diagnostic (config 500/0). No adjudication of siblings in EXP-0. | §3; measurements in the [lesson](../learning-lessons/retrieval_unit_and_gold_granularity.md) | ✅ **Decided** (implemented in P5) |
-| D-2 | 2026-10-03 | Gold of 1 paper → report **hit@k + MRR** (+ hit@1/3/5 curve); gold of 2+ papers → **recall@k** (primary) + hit@k + MRR | P5 | ✅ **Decided** (`primary_retrieval_metrics`, `hit_at_ks`) |
+| D-1 | 2026-10-03 | Retrieval gold **per paper**; exact chunk only as a diagnostic (config 500/0). No adjudication of siblings in EXP-0. | §3; measurements in the [lesson](../learning-lessons/retrieval_unit_and_gold_granularity.md) | ✅ **Decided** (implemented in P5; recorded in [ADR-006](../adrs/0006-retrieval-gold-granularity-and-metrics.md)) |
+| D-2 | 2026-10-03 | Gold of 1 paper → report **hit@k + MRR** (+ hit@1/3/5 curve); gold of 2+ papers → **recall@k** (primary) + hit@k + MRR | P5 | ✅ **Decided** (`primary_retrieval_metrics`, `hit_at_ks`; recorded in [ADR-006](../adrs/0006-retrieval-gold-granularity-and-metrics.md)) |
 | D-3 | — | Run BM25 in parallel with every new retriever to detect lexical bias of the synthetic gold? | `thakur…` reflection 4 (analogy) | Proposal |
 | D-4 | — | `precision_at_k` only with complete gold + `distinct_papers@k` separately? | P6 | Proposal |
 | D-5 | — | Abstention: LLM judge as ground truth + heuristic as a cheap baseline; structured marker only in CKPT-6? | P7 | Proposal |
 | D-6 | — | Abstention: gate = recall **with** a mandatory over-refusal guardrail, per slice, with CI? | P8 | Proposal |
-| D-7 | 2026-10-03 | **Baseline = one record per abstract**; 500/0 chunking becomes an EXP-3 arm. Measured: retrieval ≈ equal (same hit@5; 5 distinct papers vs 3.8), 2.6× input tokens, 2.2× cost, +8% latency. **Contingency:** if the golden set's bias (generated from chunks) harms the metrics, regenerate `answerable`/`persona` from the whole abstract | [lesson](../learning-lessons/retrieval_unit_and_gold_granularity.md) | ✅ **Approved**; implementation pending (next slice) |
+| D-7 | 2026-10-03 | **Baseline = one record per abstract**; 500/0 chunking becomes an EXP-3 arm. Measured: retrieval ≈ equal (same hit@5; 5 distinct papers vs 3.8), 2.6× input tokens, 2.2× cost, +8% latency. **Contingency:** if the golden set's bias (generated from chunks) harms the metrics, regenerate `answerable`/`persona` from the whole abstract | [lesson](../learning-lessons/retrieval_unit_and_gold_granularity.md) | ✅ **Approved**; implementation pending (next slice); recorded in [ADR-005](../adrs/0005-retrieval-unit-whole-abstract.md) |
 
 **L-3 note (empirical test done in a throwaway environment, without touching the project):**
 
@@ -134,7 +134,7 @@ section/table · limitations · **reflections anchored in our plan** · confiden
 | `precision@k` | ÷ k | ÷ k (`P@5 = 0.2` with 1 hit) |
 | Basis | poster: "tested against trec_eval"; paper not read | wrapper of `trec_eval` itself (community reference) |
 Both agree with our formulas in the tested cases. Recommendation: **switch to `ir-measures`** (same guarantee
-with ~5× fewer dependencies) and keep `ranx` out of the lock file; the property test stays the same. Only `ranx` provides the paired
+with ~5× fewer dependencies) and keep `ranx` out of the lock file (**done 2026-10-03**; the property test only changed its `_oracle` helper). Only `ranx` provides the paired
 tests (t, Fisher, Tukey) — if you want statistical significance (P15), reassess.
 
 ### Corrections to existing documents (proposals; **none applied**)
@@ -212,7 +212,7 @@ becomes 0 even if the system brings **another chunk of the same paper** that ans
 - `level="paper"` (default) and `level="chunk"` (diagnostic) in `hit_rate`, `recall_at_k`, `mrr`, `precision_at_k`; optional `k` (truncates the raw top-k before dedup);
 - `hit_at_ks(..., ks=(1, 3, 5))` — the hit@1/3/5 curve;
 - `primary_retrieval_metrics(reference_outputs)` — 1 gold paper → `["hit", "mrr"]`; 2+ → `["recall", "hit", "mrr"]`; no gold → `[]`.
-- Tests: 44 green (includes the real "checkpoint handoff" case: MRR 1.0 at paper level and 0.5 at chunk level) and the `ranx` oracle (now with `level="chunk"` for the diagnostic).
+- Tests: 46 green (includes the real "checkpoint handoff" case: MRR 1.0 at paper level and 0.5 at chunk level) and the `ir-measures` oracle (see L-3), now also covering the `k` cutoff, the `hit_at_ks` curve and paper gold derived from chunk ids, and `level="chunk"` for the diagnostic.
 - Checked on the real golden set (baseline retriever, k=5): `answerable` (n=40) hit@1/3/5 = 1.000, MRR 1.000, exact-chunk diagnostic 0.975; `persona` (n=10) same, with diagnostic 1.000; `multi-doc` (n=10) recall@5 0.667, hit@1/3/5 = 0.70 / 0.70 / 0.90, MRR 0.740.
 - **Effect on interpretation:** in `answerable`/`persona` hit@k is already **saturated at 100%** on the baseline: these slices do not discriminate retrieval in EXP-0 (the curve is only informative in `multi-doc`, `deep-hit` and after the index change).
 
@@ -258,7 +258,7 @@ In addition: **rename the metric's role** in the plan from "noise/FP3" to "top-k
 2. `precision_at_k` returns `None` if `gold_complete` is false/absent.
 3. New `distinct_papers_at_k(retrieved_chunk_ids, retrieved_arxiv_ids)` (pure, no gold).
 4. `hole_rate_at_k(ranked, judged_ids)` (prepared; used in EXP-0).
-5. Short ADR-005: "precision semantics" + correction C-3 in the plan. Tests: 1-chunk gold ⇒ `None`; known multi-doc ⇒ a value; same paper 3× ⇒ `distinct_papers@5 = 0.6`.
+5. Short ADR-007 (ADR-005 and ADR-006 are taken, see §5): "precision semantics" + correction C-3 in the plan. Tests: 1-chunk gold ⇒ `None`; known multi-doc ⇒ a value; same paper 3× ⇒ `distinct_papers@5 = 0.6`.
 
 **(8) What I need from you:** (i) do you agree with renaming precision's role? (ii) do you accept judging the holes in EXP-0 (D-1/C)? (iii) does diversity (B) become an official metric or only a diagnostic?
 
@@ -371,6 +371,7 @@ Proposed gate: `abstention_recall ≥ 90%` on `unanswerable` **and** `over_refus
 
 > Kept as they were in version 1 for traceability. P5–P8 were **replaced** by §6; the old section
 > "Scientific grounding (summaries)" was **replaced by the reading notes** (§4).
+> Mentions of `ranx` as the oracle below are historical: it was swapped for `ir-measures` on 2026-10-03 (L-3).
 
 ## P1 + P2 + P3 — Normalize the comparison level (chunk × paper) — ✅ EXECUTED
 
@@ -510,7 +511,7 @@ It removes the most common objection to evals with an LLM judge ("the model eval
 1. `uv run pytest` green, including the `ranx` oracle (P3) and the tests for P4/P7/P8/P10.
 2. Reproduction of the 5 evidence commands returns the expected values (1.0, 0.2, valid shape, abstention by paraphrase, normalized token-F1).
 3. `docs/plan.md` §3/§4 and `ckpt-0.6-plan.md` §3 updated to reflect the new semantics (recall×hit, precision, F1/abstention, token-F1).
-4. ADR-005 (precision semantics) and an entry in `docs/decisions.md` → Observations describing the correction of the IR bugs **before** EXP-0.
+4. ADR-007 (precision semantics) and an entry in `docs/decisions.md` → Observations describing the correction of the IR bugs **before** EXP-0.
 5. One commit per point (messages `fix(evaluators): ...`), without mixing with the uncommitted work of CKPT-0.6.
 
 ---
