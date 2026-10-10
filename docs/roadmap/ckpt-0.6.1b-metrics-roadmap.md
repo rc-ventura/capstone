@@ -1,9 +1,9 @@
 # Living Roadmap — CKPT-0.6.1b: fixing and hardening the metrics
 
-> **Iterative document (version 3, 2026-10-04).** Rewritten at every discussion round; the current version is always this one.
+> **Iterative document (version 4, 2026-10-06).** Rewritten at every discussion round; the current version is always this one.
 > Writing rules: every metric cited comes with what it measures in parentheses when that is not obvious; every "design
 > error" is explained in plain language, with a numeric example, **alternatives researched before the recommendation**
-> and the decision recorded in the §5 log. P6 was decided on 2026-10-04 (§6); P7 and later are **proposals for discussion**.
+> and the decision recorded in the §5 log. P6 was decided on 2026-10-04, P7/P8 on 2026-10-06 (§6); P9 and later are **proposals for discussion**.
 
 ## 1. Current state
 
@@ -14,11 +14,11 @@
 | P3 chunk × paper levels mixed (cause of P1/P2) | ✅ done, committed (`907fa1a`, oracle swap `a9c375a`) | helper `_ranked_and_gold`; `ir-measures` oracle in tests (L-3) |
 | P4 `f1_summary_evaluator` with invalid format | ✅ done, committed (`907fa1a`) | signature + return `{"results": [...]}` |
 | P5 hit@k ≡ recall@k with 1 gold | ✅ **implemented**, committed (`28dd93f`) | paper as the default level (D-1), `k`, `hit_at_ks`, `primary_retrieval_metrics` (D-2) |
-| P6 `precision_at_k` with a 1-paper gold | ✅ **decided 2026-10-04; code + tests implemented, not committed** | `is_gold_complete` (derived, no stored flag) + `precision_at_k` returns `None` unless the gold is complete (D-8). Deferrals D-10; pilot D-9/D-11 (§6) |
-| EXP-0 pilot mini-pooling | 🟡 **planned** (CKPT-0.8) | protocol and decision rule in §6 (P6, "Decision and execution"); runs after P7/P8 |
+| P6 `precision_at_k` with a 1-paper gold | ✅ **decided 2026-10-04; code + tests implemented, committed (`5faf69e`, `a2b7e30`)** | `is_gold_complete` (derived, no stored flag) + `precision_at_k` returns `None` unless the gold is complete (D-8). Deferrals D-10; pilot D-9/D-11 (§6) |
+| EXP-0 pilot mini-pooling | 🟢 **unblocked — next** (CKPT-0.8) | protocol and decision rule in §6 (P6, "Decision and execution"); P7/P8 done (2026-10-06) |
 | **D-7 baseline = one record per abstract** | ✅ **implemented** (2026-10-04, ADR-005) | `config.BASELINE`/`CHUNKED_500_0`, `utils.chunk_documents(…, 0, 0)`, new cache; golden builder pinned to the 500/0 arm |
-| P7 abstention detection via `startswith` | 🟡 **proposal rewritten** (§6) | awaiting D-5 |
-| P8 abstention as accuracy | 🟡 **proposal rewritten** (§6) | awaiting D-6 |
+| P7 abstention detection via `startswith` | ✅ **decided 2026-10-06 (D-5); implemented 2026-10-06** | `abstained()` — normalization + two marker families (16 paraphrase tests, 10 "know"-containing non-refusals); judge at 0.6.3; divergence in EXP-0; marker `REFUSE_*` stays a CKPT-6 experiment |
+| P8 abstention as accuracy | ✅ **decided 2026-10-06 (D-6); implemented 2026-10-06** | `abstention_summary`: `abstention_recall` (gate) + `over_refusal_rate` (guardrail) + `abstention_f1` (diagnostic), per slice, raw counts + Wilson 95% CI; `abstention_accuracy` removed from `f1_summary_evaluator`; over-refusal tolerance fixed at EXP-0 vs the baseline CI |
 | P9–P11 | 🟠 draft, **updated with the reading notes (fichamentos)** (§7) | discuss after P5–P8 |
 | P12–P17 (new, arising from the reading notes) | 🆕 listed in §7 | triage pending |
 | Reading notes | ✅ **15/15 written** | §4 |
@@ -121,10 +121,10 @@ section/table · limitations · **reflections anchored in our plan** · confiden
 | D-2 | 2026-10-03 | Gold of 1 paper → report **hit@k + MRR** (+ hit@1/3/5 curve); gold of 2+ papers → **recall@k** (primary) + hit@k + MRR | P5 | ✅ **Decided** (`primary_retrieval_metrics`, `hit_at_ks`; recorded in [ADR-006](../adrs/0006-retrieval-gold-granularity-and-metrics.md)) |
 | D-3 | — | Run BM25 in parallel with every new retriever to detect lexical bias of the synthetic gold? And/or put BM25's top-5 in the EXP-0 pool? | `thakur…` reflection 4 (analogy); NIST §6 (pool from more than one retriever type) | Proposal — **decide after the pilot** (D-9); no second retriever exists until CKPT-1 |
 | D-4 | 2026-10-04 | `precision_at_k` only with complete gold; `distinct_papers@k` separately? | P6 | ✅ **Decided**: first part → D-8 (implemented); second part deferred to EXP-3 (D-10) |
-| D-5 | — | Abstention: LLM judge as ground truth + heuristic as a cheap baseline; structured marker only in CKPT-6? | P7 | Proposal |
-| D-6 | — | Abstention: gate = recall **with** a mandatory over-refusal guardrail, per slice, with CI? | P8 | Proposal |
+| D-5 | 2026-10-06 | Abstention: **D — hybrid A+B**. A (heuristic `abstained()` with two marker families, tests: 16 paraphrases + 10 non-refusals containing "know") as the cheap floor; B (`abstention_quality` LLM judge, T=0, answer-only, validated on ~50 real stratified answers) as the ground truth at 0.6.3; EXP-0 reports the heuristic×judge divergence (target ≥ 90%). C (structured `REFUSE_*` marker) stays a CKPT-6 experiment — the baseline must measure the real prompt. | `abstention-benchmarks.md` reflections 3–4 (AbstentionBench C.3.1 rejected string matching; OR-Bench: cheap check ≈ judge only for predictable safety phrases); user approved 2026-10-06 | ✅ **Decided and implemented** (A implemented 2026-10-06; B at 0.6.3; divergence at EXP-0). Recorded in [ADR-007](../adrs/0007-abstention-detection-and-reporting.md) |
+| D-6 | 2026-10-06 | Abstention gate = **B**: `abstention_recall` (the ≥90% gate on `unanswerable`) **with** a mandatory `over_refusal_rate` guardrail, per slice, raw counts + **Wilson** 95% CI; `abstention_f1` diagnostic only. Numeric over-refusal tolerance: defined at EXP-0 against the baseline's CI. Wilson, not Student's t: a proportion has no separate variance to estimate (σ² = p(1−p)), so the small-sample fix is inverting the score test, not widening with t(n−1) — see the P8 decision note in §6 | `abstention-benchmarks.md` reflections 1–2/5–8 (RefusalBench FRR/MRR trade-off r = −0.78; GPT-4o refused 14.6× more than needed; n=15 → one example = 6.7 p.p.); user approved 2026-10-06 (Wilson-vs-t rationale added the same day) | ✅ **Decided and implemented** (2026-10-06). Recorded in [ADR-007](../adrs/0007-abstention-detection-and-reporting.md) |
 | D-7 | 2026-10-03 | **Baseline = one record per abstract**; 500/0 chunking becomes an EXP-3 arm. Measured: retrieval ≈ equal (same hit@5; 5 distinct papers vs 3.8), 2.6× input tokens, 2.2× cost, +8% latency. **Contingency:** if the golden set's bias (generated from chunks) harms the metrics, regenerate `answerable`/`persona` from the whole abstract | [lesson](../learning-lessons/retrieval_unit_and_gold_granularity.md) | ✅ **Approved and implemented** (2026-10-04); recorded in [ADR-005](../adrs/0005-retrieval-unit-whole-abstract.md) |
-| D-8 | 2026-10-04 | `precision_at_k` is defined only where the gold is **complete**: `is_gold_complete` = multi-doc known-item ("relevant = the papers named in the question", by definition) **or** `review.state == "adjudicated"`; otherwise `None`. **Derived from existing metadata, not a stored flag.** | P6; NIST/Büttcher (unjudged ≠ irrelevant; treating it as irrelevant is a floor); ADR-001 (no two sources of truth); the dataset sync only creates missing examples, so a new field would not reach the 100 existing ones without a remote update | ✅ **Decided and implemented** (not committed). For adjudicated examples the gold is complete only **with respect to the judged pool** |
+| D-8 | 2026-10-04 | `precision_at_k` is defined only where the gold is **complete**: `is_gold_complete` = multi-doc known-item ("relevant = the papers named in the question", by definition) **or** `review.state == "adjudicated"`; otherwise `None`. **Derived from existing metadata, not a stored flag.** | P6; NIST/Büttcher (unjudged ≠ irrelevant; treating it as irrelevant is a floor); ADR-001 (no two sources of truth); the dataset sync only creates missing examples, so a new field would not reach the 100 existing ones without a remote update | ✅ **Decided and implemented** (committed `5faf69e`). For adjudicated examples the gold is complete only **with respect to the judged pool** |
 | D-9 | 2026-10-04 | EXP-0 mini-pooling scope = the 5 open-topic + a **pilot** (10 random `answerable`/`persona`, stratified 8+2, fixed seed, plus up to 4 `answerable` cases where the gold was not rank 1) ≈ 80 judgments, **not** all 50 single-gold examples (≈ 225). Known-item multi-doc is not pooled (D-8 definition). | Facts A/B/C below (§6); `ir-pooling…` (≤ ~200–250 judgments is feasible, so the argument is order of work, not feasibility) | ✅ **Decided** (protocol in §6; runs at CKPT-0.8) |
 | D-10 | 2026-10-04 | `distinct_papers@k` **deferred to EXP-3** (always 5.00 on the whole-abstract baseline; no paper defines it, it is our own diagnostic). `Hole@k` **built together with the mini-pooling**, and the dataset must also store papers judged **irrelevant** (it keeps only positives today). | Measured: 5.00 in all three slices; BEIR §6/Tab. 4 defines Hole@10 (one dataset, 50 queries, top-10, single round); before judgments Hole@5 would be 0.8 on every 1-paper example | ✅ **Decided**. Deadline for `Hole@k`: before the first retriever comparison (CKPT-1) |
 | D-11 | 2026-10-04 | Pilot decision rule, fixed **before** looking at the data. *x* = judged-relevant ÷ judged candidates in the 10-random sample: *x* ≤ 10% → keep the single gold; *x* ≥ 25% → judge the remaining 40 examples (pilot judgments are reused); 10–25% → review the cases and decide. | Engineering judgment, **no source gives these numbers**. Reference: *x* = 25% means one extra answering paper per question on average (true precision@5 ceiling 0.40 instead of 0.20) | ✅ **Decided** |
@@ -263,7 +263,7 @@ In addition: **rename the metric's role** in the plan from "noise/FP3" to "top-k
 2. `precision_at_k` returns `None` if `gold_complete` is false/absent.
 3. New `distinct_papers_at_k(retrieved_chunk_ids, retrieved_arxiv_ids)` (pure, no gold).
 4. `hole_rate_at_k(ranked, judged_ids)` (prepared; used in EXP-0).
-5. Short ADR-007 (ADR-005 and ADR-006 are taken, see §5): "precision semantics" + correction C-3 in the plan. Tests: 1-chunk gold ⇒ `None`; known multi-doc ⇒ a value; same paper 3× ⇒ `distinct_papers@5 = 0.6`.
+5. Short ADR (**renumbered 008 — ADR-007 was taken by abstention, 2026-10-06**): "precision semantics" + correction C-3 in the plan. Tests: 1-chunk gold ⇒ `None`; known multi-doc ⇒ a value; same paper 3× ⇒ `distinct_papers@5 = 0.6`.
 
 **(8) What I need from you:** (i) do you agree with renaming precision's role? (ii) do you accept judging the holes in EXP-0 (D-1/C)? (iii) does diversity (B) become an official metric or only a diagnostic?
 
@@ -276,11 +276,11 @@ In addition: **rename the metric's role** in the plan from "noise/FP3" to "top-k
 - **B — structural limit of the method.** Candidates for the mini-pooling come from the baseline's top-5, so a paper that only another retriever would find is never shown to the judge and never enters the gold; the baseline's own picks all get judged. BEIR Tab. 4 shows the effect after judging the holes: nDCG@10 ANCE 0.654 → 0.735 vs BM25 0.656 → 0.668. No choice of scope removes it; only the source of the candidates does (BM25 in the pool, D-3, or judging each new retriever's holes at CKPT-1).
 - **C — sequencing constraint.** A judgment is "this candidate answers *this* question". Regenerating `answerable`/`persona` (the D-7 contingency, open) voids the judgments, so judge a small sample before judging everything.
 
-*Implemented (2026-10-04, not committed).*
+*Implemented (2026-10-04; committed in `5faf69e` + `a2b7e30`).*
 - `evaluators.is_gold_complete(reference_outputs, metadata)` and `precision_at_k(..., metadata=None)`, which returns `None` unless the gold is complete (D-8). Without `metadata` the result is `None` (safe default).
 - Tests: 62 green (new: `None` for a 1-paper gold, `None` without metadata, defined for known-item and adjudicated, `is_gold_complete` rules; the `ir-measures` oracle now passes adjudicated metadata).
 - Text corrections: `docs/plan.md` §4 evaluator catalog, `ckpt-0.6-plan.md` §3.1/§3.3, C-3 row (partly), the note above.
-- **Changed from steps (7):** the completeness flag is derived, not stored (no migration of the 100 LangSmith examples; D-8). Steps 3–4 (`distinct_papers@k`, `hole_rate_at_k`) are deferred (D-10). Step 5 (ADR-007) is still pending: write it together with the adjudication data model (judged-relevant and judged-irrelevant ids), after the pilot.
+- **Changed from steps (7):** the completeness flag is derived, not stored (no migration of the 100 LangSmith examples; D-8). Steps 3–4 (`distinct_papers@k`, `hole_rate_at_k`) are deferred (D-10). Step 5 (ADR-**008**; renumbered because [ADR-007 was taken by abstention](../adrs/0007-abstention-detection-and-reporting.md), 2026-10-06) is still pending: write it together with the adjudication data model (judged-relevant and judged-irrelevant ids), after the pilot.
 
 *Pilot protocol (CKPT-0.8; decisions D-9, D-11).*
 1. Candidates for a question = the baseline's top-5 (whole abstract, k=5) minus the gold; for open-topic all 5 (no gold yet).
@@ -328,6 +328,8 @@ Any paraphrase ("I'm sorry, the context doesn't say…") counts as **not** absta
 
 **(8) What I need from you:** do you accept D? How many real answers are you willing to label (the literature uses 300 pairs; I proposed ~50 just for abstention, within a larger sample in P11)?
 
+**Decision and execution (2026-10-06; D-5).** Approved: **D — hybrid A+B; C stays a CKPT-6 experiment**; ~50 real answers for the judge's calibration. Implemented (2026-10-06): `abstained(answer)` with normalization (case, typographic apostrophes, whitespace) and **two marker families**: first-person ("i dont know", "i cannot find"…) and source-negative ("no papers found", "not in the context", "isnt in the"…). Design detail that the tests pin: "dont know" alone is **not** a marker, so an answer reporting the *paper's* uncertainty ("the authors dont know whether…") stays an answer. Tests: 16 refusal paraphrases (including the reproduced evidence "I'm sorry, the context doesn't say."), 10 non-refusals containing "know", the documented first-person-hedge false positive, and empty/None inputs. **Changed from steps (7):** step 2 ("f1_summary_evaluator starts using abstained") became moot — P8 step 2 moved abstention out of `f1_summary_evaluator` entirely, so `abstained()` is consumed by `abstention_summary`. Steps 3–4 (judge at 0.6.3; divergence report in EXP-0) remain scheduled. **Scope:** `abstained()` is **English-only** (the golden set is English; `PROMPT_V1` fixes no answer language — a non-English refusal reads as an answer). Not fixed by translating the marker list (the original trap on a new axis); the answers are the judge (natively multilingual) or a prompt-level language contract (CKPT-6). Pinned by `test_abstained_is_english_scoped`; recorded in ADR-007 trade-offs.
+
 ---
 
 ### P8 — Abstention measured as accuracy (and not as recall + over/under-refusal)
@@ -373,6 +375,14 @@ Proposed gate: `abstention_recall ≥ 90%` on `unanswerable` **and** `over_refus
 5. Entry in `decisions.md`: regression rule "a recall gain cannot come from an increase in over-refusal".
 
 **(8) What I need from you:** (i) do you accept B as the design? (ii) what tolerance for worsening of over-refusal (e.g., ≤ 1 example? ≤ 5 p.p.?) (iii) do you agree to keep F1 only as a diagnostic?
+
+**Decision and execution (2026-10-06; D-6).** Approved: **B**, with F1 as a diagnostic; the numeric over-refusal tolerance is **defined at EXP-0 against the baseline's CI** (fixing a number before a baseline exists would be arbitrary — the rule is "must not worsen beyond the baseline's confidence interval"). Implemented (2026-10-06): `abstention_summary(outputs, reference_outputs, examples)` reports, total and per `metadata.slice` (suffix `__<slice>`, via langsmith's supported `examples` arg), with raw counts + Wilson 95% CI in each result's `comment`:
+- `abstention_recall` — the gate (≥ 90% on `unanswerable`);
+- `over_refusal_rate` — the guardrail; regression rule recorded in `decisions.md`: *a recall gain cannot come from an increase in over-refusal*;
+- `abstention_f1` — diagnostic only.
+`f1_summary_evaluator` lost its `abstention_accuracy` key (token-F1 remains there; P9 reassesses it). The LangSmith contract is pinned by a test (`EvaluationResult` extra="forbid", the two "dumb systems" of the evidence table — the one that refuses everything now shows recall 100% **with** over_refusal 100%).
+
+**Wilson vs Student's t (author's question, 2026-10-06).** They answer the same worry — with n ~ 10–25 the naive interval (p̂ ± 1.96·se, "Wald") is too narrow — but they fix *different* problems, because the data type differs. Student's t corrects the interval for a **mean of continuous data** when the variance is unknown and must be estimated from the sample itself; the extra variability of σ̂ makes the tails heavier (df = n−1), and the interval widens. A **proportion has no separate variance to estimate**: the variance is a function of the very parameter (σ² = p(1−p)), so there is nothing for the t-curve to correct — applying t to a binomial proportion is a category error (approximations exist; none is standard practice). The correct small-sample fix is what Wilson does: **invert the score test** — instead of plugging p̂ into the standard error, solve for which p values are compatible with the observed k/n. This also keeps the interval inside [0, 1] and stays honest for extreme p (0/15, 15/15), where Wald produces nonsense: at 14/15 it returns [81%; 106%] — a precision above 100%. Sanity anchors: Wilson(10/10) = [72%; 100%], Wilson(14/15) = [70%; 99%] — one example swings the point estimate by 6.7 p.p., which is *why* the CI travels with every number. Caveat shared by Wilson, Wald and any binomial interval: the trials are assumed independent, and candidates within one question are not (§6, pilot note 4) — the CI is honest about sampling noise, not about clustering.
 
 ---
 
@@ -540,7 +550,7 @@ It removes the most common objection to evals with an LLM judge ("the model eval
 1. `uv run pytest` green, including the `ranx` oracle (P3) and the tests for P4/P7/P8/P10.
 2. Reproduction of the 5 evidence commands returns the expected values (1.0, 0.2, valid shape, abstention by paraphrase, normalized token-F1).
 3. `docs/plan.md` §3/§4 and `ckpt-0.6-plan.md` §3 updated to reflect the new semantics (recall×hit, precision, F1/abstention, token-F1).
-4. ADR-007 (precision semantics) and an entry in `docs/decisions.md` → Observations describing the correction of the IR bugs **before** EXP-0.
+4. ADR-008 (precision semantics; renumbered — ADR-007 was taken by abstention, 2026-10-06) and an entry in `docs/decisions.md` → Observations describing the correction of the IR bugs **before** EXP-0.
 5. One commit per point (messages `fix(evaluators): ...`), without mixing with the uncommitted work of CKPT-0.6.
 
 ---

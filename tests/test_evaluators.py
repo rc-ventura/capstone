@@ -174,7 +174,7 @@ def test_format_unknown_instruction():
     assert r["score"] == 0 and "no known" in r["reason"]
 
 
-# --- f1_summary_evaluator (0.6.2) ----------------------------------------
+# --- f1_summary_evaluator (0.6.2; abstention moved out, P8/D-6) ------------
 
 def _scores(out):
     return {r["key"]: r["score"] for r in out["results"]}
@@ -188,17 +188,7 @@ def test_f1_summary_basic():
     ]
     scores = _scores(ev.f1_summary_evaluator(outputs, refs))
     assert scores["f1_summary"] == 1.0
-    assert scores["abstention_accuracy"] == 1.0
-
-
-def test_f1_summary_detects_wrong_abstention():
-    outputs = [{"answer": "here is my confident answer"}]
-    refs = [{"answer": "gold", "should_abstain": True}]
-    assert _scores(ev.f1_summary_evaluator(outputs, refs))["abstention_accuracy"] == 0.0
-
-
-def test_f1_summary_omits_abstention_without_labels():
-    scores = _scores(ev.f1_summary_evaluator([{"answer": "a b"}], [{"answer": "a b"}]))
+    # P8/D-6: abstention_accuracy no longer lives here (abstention_summary reports it)
     assert set(scores) == {"f1_summary"}
 
 
@@ -216,7 +206,200 @@ def test_f1_summary_contract_with_langsmith():
     out = wrapped(runs, examples)
     results = out["results"] if isinstance(out, dict) else out.results
     parsed = [EvaluationResult(**r) for r in results]  # raises on any extra key
-    assert {p.key for p in parsed} == {"f1_summary", "abstention_accuracy"}
+    assert {p.key for p in parsed} == {"f1_summary"}
+
+
+# --- abstained() (P7/D-5: detection by paraphrase, not two exact phrases) ----
+
+# >= 15 refusal paraphrases: none of these starts with the two old fixed phrases
+REFUSALS = [
+    "I don't know.",
+    "I do not know the answer to that.",
+    "I'm sorry, the context doesn't say.",  # the reproduced P7 evidence: used to score 0.0
+    "The context does not contain that information.",
+    "No papers found in this period.",
+    "I cannot find any abstract addressing that.",
+    "I can't find the answer in the retrieved papers.",
+    "I couldn't find relevant papers on this topic.",
+    "I did not find any paper on this.",
+    "The retrieved abstracts don't cover this question.",
+    "None of the retrieved papers address this.",
+    "That information isn't in the context.",
+    "I have no information about that.",
+    "The corpus doesn't include a paper on this.",
+    "No relevant papers were found.",
+    "This is beyond the scope of the corpus.",
+]
+
+# >= 10 real answers containing "know"/"knowledge" that must NOT be read as refusals
+NOT_REFUSALS_WITH_KNOW = [
+    "As far as we know, all three papers use the same benchmark.",
+    "The authors don't know whether the effect generalizes to larger networks.",
+    "It is known that transformers suffer from hallucination.",
+    "The paper reviews what is currently known about multi-agent failure modes.",
+    "Nobody knows the exact scaling law, but the paper estimates it empirically.",
+    "We know from section 3 that the dataset contains 250 abstracts.",
+    "To the best of our knowledge, this is the first survey of its kind.",
+    "The model acknowledges it doesn't know the answer scale, and proposes a proxy.",
+    "I know this sounds counterintuitive, but the paper's result holds.",
+    "Knowing the limits of the corpus, the authors restrict claims to abstracts.",
+]
+
+
+def test_abstained_catches_paraphrases():
+    for r in REFUSALS:
+        assert ev.abstained(r), r
+
+
+def test_abstented_keeps_real_answers_with_know():
+    for a in NOT_REFUSALS_WITH_KNOW:
+        assert not ev.abstained(a), a
+
+
+def test_abstained_normalizes_case_quotes_and_apostrophes():
+    assert ev.abstained("I DON'T KNOW.")
+    assert ev.abstained("I don\u2019t know.")  # typographic apostrophe
+    assert ev.abstained("  no papers   found.  ")
+
+
+def test_abstained_empty_answer():
+    assert not ev.abstained("")
+    assert not ev.abstained(None)  # guarded by `answer or ""` in abstained()
+
+
+def test_abstained_first_person_hedge_is_a_known_false_positive():
+    # documented limitation (evaluators.abstained docstring): the judge (0.6.3) is
+    # the ground truth; EXP-0 measures the heuristic x judge divergence.
+    assert ev.abstained("I don't know whether the paper tests this, but the results suggest yes.")
+
+
+def test_abstained_is_english_scoped():
+    # The markers are English; PROMPT_V1 fixes no answer language but the golden set
+    # is English. A refusal in another language reads as an answer — the documented
+    # limitation (ADR-007 trade-offs). The judge (natively multilingual) is the
+    # reference for that case; the fix is NOT translating the marker list.
+    assert not ev.abstained("Desculpe, não encontrei nada sobre isso no contexto.")
+    assert not ev.abstained("Lo siento, no tengo esa información.")
+    assert not ev.abstained("Je ne sais pas.")
+
+
+# --- wilson_ci (P8/D-6: counts + CI, honest for n ~ 10-25) ------------------
+
+def test_wilson_anchors():
+    lo, hi = ev.wilson_ci(10, 10)
+    assert math.isclose(lo, 0.72, abs_tol=0.005) and math.isclose(hi, 1.0, abs_tol=1e-9)
+    lo, hi = ev.wilson_ci(0, 10)
+    assert lo == 0.0 and math.isclose(hi, 0.28, abs_tol=0.005)
+    lo, hi = ev.wilson_ci(14, 15)
+    assert math.isclose(lo, 0.70, abs_tol=0.005) and math.isclose(hi, 0.99, abs_tol=0.005)
+
+
+def test_wilson_rejects_bad_counts():
+    import pytest
+
+    with pytest.raises(ValueError):
+        ev.wilson_ci(0, 0)
+    with pytest.raises(ValueError):
+        ev.wilson_ci(16, 15)
+
+
+# --- abstention_summary (P8/D-6: recall + over-refusal, never accuracy) ------
+
+def _run_abstention(answers, shoulds, slices=None):
+    outputs = [{"answer": a} for a in answers]
+    refs = [{"should_abstain": s} for s in shoulds]
+    examples = None
+    if slices is not None:
+        from types import SimpleNamespace
+
+        examples = [SimpleNamespace(metadata={"slice": s}) for s in slices]
+    return ev.abstention_summary(outputs, refs, examples)
+
+
+def test_abstention_summary_never_refuses_dumb_system():
+    # P8's evidence table: answers everything -> accuracy would LOOK 75%, gate 0%
+    out = _scores(ev.abstention_summary(
+        [{"answer": "confident answer"}] * 10,
+        [{"should_abstain": True}] * 3 + [{"should_abstain": False}] * 7,
+    ))
+    assert out["abstention_recall"] == 0.0
+    assert out["over_refusal_rate"] == 0.0
+
+
+def test_abstention_summary_always_refuses_dumb_system():
+    # P8's evidence table: refuses everything -> gate 100% (passes!) but is useless;
+    # accuracy would be 25%. The guardrail exposes it.
+    out = _scores(ev.abstention_summary(
+        [{"answer": "I don't know."}] * 10,
+        [{"should_abstain": True}] * 3 + [{"should_abstain": False}] * 7,
+    ))
+    assert out["abstention_recall"] == 1.0
+    assert out["over_refusal_rate"] == 1.0
+
+
+def test_abstention_summary_perfect_system():
+    answers = ["I don't know."] * 3 + ["a real answer"] * 7
+    shoulds = [True] * 3 + [False] * 7
+    out = _scores(ev.abstention_summary(
+        [{"answer": a} for a in answers], [{"should_abstain": s} for s in shoulds]
+    ))
+    assert out["abstention_recall"] == 1.0
+    assert out["over_refusal_rate"] == 0.0
+    assert out["abstention_f1"] == 1.0
+
+
+def test_abstention_summary_reports_counts_and_wilson_ci_in_comment():
+    results = ev.abstention_summary(
+        [{"answer": "here is a confident answer"}] + [{"answer": "I don't know."}] * 14,
+        [{"should_abstain": True}] * 15,
+    )["results"]
+    recall = next(r for r in results if r["key"] == "abstention_recall")
+    assert "14/15" in recall["comment"] and "Wilson 95% CI" in recall["comment"]
+
+
+def test_abstention_summary_per_slice():
+    answers = ["I don't know.", "I can't find that.", "here is the answer anyway"]
+    shoulds = [True, True, True]  # 2 correct refusals in unanswerable, 1 miss in stale
+    slices = ["unanswerable", "unanswerable", "stale"]
+    out = _scores(_run_abstention(answers, shoulds, slices))
+    assert out["abstention_recall"] == 2 / 3
+    assert out["abstention_recall__unanswerable"] == 1.0
+    assert out["abstention_recall__stale"] == 0.0
+    assert "over_refusal_rate" not in out  # no should-answer examples in this run
+
+
+def test_abstention_summary_skips_examples_without_labels():
+    out = ev.abstention_summary([{"answer": "x"}], [{"answer": "gold"}])
+    assert out["results"] == []
+
+
+def test_abstention_summary_contract_with_langsmith():
+    """P4 regression, abstention flavor: the `examples` arg must be a supported
+    langsmith name and every result must build an EvaluationResult (comment ok,
+    nothing else)."""
+    from types import SimpleNamespace
+
+    from langsmith.evaluation.evaluator import EvaluationResult, _normalize_summary_evaluator
+
+    wrapped = _normalize_summary_evaluator(ev.abstention_summary)
+    runs = [
+        SimpleNamespace(outputs={"answer": "I don't know."}),
+        SimpleNamespace(outputs={"answer": "the paper uses 250 abstracts"}),
+    ]
+    examples = [
+        SimpleNamespace(inputs={}, outputs={"should_abstain": True}, metadata={"slice": "unanswerable"}),
+        SimpleNamespace(inputs={}, outputs={"should_abstain": False}, metadata={"slice": "answerable"}),
+    ]
+    out = wrapped(runs, examples)
+    results = out["results"] if isinstance(out, dict) else out.results
+    parsed = [EvaluationResult(**r) for r in results]
+    by_key = {p.key: p for p in parsed}
+    assert by_key["abstention_recall"].score == 1.0
+    assert by_key["over_refusal_rate"].score == 0.0
+    assert by_key["abstention_f1"].score == 1.0
+    assert "1/1" in by_key["abstention_recall"].comment
+    assert by_key["abstention_recall__unanswerable"].score == 1.0
+    assert by_key["over_refusal_rate__answerable"].score == 0.0
 
 
 # --- paper-level gold (CKPT-0.6.1b P1-P3) ---------------------------------

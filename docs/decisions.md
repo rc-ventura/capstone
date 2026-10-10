@@ -4,6 +4,18 @@
 
 ## Observations (non-gates, findings outside an experiment)
 
+- **2026-10-06 — abstention metrics redesign (P7/P8, D-5/D-6; implemented 2026-10-06).** Two rules enter the
+  gate's fine print:
+  1. **Regression rule:** *a gain in `abstention_recall` cannot come from an increase in `over_refusal_rate`.*
+  RefusalBench shows the two errors trade off (r = −0.78; GPT-4o refused 14.6× more than needed), so a system can
+  pass the ≥ 90% gate by refusing indiscriminately. The `over_refusal_rate` guardrail is now reported alongside
+  the gate (total and per slice, raw counts + Wilson 95% CI); its numeric tolerance is fixed at EXP-0 against the
+  baseline's CI — no baseline exists yet to tolerate against.
+  2. **Detection rule:** abstention is detected by `abstained()` (normalization + two marker families), a cheap
+  floor — not the truth. The `abstention_quality` judge (0.6.3, T=0, answer-only, validated on ~50 real
+  stratified answers) is the ground truth, and EXP-0 reports the heuristic × judge divergence (target ≥ 90%).
+  `abstention_accuracy` no longer exists (it mixed under- and over-refusal into one number a refuse-everything
+  system could pass); `f1_summary_evaluator` now reports token-F1 only.
 - **2026-10-04 — rebuilding the frozen corpus by date scan no longer works; replaced by a manifest.**
   Building the whole-abstract index (ADR-005) with `fetch_arxiv_corpus()` failed: `Only 0 of 250 papers fell
   on/before the snapshot date 2026-09-17`. The snapshot pin has to skip every newer paper (the budget was sized on

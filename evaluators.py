@@ -3,7 +3,9 @@ from __future__ import annotations
 import csv
 import io
 import json
+import math
 import re
+import statistics
 from collections import Counter
 from typing import Any
 
@@ -343,6 +345,221 @@ def format_validator(question: str, answer: str) -> dict[str, Any]:
 
 
 # =====================================================================
+# Abstention (FP1 guard; roadmap P7/D-5 detection, P8/D-6 reporting)
+# =====================================================================
+
+def _normalize_for_abstention(text: str) -> str:
+    t = text.lower()
+    for curly, straight in (("\u2019", "'"), ("\u2018", "'"), ("\u201c", '"'), ("\u201d", '"')):
+        t = t.replace(curly, straight)
+    t = t.replace("'", "")
+    return re.sub(r"\s+", " ", t).strip()
+
+
+# Matched on the normalized text (lowercase, no apostrophes). Two families:
+# - first person: the SPEAKER owns the ignorance ("i dont know", "i cannot find");
+# - source-negative: the CONTEXT/CORPUS lacks the answer ("no papers found",
+#   "not in the context", "the corpus doesnt...").
+# Deliberately narrow: "dont know" alone is NOT a marker, so that an answer
+# reporting the paper's own uncertainty ("the authors dont know whether...")
+# is not read as a refusal.
+_ABSTENTION_MARKERS: tuple[str, ...] = (
+    "i dont know",
+    "i do not know",
+    "i dont have",
+    "i do not have",
+    "i have no",
+    "i cant find",
+    "i cannot find",
+    "i couldnt find",
+    "i could not find",
+    "i did not find",
+    "i didnt find",
+    "im unable",
+    "i am unable",
+    "no papers found",
+    "no paper found",
+    "no papers were found",
+    "no relevant papers",
+    "no relevant abstracts",
+    "no matching papers",
+    "no documents found",
+    "not in the context",
+    "not in the corpus",
+    "not in the retrieved",
+    "not in the provided",
+    "isnt in the",
+    "is not in the",
+    "not covered by",
+    "not covered in",
+    "none of the retrieved",
+    "none of the papers in the corpus",
+    "none of the abstracts",
+    "the context doesnt",
+    "the context does not",
+    "the corpus doesnt",
+    "the corpus does not",
+    "the abstracts dont",
+    "the abstracts do not",
+    "doesnt say",
+    "does not say",
+    "doesnt mention",
+    "does not mention",
+    "doesnt cover",
+    "does not cover",
+    "dont cover",
+    "beyond the scope of",
+    "outside the scope of",
+)
+
+
+def abstained(answer: str) -> bool:
+    """Did the answer REFUSE to answer? Cheap deterministic floor, not the truth (P7/D-5).
+
+    PROMPT_V1 never fixes a refusal phrase, so the old
+    `answer.strip().startswith(("I don't know", "No papers found"))` missed every
+    paraphrase ("I'm sorry, the context doesn't say." scored as an answer -> 0.0).
+    Here the text is normalized (case, typographic apostrophes, whitespace) and
+    matched against two marker families (see _ABSTENTION_MARKERS).
+
+    Known false positive (accepted, measured at EXP-0): a first-person hedge inside
+    a real answer ("I don't know whether the paper tests this, but the results...").
+    The `abstention_quality` judge (0.6.3, T=0, answer-only) is the ground truth,
+    validated on ~50 real stratified answers; EXP-0 reports the heuristic x judge
+    divergence (target >= 90% agreement; AbstentionBench C.3.1).
+
+    Scope: **English only**. PROMPT_V1 fixes no answer language, but the golden set
+    is English, so today's measurements never see other languages. A refusal in
+    another language ("nao sei", "je ne sais pas") is NOT detected and reads as an
+    answer — the same defect class as the two exact phrases, one axis over
+    (paraphrase -> language). Deliberately NOT fixed by translating the marker list
+    (an ever-growing list that never completes is the original trap again); the
+    answers are the judge (natively multilingual) and, if the product ever serves
+    non-English questions, a prompt-level language contract (CKPT-6) or
+    judge-first detection. Pinned by test_abstained_is_english_scoped; ADR-007
+    trade-offs.
+    """
+    t = _normalize_for_abstention(answer or "")
+    return any(marker in t for marker in _ABSTENTION_MARKERS)
+
+
+def wilson_ci(k: int, n: int, *, confidence: float = 0.95) -> tuple[float, float]:
+    """Wilson score interval for a proportion (k successes in n trials; P8/D-6).
+
+    Why Wilson and not Wald or Student's t: with n ~ 10-25 the naive Wald interval
+    (p +/- z*se) is too narrow and can fall outside [0, 1] near p=0/1. Student's t
+    is the wrong tool here: it corrects the mean of CONTINUOUS data when the
+    variance must be estimated from the sample (extra variability -> heavier
+    tails, df = n-1). A proportion carries no separate variance to estimate
+    (sigma^2 = p(1-p)), so the correct small-sample fix is to invert the score
+    test — which is exactly what Wilson does — keeping the interval inside [0, 1]
+    and honest for extreme p. Sanity anchors: 10/10 -> [0.72, 1.00]; 14/15 ->
+    [0.70, 0.99] (one example swings the point estimate by 6.7 p.p., hence the CI
+    in every reported metric). Caveat shared with any binomial interval: trials
+    are assumed independent (candidates within one question are not; roadmap §6).
+    """
+    if n <= 0:
+        raise ValueError("n must be positive")
+    if not 0 <= k <= n:
+        raise ValueError(f"k must be within [0, n], got k={k}, n={n}")
+    z = statistics.NormalDist().inv_cdf(0.5 + confidence / 2)
+    p = k / n
+    denom = 1 + z * z / n
+    center = (p + z * z / (2 * n)) / denom
+    half = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / denom
+    return max(0.0, center - half), min(1.0, center + half)
+
+
+def _slice_of(example: Any) -> str:
+    if isinstance(example, dict):
+        meta = example.get("metadata") or {}
+    else:
+        meta = getattr(example, "metadata", None) or {}
+    return str(meta.get("slice") or "unknown")
+
+
+def _abstention_metrics(rows: list[tuple[bool, bool]], suffix: str = "") -> list[dict[str, Any]]:
+    """Three numbers from (should_abstain, did_abstain) pairs — never accuracy (P8/D-6).
+
+    accuracy mixes two opposite errors: a system that refuses EVERYTHING scores
+    100% on the gate and is useless (its over_refusal_rate is 100%); one that never
+    refuses scores 75% here and hallucinates. RefusalBench: the two errors trade
+    off (r = -0.78; GPT-4o refused 14.6x more than needed).
+    """
+    pos = [did for should, did in rows if should]
+    neg = [did for should, did in rows if not should]
+    n_pos, k_pos = len(pos), sum(pos)
+    n_neg, k_neg = len(neg), sum(neg)
+    out: list[dict[str, Any]] = []
+    if n_pos:
+        lo, hi = wilson_ci(k_pos, n_pos)
+        out.append({
+            "key": f"abstention_recall{suffix}",
+            "score": k_pos / n_pos,
+            "comment": f"correct refusals {k_pos}/{n_pos}; Wilson 95% CI [{lo:.2f}, {hi:.2f}]",
+        })
+    if n_neg:
+        lo, hi = wilson_ci(k_neg, n_neg)
+        out.append({
+            "key": f"over_refusal_rate{suffix}",
+            "score": k_neg / n_neg,
+            "comment": f"unwarranted refusals {k_neg}/{n_neg}; Wilson 95% CI [{lo:.2f}, {hi:.2f}]",
+        })
+    if n_pos and n_neg:
+        n_refused = k_pos + k_neg
+        precision = k_pos / n_refused if n_refused else 0.0
+        recall = k_pos / n_pos
+        f1 = 2 * precision * recall / (precision + recall) if (precision + recall) else 0.0
+        out.append({
+            "key": f"abstention_f1{suffix}",
+            "score": f1,
+            "comment": "diagnostic only: a single number hides the recall/over-refusal trade-off",
+        })
+    return out
+
+
+def abstention_summary(
+    outputs: list[dict[str, Any]],
+    reference_outputs: list[dict[str, Any]],
+    examples: list[Any] | None = None,
+) -> dict[str, Any]:
+    """Summary evaluator: abstention as recall + over-refusal, per slice (roadmap P8/D-6).
+
+    - abstention_recall: of should-abstain examples, the fraction that refused
+      (the plan's gate, >= 90% on `unanswerable`);
+    - over_refusal_rate: of should-answer examples, the fraction that refused
+      (the guardrail: a recall gain must not be bought with over-refusal;
+      regression rule in decisions.md);
+    - abstention_f1: diagnostic only.
+    Reported total and per metadata.slice (`__<slice>` suffix), each with raw
+    counts + Wilson 95% CI in the comment. Uses abstained() from P7. The
+    abstention_accuracy key was removed from f1_summary_evaluator (this replaced it).
+
+    LangSmith contract (P4, extra="forbid"): supported args are runs/examples/
+    inputs/outputs/reference_outputs; langsmith maps outputs <- run.outputs,
+    reference_outputs <- example.outputs, examples <- the Example objects
+    (their .metadata carries the slice). Returns {"results": [...]}.
+    """
+    rows: list[tuple[bool, bool]] = []
+    by_slice: dict[str, list[tuple[bool, bool]]] = {}
+    for i, (run_out, ref) in enumerate(zip(outputs, reference_outputs)):
+        should = ref.get("should_abstain")
+        if should is None:
+            continue
+        did = abstained(run_out.get("answer", ""))
+        row = (bool(should), did)
+        rows.append(row)
+        sl = "unknown"
+        if examples is not None and i < len(examples):
+            sl = _slice_of(examples[i])
+        by_slice.setdefault(sl, []).append(row)
+    results = _abstention_metrics(rows)
+    for sl in sorted(by_slice):
+        results.extend(_abstention_metrics(by_slice[sl], suffix=f"__{sl}"))
+    return {"results": results}
+
+
+# =====================================================================
 # f1_summary_evaluator (P5 course pattern, adapted: token F1 vs gold)
 # =====================================================================
 
@@ -364,8 +581,12 @@ def f1_summary_evaluator(
     outputs: list[dict[str, Any]], reference_outputs: list[dict[str, Any]]
 ) -> dict[str, Any]:
     """Summary evaluator: aggregated token-F1 of produced answers vs gold answers
-    across the whole run (substantive-coverage proxy), plus abstention behavior
-    vs should_abstain (FP1 guard).
+    across the whole run (substantive-coverage proxy; P9 reassesses this metric).
+
+    Abstention moved to abstention_summary (roadmap P8 / D-6, 2026-10-06): the old
+    `abstention_accuracy` key mixed under-refusal (answering when it should abstain)
+    with over-refusal (refusing when it should answer) into one number that a
+    system refusing everything could pass.
 
     Signature follows langsmith's summary-evaluator contract (course
     module_2/summary_evaluators.ipynb): parallel lists `outputs` (target outputs,
@@ -374,19 +595,9 @@ def f1_summary_evaluator(
     EvaluationResult (extra="forbid"), so any extra top-level key makes the whole
     evaluator fail (the exception is logged and every metric is dropped).
     """
-    f1s, abstain_hits, abstain_total = [], 0, 0
+    f1s = []
     for run_out, ref in zip(outputs, reference_outputs):
-        answer = run_out.get("answer", "")
         gold = ref.get("answer", "")
         if gold:
-            f1s.append(_token_f1(answer, gold))
-        wants_abstain = ref.get("should_abstain")
-        if wants_abstain is not None:
-            abstain_total += 1
-            did_abstain = answer.strip().startswith(("I don't know", "No papers found"))
-            if did_abstain == wants_abstain:
-                abstain_hits += 1
-    results = [{"key": "f1_summary", "score": sum(f1s) / len(f1s) if f1s else 0.0}]
-    if abstain_total:
-        results.append({"key": "abstention_accuracy", "score": abstain_hits / abstain_total})
-    return {"results": results}
+            f1s.append(_token_f1(run_out.get("answer", ""), gold))
+    return {"results": [{"key": "f1_summary", "score": sum(f1s) / len(f1s) if f1s else 0.0}]}

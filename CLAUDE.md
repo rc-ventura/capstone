@@ -18,3 +18,4 @@
 | [ADR-004](./docs/adrs/0004-persona-audience-axis.md) | Persona audience axis: lay vs phd (stark contrast) | Accepted | 2026-09-27 |
 | [ADR-005](./docs/adrs/0005-retrieval-unit-whole-abstract.md) | Retrieval unit for the baseline index: one record per whole abstract | Accepted | 2026-10-03 |
 | [ADR-006](./docs/adrs/0006-retrieval-gold-granularity-and-metrics.md) | Retrieval gold granularity and metric reporting policy | Accepted | 2026-10-03 |
+| [ADR-007](./docs/adrs/0007-abstention-detection-and-reporting.md) | Abstention — how the system says "I don't know", and how we measure it | Accepted | 2026-10-06 |

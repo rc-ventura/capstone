@@ -66,7 +66,7 @@ Work proceeds checkpoint by checkpoint (`docs/plan.md` §5); each checkpoint has
 | CKPT-0.5 — golden set (100 examples, human review 100/100) | ✅ done |
 | CKPT-0.6 — evaluators: retrieval metrics and format/summary evaluators | ✅ done |
 | CKPT-0.6 — LLM judges | ⬜ next |
-| Metrics hardening ([roadmap](./docs/roadmap/ckpt-0.6.1b-metrics-roadmap.md)): level-aware retrieval metrics, paper-level gold, whole-abstract baseline | ✅ P1–P5 done · P6–P11 under discussion |
+| Metrics hardening ([roadmap](./docs/roadmap/ckpt-0.6.1b-metrics-roadmap.md)): level-aware retrieval metrics, paper-level gold, whole-abstract baseline | ✅ P1–P8 done · P9–P11 under discussion |
 | CKPT-0.7 — experiment runner · CKPT-0.8 — EXP-0 baseline run | ⬜ planned |
 | CKPT-1 → CKPT-8 — experiments (k, embeddings, chunking, reranker, query rewriting, prompts, A/B) and production monitoring | ⬜ planned |
 | Gradio web UI ([plan](./docs/ui/ui-plan.md)) | ⬜ planned |
