@@ -1,0 +1,73 @@
+# Adlakha et al. 2024 — Evaluating correctness and faithfulness of instruction-following models for QA
+
+- **Full reference and link:** Adlakha, V., BehnamGhader, P., Lu, X. H., Meade, N., Reddy, S. (2024). *Evaluating Correctness and Faithfulness of Instruction-Following Models for Question Answering*. TACL 12 (2024). arXiv:2307.16877 (**v2, 17 Apr 2024**; text read = v2) — <https://arxiv.org/abs/2307.16877> · published version: <https://direct.mit.edu/tacl/article/doi/10.1162/tacl_a_00667/121196>. Code and human annotations: <https://github.com/McGill-NLP/instruct-qa>.
+- **Reading confidence:** **full** (all 18 pages of the arXiv PDF, extracted with `pdftotext`; body, Tables 1–7, Appendices A–C; figures read through captions and the text that cites them). I did not run the released code or inspect the annotation files, so the exact tokenization/normalization used by Recall and K-Precision is **not stated in the paper text** and I do not know it.
+- **Why it was added (2026-10-10):** found in a web search for evidence on P9 (is token-F1 a valid quality metric for long LLM answers?). It is the closest published setting to ours: verbose answers from an instruction-following LLM over retrieved passages, scored against a reference, with human labels.
+
+> Convention: **(F)** = what the source states or measures; **(I)** = my interpretation or arithmetic.
+
+## 1. Problem the source addresses
+
+(F) Instruction-following models paired with a retriever produce long, informative answers. EM and F1 were designed for short extractive answers and "become unreliable" on them (§1, Fig. 1: reference "London, England", response "One Direction are from London, England and Mullingar, Ireland": human = correct, F1 = 0.36, Recall = 1.00). The paper asks two separate questions: **correctness** (does the answer satisfy the information need, judged against a reference) and **faithfulness** (is the extra information supported by the provided passages).
+
+## 2. Method (with the exact definitions)
+
+- (F) **Tasks (§3.1, Tab. 1):** Natural Questions (3,610 questions, average reference length **2.16 words**), HotpotQA (7,405; **2.46**), TopiOCQA (2,514; **10.98**). All Wikipedia, short-form references "as they are easier and more consistent to annotate".
+- (F) **Models (§3.2):** Flan-T5 11B, Alpaca 7B, GPT-3.5-turbo, Llama-2 7B chat, plus a fine-tuned FiD baseline. Same prompt template; 8 passages (4 for TopiOCQA).
+- (F) **Correctness metrics (§4.1):** EM; token F1; **Recall** = "proportion of tokens in the reference answer that are also in the model's response"; Recall (Strict) = reference contained as a substring; Precision; METEOR; ROUGE-L; BERTScore; BEM (trained equivalence classifier); GPT-3.5-Eval and GPT-4-Eval (prompted to say whether the response is correct given question, reference and response).
+- (F) **Human labels for correctness (§4.2):** 100 samples per task × 3 tasks × 4 models = **1,200 responses**, only cases where the **gold passage was among the retrieved ones** (so a wrong answer is the model's fault, not the retriever's). Four NLP graduate students; each sample labeled by two, a third breaks ties; agreement **92.42%**, Fleiss' κ **76.4%**. Result: 961 correct, 239 incorrect.
+- (F) **Agreement measure:** Spearman ρ and Kendall τ-b between the metric's score and the 0/1 human label, pooled over the 1,200 responses (ties handled by average rank / τ-b).
+- (F) **Faithfulness (§5):** K-F1 (F1 between response and knowledge), **K-Precision** = proportion of response tokens that appear in the knowledge passage, BERTScore variants, FaithCritic, Q², prompted LLM critics. Human labels: 600 responses (50 per dataset × 3 × 4), "fully/partially/not at all" supported; filtered to 544 where the passage is relevant; agreement 86.33%, Fleiss' κ 70.57%.
+- (F) **Abstention (§5.3, App. C):** a second instruction ("Instr. v2") adds *If the answer is not in the passages or cannot be inferred from the passages, respond as "I don't know"*. P_IR = fraction of responses that refrain when given a related-but-irrelevant passage; P_G = fraction that refrain when the **gold passage is present** (should be ~0).
+
+## 3. Main contributions
+
+- (F) Human-annotated correctness and faithfulness labels for four instruction-following models, with an error analysis of why EM/F1 fail.
+- (F) The proposal of **Recall** (correctness) and **K-Precision** (faithfulness) as cheap token-overlap metrics that correlate best with humans among lexical metrics.
+- (F) An evaluation showing that instruction-following models match or beat a fine-tuned FiD on correctness **only when scored with Recall**, and that they are less faithful and over-abstain when told to say "I don't know".
+
+## 4. Key results
+
+- **Score distributions (Tab. 2):** when humans say *correct*, the mean score is EM **0.22**, F1 **0.45**, Recall **0.85**, GPT-4-Eval **0.89**; when humans say *incorrect*, EM 0.00, F1 0.10, **Recall 0.23**, GPT-4-Eval 0.13.
+- **False negatives vs false positives (§4.2):** with F1 ≥ 0.5 counted as "correct", **EM misses 78%** of human-correct responses and F1 **39%**; but only **0.4%** (1 of 239) of human-incorrect responses pass EM and **3.8%** pass F1. The authors therefore analyze only false negatives.
+- **Why F1 fails (Fig. 3, 448 human-correct responses with F1 ≤ 0.3):** *semantic equivalence* 63.77% (of which **"more elaborate answers" 60.81%**), *incomplete reference answers* 15.47% (open-ended questions 10.81%, lists of named entities 4.66%), *enumeration of reference answers* 7.84%, synonyms 2.33%; the other categories (granularity, symbolic equivalence, ambiguity, satisfactory subset) are not quantified in the text I read. Quote: "Recall can act as an effective fix for More Elaborate Answers. However, both lexical and semantic similarity metrics struggle with Open-ended Questions."
+- **Correlation with human correctness (Tab. 3, Spearman ρ × 100):** EM 27.3 · F1 47.3 · Precision 43.9 · ROUGE-L 45.9 · METEOR 48.2 · BERTScore-F1 31.9 · BEM 53.7 · Recall (Strict) 52.5 · **Recall 60.0** · GPT-3.5-Eval **61.4** · GPT-4-Eval **67.5**. "Recall is the highest correlated among all lexical metrics."
+- **The metric changes the ranking (Tab. 4):** on NQ, FiD scores EM/F1/Recall 46.6/53.9/54.5 and GPT-3.5 scores 1.4/16.2/**58.0**: F1 ranks the fine-tuned model far above GPT-3.5, Recall ranks GPT-3.5 above it. With Recall, GPT-3.5 beats FiD on all three tasks.
+- **Faithfulness (Tab. 5, Spearman ρ × 100):** K-F1 **−10.3**, K-Recall −13.9, K-Precision **49.8**, K-Precision++ 43.6, Q² ≈ 28.7, FaithCritic 11.3, LLMCritic (GPT-3.5) **23.9**, LLMCritic (GPT-4) **55.0**. A free token-overlap metric beats a prompted GPT-3.5 critic.
+- **Over-abstention (Tab. 6–7):** with Instr. v2, GPT-3.5 answers "I don't know" even though the **gold passage is retrieved** in 39.0% (NQ), 41.2% (HotpotQA), 25.1% (TopiOCQA) of the questions; Llama-2 in 31.6%, 61.5%, 33.3%. Correctness (Recall) falls for GPT-3.5 from 57.98 → 34.10 (NQ), 66.77 → 40.08 (HotpotQA), 67.39 → 46.76 (TopiOCQA) — **about 37% relative on average** (my arithmetic from Tab. 7; the text reports "37.26%"), Llama-2 about 29%. Alpaca barely changes its behavior.
+
+## 5. Limitations
+
+- **From the authors (§6):** Recall and K-Precision "are easy to hack": "Recall might score an affirmative statement and its negated version equally, despite their contrasting meanings" (they argue models tend to answer in affirmation); K-Precision can be hacked by copying the knowledge; "A model that always output 'I don't know.' with Instr. v2 will achieve the best score in K-Precision but the worst score in P_G". Correctness, faithfulness and abstention are not an exhaustive list of properties; low faithfulness does not mean the answer is wrong. GPT-4 as evaluator is expensive and "prone to systematic biases".
+- **Mine (I):**
+  1. **Short references.** Reference answers average 2–11 words; Recall's good behavior is demonstrated when the reference is the minimal answer and the response only adds extra material. Our references are full sentences (see §6, point 1).
+  2. **Old models, 7B–11B and GPT-3.5.** Nothing is said about GPT-4-class generators such as `gpt-4o-mini`.
+  3. **Pooled correlation.** The 1,200 responses are pooled across models and tasks; no per-model or per-task correlation, no confidence intervals, and the ρ values are ordinal association with a binary label, not agreement (no κ for the metrics).
+  4. **Binarization.** The 39% / 3.8% error rates depend on the 0.5 threshold on F1.
+  5. **Tokenization and normalization of Recall/K-Precision are not specified** in the text (stopwords, articles, punctuation), and these choices matter on longer references.
+  6. **Retrieval is controlled out of the human study** (only gold-retrieved cases), so the numbers describe generation quality, not end-to-end quality.
+
+## 6. Reflections anchored in OUR project
+
+Reference: roadmap P9 (token-F1), P8/ADR-007 (abstention), P11 (judge calibration), `f1_summary_evaluator` and the 0.6.3 judge list.
+
+| # | Point / file | Reflection | The source… |
+|---|---|---|---|
+| 1 | **P9 — does the regime transfer?** | The closest published setting to ours, but with a different reference length. Measured here (2026-10-10): the 15 `multi-doc` gold answers in `build_golden_dataset.py` average **53 words** (44–62); the abstention references are 3 and 6 words. Adlakha's references average **2–11 words**. So "Recall rewards a response that *contains* the reference" is shown for minimal references; with a 53-word reference, a correct answer that says the same thing in different words covers few reference tokens. | **(i) SUPPORTS the diagnosis, (iii) NEUTRAL on the fix** |
+| 2 | **P9 — Recall as a cheap alternative** | Local test (not a measured rate): reference `"LLM agents often hallucinate tool calls [2609.12345]."` — correct paraphrase: F1 0.21 / Recall 0.25; correct and verbose (contains the reference): F1 0.55 / **Recall 1.00**; **opposite meaning with the same words: F1 0.88 / Recall 0.88**; unrelated claim citing the same paper: F1 0.24 / Recall 0.25. So Recall fixes verbosity, not paraphrase and not negation; the authors say the same about negation. | **(i) SUPPORTS** (verbosity), **(ii) CHALLENGES** (as a replacement for a judge in our regime) |
+| 3 | **P9 — false negatives dominate** | F1 passes only 3.8% of human-incorrect responses and rejects 39% of human-correct ones. This confirms correction C-6 in the roadmap: the supported claim is that F1 **underestimates** correct answers, not that it rewards wrong ones; my 0.88 negation example is a possible case, not a measured frequency. | **(i) SUPPORTS C-6** |
+| 4 | **Gates between configurations (plan §2; CKPT-6 prompt variants)** | The metric changes the *ranking* of systems (Tab. 4). F1 depends on response length, Recall does not. A prompt variant that makes answers longer or shorter would move F1 without changing correctness. Any gate of ≥10–15% needs a length-insensitive measure or a judge, and a check that the metric ranks configurations like humans do. Caveat: their ranking flip is across different architectures (verbose LLM vs short FiD), not between prompts of one model. | **(i) SUPPORTS** |
+| 5 | **P11 — a free baseline the judge must beat** | GPT-3.5-Eval (ρ = 61.4) barely beats Recall (60.0) and trails GPT-4-Eval (67.5). A weak judge is not automatically better than a free lexical metric; local calibration is not optional (same conclusion as `qa-eval-judge-vs-f1.md`, Wang et al.). Recall is a zero-cost baseline against which the 0.6.3 `correctness_judge` should be compared on our labels. | **(i) SUPPORTS** |
+| 6 | **0.6.3 `faithfulness_judge` — K-Precision (new)** | K-Precision (share of answer tokens present in the retrieved context) correlates with humans at ρ = 49.8 vs 23.9 for a GPT-3.5 critic and 55.0 for a GPT-4 critic. It is free and code-based, so it could be a sanity baseline or diagnostic for our LLM faithfulness judge. Hackable by copying the context; our citations add tokens that appear in the context. Not in the current plan. | **(iii) NEUTRAL for P9; candidate for the P12–P17 triage** |
+| 7 | **P8 / ADR-007 — over-refusal is a measured risk** | An instruction to say "I don't know" when the answer is not in the passages made GPT-3.5 refuse 25–41% of questions whose gold passage was retrieved, and cut its correctness by ~37%. Our `PROMPT_V1` contains the same kind of instruction. The effect on `gpt-4o-mini` is unknown and must be measured in EXP-0. | **(i) SUPPORTS** the mandatory over-refusal companion |
+| 8 | **P11 — how to label real answers** | The annotation design is reusable: label only cases where the gold passage was retrieved (isolates generation from retrieval), two annotators plus a tie-breaker, report κ. For us, a single annotator (the author) cannot give κ; this limits the claim, not the labeling. | **(i) SUPPORTS** conditioning the correctness labels on hit@k = 1 |
+| 9 | **Single score vs separate dimensions** | "we urge … the community to move away from reporting a single overall score and adopt a more holistic evaluation that reports correctness, faithfulness, and the ability to refrain from answering." Matches the separate evaluators we already have (abstention_summary, faithfulness judge, correctness). | **(i) SUPPORTS** |
+
+**What we would adopt:** (1) Recall as a **sibling diagnostic** to token-F1 (both free, both offline), never as the only correctness signal; (2) the comparison "judge vs Recall vs F1 vs human" on our own labeled answers before any metric is declared primary; (3) labeling correctness only where the gold paper was retrieved; (4) K-Precision as a candidate diagnostic for faithfulness (triage).
+**What we would NOT adopt:** (1) the claim that Recall "correlates highly" in our regime — it was shown with 2–11-word references; (2) Recall as a gate metric (negation-blind); (3) the ρ values as expected agreement for our judge (different task, models and label scale).
+
+## 7. Useful quotations (verbatim from the text read)
+
+- "Recall can act as an effective fix for More Elaborate Answers. However, both lexical and semantic similarity metrics struggle with Open-ended Questions."
+- "Although these metrics correlate highly with human judgments, they are easy to hack. For instance, Recall might score an affirmative statement and its negated version equally, despite their contrasting meanings."
+- "When using instruction-following models for QA, we urge to the community to move away from reporting a single overall score and adopt a more holistic evaluation that reports correctness, faithfulness, and the ability to refrain from answering."
