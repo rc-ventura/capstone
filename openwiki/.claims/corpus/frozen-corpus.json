@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:25e2df25bff7f0817652d0788110e8b10f8e214271de8cb96086f4d3e5b4ee37",
+  "claims": [
+    {
+      "id": "claim_a62afaeb3efe449cb35c5f150e6abc53",
+      "statement": "load_frozen_corpus resolves the corpus in a three-tier order: the git-versioned manifest fetched by id and verified, an existing parquet cache as offline fallback, or a cold-start date scan that also writes the manifest.",
+      "evidence": [
+        {
+          "resource": "repo://utils.py#L221-L238",
+          "version": "repo-lines-v1:sha256:79d467d4d3571e64dab7aeeb8d3c62df496960fa3620db509664609e976fdde0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3MTJiYzRlYTM2MDM4N2E3NzNkMjU2YjhlYzdkMWYyNjUwODg0MWM2YjczNmQ3OTRhOTkxOWUyMTk5YTgwZjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4NmM5MWI5YzQyYWM5ODE3ZmRmMTdhMDE3ZmNmNmIwNzRiNzY4Njk1NDk4ZWYxNWE0OTFkOWEwYzA4N2M2NTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3MDE0OWUwNjlhZDY3ZWNjZjQ3MzY0NmZmMWM3NTAwNTBkMzI5ZDExMDAxOGRjNTc2Njg3OGVhZmExZDYwN2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI3MzkzY2YzMDQ2NWQ4YzhmMzVlZDEzODVjYmJlOTQxMzE5ZjBmYWFmNjM4OTE1ZGU1MDFhNjM4Y2EyNmNhZmYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_40a0f177747c405f9eec1e2985a5791e",
+      "statement": "corpus_manifest.json records the snapshot date, category, n_papers, and per-paper arxiv_id, published date, and abstract_sha1; papers_from_manifest fetches papers by id in batches, restores manifest order, and raises RuntimeError if any id is missing or any abstract digest differs.",
+      "evidence": [
+        {
+          "resource": "repo://resources/corpus_manifest.json",
+          "version": "repo-file-v1:sha256:257f71340d85dd27b0c453459b636e09ce2bd2f45baf392ae6a653ef0c34ffc3"
+        },
+        {
+          "resource": "repo://utils.py#L129-L175",
+          "version": "repo-lines-v1:sha256:d023d19bc9c5d01a8110e6ccc102d2d1f78ab3f14cf039aef35f731593344e4a:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFjNzQzNzE2YjJmMWYwMDViZWFkZWNlYjkzMDI3YzE5NWVhMThiNGM1ZDUxMTExZjVjNTA0MmEwMmYyOGE5MzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0Yzg5OGIzNjQ5MDI5NDZlNzIyYTZiZWEwOTgzM2Q0OWE4YzAzNTIzYTcxNDZmYmZiYzc3MWRkMmI2M2NiMzQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI1ODFlMDQ5Yzk3NzE1YTlmZmFlM2I0ZWJmNzhhNDJkNGM5OGI4NzdhNDc1NzQyM2JmZWQzM2Y2OGZiM2U5OWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdkNjdhMmJiOWIxODc4N2U2MGNmNDZjOWNhMjM3ODE5Mzc1OTU3ZGQ0YmNmZjlmMWY2YjA2MTJkZWRjYzA2MzYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a3597d2b61184cba82b9cba14b54e79b",
+      "statement": "abstract_digest is a sha1 over the abstract with all whitespace collapsed, so a line break versus a space does not change the digest while any content change does.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_corpus_manifest.py#L18-L20",
+          "version": "repo-lines-v1:sha256:e2ae69c734458d1e266b6a492c330594c78bb6e5befc1a4f3da51d645078941f:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzJkZjU4NzQwNGMyMGU4ZmJjYmVhODY4ZDFjYzg2NGNkMzEwMjg1Yzg5NTA1ZWI3MWI3ZWVjZDI0OTUwYmE4MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzYzYTZlZGU2YjMwYmI1M2Y4MGU0MDYxYTk0ODRjZGI2Zjk0ZDU3NWJhY2I4NTJkNjFmN2M3YTQxNjUxODVjYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDU4YzRjNzEzMTJiNTI1ZTc4YzkzZjNmNzkzNTkzNWU3MjlkOTQxZGRjMzc3YmJlYTUxNWJmYWNkNWZlYmYwOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzgzZGUzZjI0OTI4MmFhNmU1MDc2Y2JlYjY4N2I1MDhiMWM5N2U5NzY5ODg0YzNlOTA4OGY1NzAzZDRlNjA2MiJ9"
+        },
+        {
+          "resource": "repo://utils.py#L124-L126",
+          "version": "repo-lines-v1:sha256:b36b6cebb43f92220da15299e69b3dae234aa036af2290f87a76f3e53be6cd3e:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzgxOTNiMGEzMjMzZGZhZTU0NjU0NzM0YWVmODdjYmJlZWMzZjIzZDFkNzY4NmY0Y2JhNDZiZTllYjI2ODU2NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzQ0MWY0MGZmMzE5MDA4NjU1NTZhYTRhNDExNTVjZTg0ZGI5NzIzMDgxYWFlZWQxMDdjNThhNWY5YjU3NjcyNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmMyNDk3OTliNDM4NzExZTJkN2JjOTllODBjZmNkZGI3NzA0ZGJhZmRlYzBlMDNjNWYzYTZiYjhhMmJmNjNhYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzhhMjllMThhNzI1MDJkYzY1MzhjNGMwMTc4MTY1NDY1Y2FhZGE5YzZkOTc0ZjI5M2NmOTc5ZjkwNzVhM2I3MSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_7dc211adea2240d19455ca691330548a",
+      "statement": "The date-scan fetch became unusable because the snapshot pin must skip every newer cs.AI paper (~128/day) within the additive 2000-paper skip budget — by 2026-10-04 all scanned results were newer than the pin — which motivated the id-based manifest rebuild.",
+      "evidence": [
+        {
+          "resource": "repo://config.py#L45-L49",
+          "version": "repo-lines-v1:sha256:e3dae70105810b7cd0ac69b4761a366fbbcce01234a1e40245b8fbe3e7628a41:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOWE4YTEwMGJhOTgwYTBmNzU3Mjc3NTIyZDJiZGZmYTU2Y2Q4OGQzNTY1YWMyYzE1YjdkYmIzYTdhZjE1ZDcxOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDgyZWFmZmY4ZjQ0OWU2ZTNkYWEzNWIzOGUxODk4MzQ1OTVjN2JlZTRiNWNiNTk5ZjQyNmQ2MWI0NTUwYmE5NCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTc4YmU0MmNjMmJmOTBlY2VhYjNkNDVhYTk0ODk3NzBiMmQ4MmY4NmU5MTQyOWY3YzYyNmE4Njc5YTI3ZmQ3MyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDY0ZDgxNWI4OTFiMGNlMmViYmYwZGIzYzJkNTQ3N2Q1Y2QxYWNhNzRlZDQzNGZjNTk1ZmZiZmEyODQwNjZkNSJ9"
+        },
+        {
+          "resource": "repo://docs/decisions.md#L25-L28",
+          "version": "repo-lines-v1:sha256:cfceaeaba8f7441c65f1e4971aebd4310cc54aaf4bd8d36f267a6dd3263aeb31:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzdlMTAzNDJkNDIyZDgzM2I0N2Q2MGI3ZjdkMzBkYjViY2VjNjZkZmE3ODIzYTJjYzY5YmVmNDdhNjQ0OWI3ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMmFhMDRkYmFmYWM3NzU3YjhhZWQ4MzJhNGZiM2M2N2JkNDkzMmVmYjZjM2MwZjU2M2UxYjhiNTUyMTFhZDcyMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZGYwMWU2MDg3YmNmNGJlNmVlYjQxNmE4NzQxMDQ4MDUzYWJhMzM4OTQ2MDYwMGVmM2Q0YjNkZGE2MzdhNDU5MSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWIwNGVlN2I0NzU2NzE5NGEyZDU0NmY1YTQ1NGI0Mzc2MjRmN2FjYjU4MjJhMWEyZTE2OGNjOWJjYTQyNmY0MyJ9"
+        },
+        {
+          "resource": "repo://utils.py#L38-L80",
+          "version": "repo-lines-v1:sha256:53a6a999ee21cd47b8ccee54a149fa95c7906f3f0b45c2e37df08cffcac9d7c9:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ2ZjYyZTQzZWFjNmMzOWFhMDMwNTA1YTA5ZWM3OTVkNzhmMTQ1NmM2ZDNhMTQxNWJkY2U5YzE2M2UxMTkxOWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzMmQ5ZTBhZjBhMGRhNjA4ZTE3MjJhZWYwYjQ3NjRiMjhkNGQ4MThlZDU4Yjg5Njc1N2I0NzJkNzJhZDdkNmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjYzRhN2QxY2M3OTZhYmEzZTQ2NzIzMzI3ZjUxN2U5ZjgxMTk4MmQyNTBmMDcwMjk4NmU0YjU3NjRhZDk1ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRmMDg4NGVmOWYwYWZjYTE4OTQ1MmIyZDdhMTgxNzQwOThmN2RhM2IxNDY0OWYzZjdiMTM2MDFhNzliYmU4OGEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d56b996a28da45af825e13efa993eb1b",
+      "statement": "papers_from_chunks reassembles a paper by joining its ordered chunks with a single space, which restores words exactly but can turn a chunk-boundary line break into a space (10 of 250 papers); gold labels are paper ids so evaluation is unaffected.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions.md#L29-L31",
+          "version": "repo-lines-v1:sha256:ab04ee7b47567194a2d546f5a454b437624f7acb5822a1a2e168cc9bca426f43:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjkwMGVjN2QxYjdjZjE5YjIzMTcyZjg4MTMwMzBmYTkwYTE1ODlkNTZkMmQxZTg5NjNkZmI4OWYyYmY0MGE1OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmRjODE0NzNjYmFjNThmNTdhMDExNzg5NDYxYzkzZDlhYjk4OWM3OGY0NzgzMmQ4YzUxZDZlOGVkMzY1ZmM0YyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTQxNmQxMTYwNTdhNDYxZTE1MzYyMDZmNjA5NWViMDIxYjczYTQyNGNlM2NhMTMzMGEwMjVmZDBmY2VjZGJlOSJ9"
+        },
+        {
+          "resource": "repo://utils.py#L195-L210",
+          "version": "repo-lines-v1:sha256:7f9668551bae410f25bc69730fc9d29d9b1a546d164de69ab31206c3a53b6219:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5MWYxMDY1OWI2MmVjYzZiZjJhYmZkMjk1YjY1YjE2MTgxY2RmNGQ5NDgzOGIxMDIzMmE5YTU5ZjE1ODA4MmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkZDI0NDU4MmI2ZmIwM2QyM2I4NDE1YWJlY2QzNDZiMGM5ZjQ2NmI2Zjc1MmIwNjgxODljZTdlOWEyZGMzNTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlhMmJlZGViN2JiMTc2NjdhZjJkM2YzNWUyMDUxZGFkNjg3NzhkOGExZTM1ZmM4NWZhZjUxMWM3YWE5Y2IxODQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM5Mjg5YTU0NmM3ZDNiOTgzMjMzZmQ1YWE1YzkzNGQ4NjI0NWQzMzU2Y2JlN2QzZTU5ODg1NTBiODQwODkwMDQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_de545dd0deea43c381f7834ae4b6d7a1",
+      "statement": "The corpus is pinned at CORPUS_SNAPSHOT_DATE, defaulting to 2026-09-17 and overridable by environment variable, so the stale golden slice's meaning (papers published after the corpus) survives cache rebuilds.",
+      "evidence": [
+        {
+          "resource": "repo://config.py#L20-L44",
+          "version": "repo-lines-v1:sha256:81d53f024a3e68e2581d16b3ce8840f9756b530dcb6d08171350332038fe9159:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhOTg5YjFiODExZGRmZGVhZTIzYzI3ZTI0NmQxMjdiN2QzOGU0ZjA5NDA2MjQwMzVjNzJhNTk2ZTdkMDc0NDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhZmJhMDUyN2MzOTUzYzRiNmUwZTViNTczOWJhODM2MTJmODA1M2JjZGM5NDY2NzMwMTkzY2QxZDU5MGI0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5ZWUxOTMyODRlODJmYjc2YWY0ZjRmNTgzZTQzZjA1MDdiNWYxMzJiMTY0ZTZkMzUyM2JhZmI5NGMwYzdiMWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAxMmQ2Yjk0ZGEwNzk0MWNmMDcxYThiN2U2YTQwYzE0MmMyMzdhMTRmYmJmYzgwOWQ4YmM4OWU1ZTk5NzFlMDkifQ"
+        },
+        {
+          "resource": "repo://config.py#L42-L44",
+          "version": "repo-lines-v1:sha256:a78be42cc2bf90eceab3d45aa9489770b2d82f86e91429f7c626a8679a27fd73:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTVhMDI0YTU2MzlhMjNiOWMwNzEyMDlhNTU4MzU3OThlZTZkNTkwM2Q3MDQ1MjJlYmNiNTQzNDRmODViY2FhYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmFmYmEwNTI3YzM5NTNjNGI2ZTBlNWI1NzM5YmE4MzYxMmY4MDUzYmNkYzk0NjY3MzAxOTNjZDFkNTkwYjQwOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmY5OTM3MGQzMTRkZTk0ZjczNWQwNGI4OTRkZWVlYzE0ZGQwYjhjMWMyNzJjNDY3YjQ5NWZhYTQ1YTkwY2M1MCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDEyZDZiOTRkYTA3OTQxY2YwNzFhOGI3ZTZhNDBjMTQyYzIzN2ExNGZiYmZjODA5ZDhiYzg5ZTVlOTk3MWUwOSJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.6.0",
+    "at": "2026-10-11T10:08:11.054Z"
+  }
+}

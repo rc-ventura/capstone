@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:c37b8c468df70b02fada2ca8a8dde089cccc19198a893f4e49a9ec960efff5f2",
+  "claims": [
+    {
+      "id": "claim_b7a980c9d6814d4288ca1b53c63e18d4",
+      "statement": "app.py uses all three LangSmith tracing mechanisms together: @traceable on the four pipeline functions with chain/retriever run types, wrap_openai on the module-level OpenAI client, and an explicit trace() context inside generate_response that records formatted_docs as input and the answer as output.",
+      "evidence": [
+        {
+          "resource": "repo://app.py#L102-L112",
+          "version": "repo-lines-v1:sha256:3784354b826d4384bce4ef9d1ced2fc9251b8ff72ea1c6460e8b167672dc03c3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwYWFhMmZhYWE5YmVjNzVlNTM4NjhkMmY1ZjZkMTQ1MzBlNzI5NTNjZGRhNzJhNTM0ZDI1NTEyNzUwODExYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5OTI1YjEyMDNhYjhlZmYzMTc0MzVkNzJmODMwM2EzYzExYjIwODRkNzgyOTdkNjQzNjVkMmVjMDY5M2M1YmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVkNmQzMTE3NmFjZDg3MDA3MTY2MThiOWZmZDA2MDhjNDdlNTVkYzI2NDNkYWIyZGIyYjU4NjE5OGIyMjBjZWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://app.py#L14-L14",
+          "version": "repo-lines-v1:sha256:ece090d96d357f48e90186b23f9050dd4b78715a090995d2e5d9ed4ef565bd6b:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWNlMDkwZDk2ZDM1N2Y0OGU5MDE4NmIyM2Y5MDUwZGQ0Yjc4NzE1YTA5MDk5NWQyZTVkOWVkNGVmNTY1YmQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWNlMDkwZDk2ZDM1N2Y0OGU5MDE4NmIyM2Y5MDUwZGQ0Yjc4NzE1YTA5MDk5NWQyZTVkOWVkNGVmNTY1YmQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmFjNDliZjA5MmFjMGVjZDAwNjAwNGZkY2EwMmYyMWQ2MzFhY2Q3ZTZlODk3MDM0MTQzNzkzMTMyODU5NDQxZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTllZWZmYjcxZTU4ZTZiMTVlODlhYzM0YjA1MTJlZTE4YjQzNWJjZTI2MDkyMTcyMjAzMzViYWQyMjZjNDMyNCJ9"
+        },
+        {
+          "resource": "repo://app.py#L52-L69",
+          "version": "repo-lines-v1:sha256:fbee58f455539ee8e08eadad789bd9ff49120cce787079d0807dfacf3bf76c08:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwYWFhMmZhYWE5YmVjNzVlNTM4NjhkMmY1ZjZkMTQ1MzBlNzI5NTNjZGRhNzJhNTM0ZDI1NTEyNzUwODExYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVlMjlmYWIwNTJjNTg5MjQ3YWNkNzdhNTYyNTM1YTc5MDQ2MmRkNjMwYTgwNWZmYWI5OWY2YmM4ZDg5NTU5OWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmYmQwMDkzMTRiYzI3MDg0MTY3MzRhMDJhZTVmZjM5YTFlNDhhMDUwYmU5MWY0M2IyZmFhOTIwMDJjNjJiZmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBiOWE5ZDc0YmRiZjhjMzI0MTcxYWZkNDQ5MGE0YWM4OTlkZDJmZTIxM2IwOWQxMGMwNGMwYTQ1ZGIyNDVlN2YifQ"
+        },
+        {
+          "resource": "repo://app.py#L86-L99",
+          "version": "repo-lines-v1:sha256:35433a0481cfa16db98e712551025c7fc4a39cd049ecfcd0ee64b6ec3b6618e5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkYTg3ZGU1MmI3Y2NhNmMxMWFlMjBkMzQwOGExYTQwODE1MWQ0MDlmZjQ0Y2IyMjM2YTk2OTkxNGFhYTg4YjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNmZWVlY2ZhMjEwYTE2MzYyYjk5YWE5YmZjM2M5MjkwOGFjZjhmNmQwZTgyYTVlNDFkZjFkYmQ2YmM5NDdiOTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY3MmI2ZTA4ODlmNzk2ZDM5MTBjMjdjMGQyMmU5NjU2NmFjM2RkMjU0Y2NhNGJhZjhkOTU1MjFmZGY5MGExOTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJkZTllYzRkZGNlNjViNDY1ZWQ0MTI0NzU0ZTllNWY5ZTkyMTNjYjI1ZDYwOTRhOGRhOTAzYTlkMDRmMmRiYjAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0d7944d3bd1941c5a361385bfd9cfe4a",
+      "statement": "Every run in a pipeline invocation carries the same metadata dict (app_version, embedding_model, k, chunk_strategy, rerank, query_rewrite, prompt_version) attached via langsmith_extra or the trace context, so any metric can be sliced by any configuration axis.",
+      "evidence": [
+        {
+          "resource": "repo://app.py#L108-L111",
+          "version": "repo-lines-v1:sha256:716d47497eac91bee5f1d286842d41811d390a8312a2ea529905a864a59459be:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTUwNjJhNDdjOGQwODQwZmMxYmE4YmUwODg2MWU3ZmNkNTFhMDcyODBiNzJlNjY0NjE0NWI5YmE1YmFkNTIzZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjI3NGQ0OGUyZjNmYTdiYTQ2YzM4YjQxMWQyZTM1YzljMTRhMTY5MGUxNzNlNDliMzRlZmVlOTIyZDBmYmVlZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjgwM2U4MjMxZmQ0YzE5MWIxMWU2MjFhYmZmOTVhZjczZjA2NTcwNmE4ZmMwMGZmMjliYmYyYTg3MmYyZWRlYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjk5MjViMTIwM2FiOGVmZjMxNzQzNWQ3MmY4MzAzYTNjMTFiMjA4NGQ3ODI5N2Q2NDM2NWQyZWMwNjkzYzViYSJ9"
+        },
+        {
+          "resource": "repo://app.py#L38-L49",
+          "version": "repo-lines-v1:sha256:d94b8111b1dcb124bb0b94e6c9599aa7866edb986b9835f45c585092d42209d9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwMTk0NGRjMDQ4NWZlZGM5OWI1NjdiMjA0NGFlY2M3OWVhYjBjOTcwMDE0N2UxOTY2NDk3MjYyY2EzZmI3YjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlhN2E4YzFiMmVmMjEyZDJjNWNjMjRhMTI5NTYxOTdkOTI3MmQwNWFmMDQzY2RkYWMxZTI1ZmIwNmIwMzk1YjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJkZTllYzRkZGNlNjViNDY1ZWQ0MTI0NzU0ZTllNWY5ZTkyMTNjYjI1ZDYwOTRhOGRhOTAzYTlkMDRmMmRiYjAifQ"
+        },
+        {
+          "resource": "repo://docs/plan.md#L120-L120",
+          "version": "repo-lines-v1:sha256:4cd5af1bb4ed0a8540b17728528c7bed3a8b76d213308a3f1063931353df7af3:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGNkNWFmMWJiNGVkMGE4NTQwYjE3NzI4NTI4YzdiZWQzYThiNzZkMjEzMzA4YTNmMTA2MzkzMTM1M2RmN2FmMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNGNkNWFmMWJiNGVkMGE4NTQwYjE3NzI4NTI4YzdiZWQzYThiNzZkMjEzMzA4YTNmMTA2MzkzMTM1M2RmN2FmMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzBiZTc0NzA1NjBmOTdhNTJhMzE5MGQ4ZjZhODZlZjA0MWM1N2RiNTA1MTdlZDg4MWFiZjE1ZmM3MzdiODU1ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDAxZjJlYzE3NTkzYzEwNTRlYjQ2MzY3ZDg0NTNlZjI0YTE3M2NlOTZiNzExN2Q5MWY5YTY4ZDQ0ZmVmOGIwMSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_d2fde464774f4f81bcd70fa45bb1b4ed",
+      "statement": "Multi-turn thread identity is carried in metadata, not function signatures: run_pipeline attaches a fresh thread_id uuid to the run metadata that groups a conversation's runs in LangSmith.",
+      "evidence": [
+        {
+          "resource": "repo://main.py#L23-L28",
+          "version": "repo-lines-v1:sha256:5bd700310dfc101e83d226099c0e4cf447f6e18f924f206ea6582be6b91fd42b:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjRiYzVjM2FlNmZmZjUyMTE3YjNiNGQ4NGE1ODA5NmUwMTc4MTdlZjkzNzA5Y2I3MjQyYzBhYjdjMTcxNzQ5MSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjJhZTAyYWMwMTAyMGVhNDQ1YzU0MjU5OThhZGE3Zjk3MTg4MjVhYmIxNWZmOTAyMmNlZGU5N2RiNTYwMDRkYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWFlNmI5MmRmZTQ0MGU0NWU4Y2Q5NTY3YTY1OGU1NjIwNDcwMGIyZDk2NWQ4ZGIyMTVjMDQxYTE5ZjQ3MGJlZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjg3OGViNDI5NzgwMWNlMWVjYjQ4YmY2YjFjOTdhNmY0NDllMjgzZjk4NDFhNTFlMmUyM2MyZDQ2MTI4Njk2MSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_b3a0d4c55b644efe8e19c2a0dd7169a6",
+      "statement": "build_golden_dataset drives the LangSmith SDK directly: has_dataset/read_dataset/create_dataset for arxiv-copilot-golden, list_examples filtered to the core split for idempotency counts, create_examples for bulk slice creation, and update_example for in-place regeneration.",
+      "evidence": [
+        {
+          "resource": "repo://build_golden_dataset.py#L603-L636",
+          "version": "repo-lines-v1:sha256:14bf011dae0789be18bec4ca2d2b389373ff7851ff5165841b5e9da2a15041d2:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyZWFlM2IyYTc4ODExMjA1ZWQyZjVjMzc4ZmQwNTQ0MTg4MWVkNTRjYjQ3YTMxNmQyZGRkZDM5MTQ2ZTJlNzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE5OGIwNjNkOWI0N2U2NTM3OTYyNTU3MmNjZTE5NzY2OWQ1NzY3ZTEyYzE4YmUwNzU2NTJiOGNkOTgxY2U4ZDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImViZGM5NzUxYWE2ZTFjZjllNDdlZjg3NWRhZjlkNzk1YWQ0ODk2ODM1MjI2NjdmMzg2OWQ0ODhmZTdjNGZiYTEifQ"
+        },
+        {
+          "resource": "repo://build_golden_dataset.py#L647-L694",
+          "version": "repo-lines-v1:sha256:320e09de07026c129010aca9662013a3e248121e4fac3e5ca9f7830a3ae5381b:eyJzZWxlY3RlZExpbmVDb3VudCI6NDgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYxOGU3ZjBmZGRmYmRkOTEzNTU0MTAwYTE3MDNmYjFhNWRmZmVhMTI5NzEzZWEwZGU1MjYxMWY4OTg4YjEyNmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MDMyZTk2NGQwOTMyMzUxZTVkMTg1MjY5MjgxYjE3MWEzYTA5YjA4YjI4NmU2NjFlYTQ3MDMyM2M4MmViNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZhZDhjYWQzNjg1YWU1ZTYxNzFmMzg1NWEwZDJmM2Y2MTE3MWZiZGU5MDM1ZWYzZWZkYzM4ZWM5YTU1MGQwNTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRlZThlZTZhNmZiYzNkMjM3MDZlNGUxZWQ1OWIwZWE1NDhkN2E4OTljZWU2YWRiYWQ5OGI2ZTc2Yzc4YTc3OWQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9ed16636f88b49af9ddca2df2e12c82b",
+      "statement": "Summary evaluators follow LangSmith's contract of returning exactly {'results': [...]} entries built as EvaluationResult with extra='forbid', so an extra top-level key fails the evaluator and drops every metric — evaluator signatures accept runs/examples/inputs/outputs/reference_outputs.",
+      "evidence": [
+        {
+          "resource": "repo://evaluators.py#L532-L542",
+          "version": "repo-lines-v1:sha256:dddbaeb36f5e0917c2618d8d5339a61af4dd1ca10b7a5080fe9257a0925cdc0e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4YjRmZDcwMDJmZWJjMzJkYWZmMDRiNGY4Y2FlZjQ3YjIyNmM0ODcxMGFlNDIyMmE0ZDM0ZTUwZDU3MjlkOTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2YTcxNTI1NzJlZTg0ZjEwOTA2Yzc0YjlmMmE5MjQzNGRkYWIwZTNjNDI4MTNiMDRlNTk3ZWZjZWM5NTFiMjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUzZDM5YTQ0NzNhMGZlOTA5NTY2Y2Q2Y2NhNjY3ZjVhZTA0NjY0MmEyMTgyMjdlOGIyODEzZjVlZTMyZGMxZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFkMmVkYmFiZjFlZmM1ODRkYzc3NzlmMzBmMzIyMzdiYTdkMGZlMjUxMjQ3NWUzMDQyYTFlNDEzNjlkNTA2OWYifQ"
+        },
+        {
+          "resource": "repo://evaluators.py#L589-L597",
+          "version": "repo-lines-v1:sha256:625342496b9a0081f4100c8fc28824721bc6fb13289edd2fb2f572d0f422e684:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDQwNWViNmViYzRlY2FlNWRkYjczNGIyZWZjZGMyYTE3NTIzN2ZkYThlYzZmZjUxZGY5ODM0NjBiNTE1MjZiZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTZhNzE1MjU3MmVlODRmMTA5MDZjNzRiOWYyYTkyNDM0ZGRhYjBlM2M0MjgxM2IwNGU1OTdlZmNlYzk1MWIyNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjM0NTg4ZTBiYzc5ZjMzMzgzZmE3N2E0Y2I1ZGFkMDZkOTlhYzFmZTExNmMyZGU0ZTE4ZTk5YzRiYzRlOGQ1MyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTMwM2ZhOTZhZWVlZDUxMzQ1MTAzZWFlZGUwNzkzNzBlZjVmMWE2MDUzYWUzMWQ5OTE4OTEzM2UwZmU1OWVmNSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_91831cfae6ba4bce868622228d0e2dee",
+      "statement": "LangSmith configuration requires LANGSMITH_API_KEY at import (missing keys raise), defaults LANGSMITH_PROJECT to capstone-arxiv-copilot, and example.env documents LANGSMITH_TRACING=true plus an optional EU endpoint override.",
+      "evidence": [
+        {
+          "resource": "repo://config.py#L21-L23",
+          "version": "repo-lines-v1:sha256:5c0a4eb17fd213be4c429837efb28cad0eed8f55fca56e4492059f24fe05135e:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWU3MmUwMmM3MTAxYTlkNjU0NGM1MGE1M2FlYzdkOWI3ZGE3ZmJkNzVjOTFjMGRlMWUzYzhiMzhiN2E1NDdmYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNmVhNzMyZTE0MDFiNDgyYmVlODY2YTFhZDVmZDA5YTI1NjQzZDdiYzhmMjljZTg3MWQxZDI1NjE2ODU5MTI5NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDRjNmZiMzBhZDRlMmM2MjkxZjRiYWRiZGJhOGQyNTkxMjQ4ZGUzNTM0ZmEyMmVkMDgzZTgyYmM1ZWU0OTYzNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODg2NjQ2YmU3MmEwZjhlNWQ3Y2RjODc4N2I2NDMzMTBmZjQ5YzVlYzcxYzA3NmM1NDExYTQyODc4MDgyZGQ2MiJ9"
+        },
+        {
+          "resource": "repo://example.env",
+          "version": "repo-file-v1:sha256:c35e84664dfeda5119b5fc61dc4f12a954a1c8c196caa72d51e2a5b90d9afe23"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.6.0",
+    "at": "2026-10-11T10:08:11.054Z"
+  }
+}

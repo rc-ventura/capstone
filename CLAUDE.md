@@ -20,3 +20,12 @@
 | [ADR-006](./docs/adrs/0006-retrieval-gold-granularity-and-metrics.md) | Retrieval gold granularity and metric reporting policy | Accepted | 2026-10-03 |
 | [ADR-007](./docs/adrs/0007-abstention-detection-and-reporting.md) | Abstention — how the system says "I don't know", and how we measure it | Accepted | 2026-10-06 |
 | [ADR-008](./docs/adrs/0008-answer-correctness-signals-and-calibration.md) | Answer correctness — free signals first, embedding cosine next, an LLM judge only if the calibration demands it | Accepted | 2026-10-11 |
+| [ADR-009](./docs/adrs/0009-incomplete-gold-and-pool-bias-mini-pooling.md) | Incomplete gold and pool bias — judge the holes (mini-pooling), never treat "unjudged" as "irrelevant" | Accepted | 2026-10-11 |
+
+<!-- OPENWIKI:START -->
+
+## OpenWiki
+
+@AGENTS.md
+
+<!-- OPENWIKI:END -->

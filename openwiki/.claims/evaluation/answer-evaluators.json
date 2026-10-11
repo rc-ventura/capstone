@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:a28c5434c18f08308552bc486be8e781d842f1753b2b73d5258a8511fd974f6d",
+  "claims": [
+    {
+      "id": "claim_d1ed4f9341ea45318cc2e8c0981466fa",
+      "statement": "format_validator is a deterministic zero-LLM-cost evaluator that dispatches on the format the question demands (markdown table, JSON object/array, CSV, YAML, bullets, sentences+citation) and returns a binary score with a reason; unrecognized instructions score 0 with 'no known format instruction detected'.",
+      "evidence": [
+        {
+          "resource": "repo://evaluators.py#L225-L344",
+          "version": "repo-lines-v1:sha256:f929a0f20d481774d24d3dbd200bde2273c927fc1b0b4a6b9a12c0c35d6f673e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkMzVlY2M3ZTc4OGE5NzkzMWI0OTQwNWQ0NDI1YTQ5YzA5MDAzYmQxZDE4Y2EzNzM5ZjVlYWEyYmNhNjQxZDIwIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI2YzRjZmE5YjQ4OTFmNDVmZjU0MzgzZWIzZjFjN2E2Y2Q0MGJjODJjYzIxNjFmOTJiNzQxZGVjNzM3Zjc4YmMwIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjM2ZjNGUxMmQ4ZDU3MWE5MDk4MjM2YWI4MWMwNmNkZTZkZmYwMTY5ZTAzNWU3ODUyOTAxODE3N2E5MTBjZTcyIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI5NjMzNzcyNjAxMDFmZDQyNDFiYTJmOGE2MTY4NWZhNDFjY2FlYzM3NDI5NDdmNTZmYzYyYmM2YWYyM2UyMDVkIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_fd6dfb652f534311b92f48edb2067941",
+      "statement": "abstained normalizes text and matches two marker families (first-person ignorance and source-negative claims); 'dont know' alone is excluded so reported paper uncertainty is not read as refusal, the detector is English-only by design with the abstention_quality LLM judge as multilingual ground truth, and a first-person hedge inside a real answer is a known accepted false positive.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adrs/0007-abstention-detection-and-reporting.md#L33-L46",
+          "version": "repo-lines-v1:sha256:ea0eeaf2f5ce988f1b7190c05c6cc3e108a4a636efa5a652a83ec5c49381dfec:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhNzYxMDkwODk0OWFkNWY2MjFjYzgwOGJkM2E5NGJlOGVhYzM0Y2E1NDdiODViYTQxMGViYWQ5NjBhM2IyMjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjZWIzYTA0NjQ4ODhiNGVjZDgxZjI2MTJiNTM3YjMwOGE1MWFmMTFkOWEzMzQzY2NjODQxY2Q2ODE4OWMwOGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxNTNmYTkzOGY0OTBlZDFkYWY2Yzc5NGU4M2EwOGY5MjI3ZjJlNTg5Y2E3MDg5ZWEwNmYxYTgyYTQ4YTBhNjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkzNjc2NGU5MDZlMzk0NDU1NWJkZThmYTNlNjM5MzJjNmZlNDRiNzlmYzg4ODc3Y2M3YTFkMmQ3NmI1YzcyYTkifQ"
+        },
+        {
+          "resource": "repo://evaluators.py#L351-L443",
+          "version": "repo-lines-v1:sha256:02641f69af5a752adb371a4c6072f990af05310c890d2efe80b762f9d3ae6e25:eyJzZWxlY3RlZExpbmVDb3VudCI6OTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVkY2VmNzc3N2U4ZjllMDM4MTAzNDYwM2NlNjFhMTY5NDgxOTJjM2E3YzMwNzg0ZDVkNjhjNzNjYTg5ODc5OTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY2OTMzZjI5ODhkYTg1MTM0Y2E2NmUzZjQ2MGVjNGFlNTk1ZTQyZDM5NjBkM2ZiMGJmZGYzNWY3MDQ4ODAxN2UiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyZDY2YTg0NGE5MjIxOTcwNGFhZDBlOWUwNzEyMmQ3MTlmMjgzMmExN2I4NjM0YTQ0OWNiNzA4MDRiNjc0YmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY1YjJiZTNjZmM1ODI1NTJkNmY5Y2EwYTk5ZTYxNTMyNzhlYjlmNjkyNTJjOTkwNzg3N2Q2OGJkMmZlNDMwMWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3147cadb6e0e4ed1adeb6b8f1d96f112",
+      "statement": "abstention_summary reports abstention_recall and over_refusal_rate (plus a diagnostic-only F1) total and per slice, never accuracy — because a refuse-everything system would pass a single-number gate — and each score's comment carries raw counts with a Wilson 95% CI.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions.md#L8-L17",
+          "version": "repo-lines-v1:sha256:1340e8fb2b468a9b0cd843198c6de27b876214512c09fcbbd3d71b1663be5fcd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5NTkzNjNjZjE3MmQxZWJlNjZjN2RjYTJmZDg1NzM5ZTk4ZDEyMzkxZjAyMzZiYzI4Njc1ZmVkZDEwNWVhY2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1NTM4Y2IwZjhmNDAyODUxMjkzMWQ0NGFjMmYzZjFjZDg2MWQyY2NhZDgwZDNiMTRlMzAyMTJiNDMwM2JjYTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM3MGViODk5Y2EyMGI5ZDgzMzhlMTNmZjU1ZWE2OGRjYTcyMDRiMjFkOGFjNGFkOGU5OWY2MjMyZmEwMTkxZjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY3YjQzNjA0NTFiYWE3MjM3MTg4YWE4MzU5NDRhOTQzNDIwYTA3ZTUwMWE1ZjNiZjdjMjg2YzU1NTNiNWFkYmUifQ"
+        },
+        {
+          "resource": "repo://evaluators.py#L481-L559",
+          "version": "repo-lines-v1:sha256:6c9bd4979ceaccd8c5072d73a7387e2bc67d83116af1cf9d50279c6e7b8f2c13:eyJzZWxlY3RlZExpbmVDb3VudCI6NzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1ZjA1MGNhMzNkZDEyZjIwMzRiNWFjMzJjNTc1MGUyNGFhNTA1ZjEwYWFmZGNjZDFkYjI5YTNhMDU1NmM2MGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMDQ5OWUxYjJmN2U5YjgxM2Q5MjMzODc4YjFkYTdkNjk4MWQxYTQxMWQ5OWY4MzdmMmI1ZDZjZTE1ZWZkMTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQxM2E1NGViMTYxZjk2MWM3YjAyODkzYWRmZTgxYjc0NzhiYWRjYWYwOTc4ODNjNzAwMWJiMWE0YmMxOTZkODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk2MzM3NzI2MDEwMWZkNDI0MWJhMmY4YTYxNjg1ZmE0MWNjYWVjMzc0Mjk0N2Y1NmZjNjJiYzZhZjIzZTIwNWQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_97e4ff8bc979460dbbe9cfbcb3e46f3d",
+      "statement": "wilson_ci implements the Wilson score interval for a proportion, chosen over Wald and Student's t for small samples (n~10-25) because it stays within [0,1] and needs no separate variance estimate; it raises ValueError for non-positive n or out-of-range k.",
+      "evidence": [
+        {
+          "resource": "repo://evaluators.py#L446-L470",
+          "version": "repo-lines-v1:sha256:7bb5178694bfc2a3ef874079f4abe3c77725bd9a23bda7930d449e3a4fcc9b84:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0OTliMmYwMzEyZTRiNjA5Mzc1MzYyNWIwMGRiNmU4NDRlNzM3OGM0N2Y0MjI3MTkzOThkNjkzZDI2MmUzMjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjMDU4NjI0MzBkMDJhODk0ODU5MGQxNjY2NjU0OWQyOTdjNDgzMTU2YmQxMmI5Y2NmZDQ4NWFhMmI5OWE2MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5MGM3NzZjMGIzMDM1ZDRhY2YzNGE4ODc5ZTljY2VkYTJlZGM5NmY4NDIzODNjNmQ5YTNiNDNlYzU3ZDdiMzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE5YTY1NmJkZTEzZmNiYzIyMThmMTdkMzZmZTgzZTkwNTBkMTJkMDZhNTZhMGIzZWJhNDBlNmYxYzI5ZWYzOWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1ced157d7e814608a40bc6c50676e47e",
+      "statement": "Both summary evaluators follow the LangSmith contract of returning exactly {'results': [{key, score, comment?}]}, since extra top-level keys fail the evaluator and drop every metric; f1_summary_evaluator averages token-F1 against gold answers while abstention_summary uses the examples argument for per-slice breakdowns and skips unlabeled examples.",
+      "evidence": [
+        {
+          "resource": "repo://evaluators.py#L521-L542",
+          "version": "repo-lines-v1:sha256:ff376953e107eda1d63764022d9d2100fb78b0347a0bf8d59c4e395cbdcd6e7c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3YmYyOGE5OTVmZWMxMjQ4ZmZjZTU4YjIyZWM1NTg2ZTA5ZjFiMDgxZDA3ZWFiNGU1MGNjYzA5MWYwYTVjMDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2YTcxNTI1NzJlZTg0ZjEwOTA2Yzc0YjlmMmE5MjQzNGRkYWIwZTNjNDI4MTNiMDRlNTk3ZWZjZWM5NTFiMjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBiNDY4YWQwYWJkNWRmODYyMGJiOTRiZGZmZTg1ZjQyMTEwZWNkYThhZjc2NGE0ZDVjM2JhMDZiYWE1Zjc3M2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFkMmVkYmFiZjFlZmM1ODRkYzc3NzlmMzBmMzIyMzdiYTdkMGZlMjUxMjQ3NWUzMDQyYTFlNDEzNjlkNTA2OWYifQ"
+        },
+        {
+          "resource": "repo://evaluators.py#L566-L603",
+          "version": "repo-lines-v1:sha256:886a6d0bae3e855c89be204e862f481d37f875d585daaf60ce059621868f29ea:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzMzYyZTllYTFlZDkwYWQ5Yjk5OWM3NWM4MjY3NGJkNGFkMjQ2MTYxY2MxOTc5NGZjOTk4MDhjMzlmZDc2MTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkYjlkMjMyNmI1ZTZiNzViNDkwY2E4MTc4MDUzZDQ5NTEyZjdlNDcyZTU4MzI3YTZmYmY1Zjk0ZDkxMDI3MTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNkZTgwYjc4ZTI0ZTY3ZTlkMWVmYWYyMWE3OTNjMzFmYmNkZjZjYThhYTc4MzM0YTNhMDJhZmQ5ZTlkYWI4MjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d21f2336ff2a4061a250d099c5385868",
+      "statement": "ADR-008 documents token-F1's defects as a correctness proxy (low scores for correct paraphrases, high scores for wrong answers reusing reference words, citations counted as tokens) and fixes an escalation order: free signals first, embedding cosine next, an LLM judge only if local calibration demands it.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adrs/0008-answer-correctness-signals-and-calibration.md#L1-L20",
+          "version": "repo-lines-v1:sha256:fed796530cb352eb94cc84f789020be87b5a1cf862863fdf99ebe3d2ce12900f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhOTljNGY3ZDUwNTVkNWY1NjlhMjI2MmYxYjYwOTBmMTc4ZGI4YjcxMzAwNjJjNDE1ZGE1NTExNTA4YjVmYWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJhNDAxNDRkZWQ0MzJlYzIyMDA5NzMzODZkMjIzNmY1MjdkMDY3ZjhiMmI5YzkxOGQzMzM4YjQzNzZkNWI1MzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVjYTAxZGNjYzBhNTA4MTIzN2I2ZWE0MDRhMTQ1ZmM5NjI5MTMzNzA0ZGI4YmE1OGZiYWRjYWI2ZTNjM2UyOTMifQ"
+        },
+        {
+          "resource": "repo://evaluators.py#L580-L603",
+          "version": "repo-lines-v1:sha256:a5e0a97d0c714ae3ffe4a9d6ac9e18a645bf62824913f546abad5ac2d29b2bc8:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMjI1ZDY0MTRiNDA2ZmJhNmM2NDNlZTdjODBlMjZhNGYxNmQ3MThhNGIwNGM5ODc5NmI4Zjk4MTY2MmNlMzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkYjlkMjMyNmI1ZTZiNzViNDkwY2E4MTc4MDUzZDQ5NTEyZjdlNDcyZTU4MzI3YTZmYmY1Zjk0ZDkxMDI3MTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwMTA0MmE3NjMxYjgwOGI1NzJiODI0YjUzZTQ4ZTJhZmM1NTcxM2ExYWQzYzkxMWNhNTliNmQ5ZWUwOTFjOGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.6.0",
+    "at": "2026-10-11T10:08:11.054Z"
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:86e42daa33c9798f83b32832eccbc6215ec59bd1a071c1f0a60ca3e79657e1e7",
+  "claims": [
+    {
+      "id": "claim_b6008ca52a334680a8902cab381d77fa",
+      "statement": "_ranked_and_gold is the shared core of all retrieval metrics: it ranks retrieved items at one level (paper by default, chunk as diagnostic), derives paper gold from gold_arxiv_ids or the arxiv_id prefix of gold_chunk_ids, cuts the raw retrieved list at k before first-occurrence deduplication, never mixes chunk ids and arxiv ids, and returns None when no gold exists at that level.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adrs/0006-retrieval-gold-granularity-and-metrics.md#L35-L50",
+          "version": "repo-lines-v1:sha256:2d7c610c0a9c52d0441b4ccdd4d7887ebe804f2b9a89f3c2bc396ce0a4316439:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwZGVjYjhlMDk0NWIwMzMzOTYzMTNhYTAzNjhkZjVhYzBhZmE5N2FlZTE5ZTBkYjlkNjhjNjkwMDk2YjA2Y2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0YjViNGEwMjA0ZDMzNTgwYmI4NzhiNDY1ZDRjMjhlMDEwODMwZWZiN2EzOWU2NzkxYTE2ZmJiZmMyNjUwNGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNiMTU3YTZkMjc2N2ZmN2Y0MTMzZWUyNzY1MTM2N2M2ZmRmZjdhYjRmZDliYTNjYjQyNjJlMmFhNDQ5MGNjYTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNjZDI3ZmRhNmY2ZDNiOGI2MGFkMjRiZjI3N2E1MDQ1ZDMzYTBkMTEyN2EyNDBiNzdlMWQyNGFkNGQ1MmUzYmEifQ"
+        },
+        {
+          "resource": "repo://evaluators.py#L66-L99",
+          "version": "repo-lines-v1:sha256:340b0aa019d83a932c03d7cedb5fc55b9293c19093ab5d75ec807cbdac95bf34:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3YmVhMDc5NTM2MTYyM2U0ZDk4ZWE3NzJhYTYxZjYzNzY5NTBkMzNlNmFhMWI2OTc2MjY1MjJjYjQwY2UwYmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwYWQyMGFmMDJlOTFkMDEzOTYwYzgxMGM2NTEyZjEyZDFjN2M4MDE5MjlkZDg2Yjc1YmU3ZDE5Y2QzMjE3YmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlkMDg2ZjM5NDFhMjg2YzA2ZWZhMmQ1OGUyZTQzYjFkYmM1ZjdhNDg3ZTkwMGI3ODQ1MWI0YmZlMDkwODk2YWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ1N2U4NDQ0NWM3ZWIxM2U5MTVlOWM5YWM5ZGVjMTgwMmI5YjBkMTI5NDI3N2IxOGFmYzg3YmIxMzk0ZDkxODkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_94db662a24b84fac9012b566063e07fc",
+      "statement": "precision_at_k is only defined where the gold is the complete relevant set: is_gold_complete returns true for adjudicated examples or non-open-topic multi-doc, so 1-paper golds (answerable, persona) yield None because unjudged siblings cannot be counted as errors.",
+      "evidence": [
+        {
+          "resource": "repo://evaluators.py#L161-L190",
+          "version": "repo-lines-v1:sha256:e901fc12fb86ff3118f8b50eae42931533275f833b71905d06ce9a7d64190cfc:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcyZDMxYjc5ZDkxOTAyMjY2ZDMzODk4NzU5NDg4NmRjMWMwZDBlN2JhNTJmOGVkNWVhNmU2NzM3ZWJkMzk3NDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0MjY5NTIyMGFkYmRkYWNjYjYzMjQyYTM1NjIzMjI5YjExMjVmYjViMDAzNzE5Yjc4NDdhYmZmNjQwMTEyNDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBmMGE0N2YxNzA2MzA5YjAyMGU0NGIyYWM4ZmRlZjAwZjA5YjJjOWRkMzliNDc2OTJkZjczYjJmOTdiZWZjZTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYzOWU2NjMwNGQ0OTRhNTIyNjcwNmM1MTM3MDRhOWEzNTdkNGY3MDYzMzlhZWRjMDRiOWE1MTU4MWFlZjA2Y2YifQ"
+        },
+        {
+          "resource": "repo://evaluators.py#L32-L48",
+          "version": "repo-lines-v1:sha256:d06cf1731e93aea073ae6ca6918b4c106f8a60a5906b962df893e89540405751:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdmMTM4OTY5ZDhmZGMyOTBjMWJmZjU3ODk4MGEzODc4ZmIwZjMwM2U3YjJmOTgyY2ZjZDA0ZmQ0YzZhMGVjMzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyMmJkNmE4MWRkOThlZTRlZTliZmQ0M2IwZjk1ZDUxZTk0YjQ3ZmQ5NDRhZWU1ZWZlM2YyNzgyZDcyMmFlZDQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQxNTY5MTI0ZTgzMGIxZmI2NzJjY2RkMDY0Y2U5OGRkZjAyY2IwMDUzZjg2MmEwYzFjZWQ5MTQyYzQ3OWM2NjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJiZDVlNDgyYjhiN2E1YjI4YTczYjNlZjk3YTY0MzdiNmI2MGZiZDcxYWZjNGZiODE4OTA5ZDI4YWQzYWZmYTMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6d2288464d4a42298214ce79c00a3fb7",
+      "statement": "is_retrieval_evaluable skips examples with retrieval_gold 'pending-adjudication' or no gold labels, and primary_retrieval_metrics implements the reporting policy: 1 gold paper reports hit and MRR (recall would duplicate hit), 2+ gold adds recall, and zero gold reports nothing.",
+      "evidence": [
+        {
+          "resource": "repo://evaluators.py#L208-L218",
+          "version": "repo-lines-v1:sha256:c5f81bf2799b174bb31f8c017c8bdc2cb1d64830e7cceaf3735ba82262b65450:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYxNjZmMzhkNTZlMWU1NTEwNmZjNTU4YzFkYzBiMGMwMzdjNjI3YzQyNjMyMGVkZjFlYjUyZjQzMzNkM2RmMTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2YTMyNjAzMzhlNDM2NWY2NDlhYzQ2YmM2MWQ5YTJhNzY3Y2E3YjcxYmE0ZmVmYTMyYWI3NTM0MGMzZDQ5NzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmYmQwMDkzMTRiYzI3MDg0MTY3MzRhMDJhZTVmZjM5YTFlNDhhMDUwYmU5MWY0M2IyZmFhOTIwMDJjNjJiZmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk2MzM3NzI2MDEwMWZkNDI0MWJhMmY4YTYxNjg1ZmE0MWNjYWVjMzc0Mjk0N2Y1NmZjNjJiYzZhZjIzZTIwNWQifQ"
+        },
+        {
+          "resource": "repo://evaluators.py#L21-L29",
+          "version": "repo-lines-v1:sha256:56bbced395645c4ee296abe6c052fb0a1590e890f1786e9b09d5ba1e345bd1db:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzdiN2QxZDg2M2I2ZDgxMzA1MzVlN2RiMmMzMzIzYTc2MDc4ZDc0NTZjYmM0OWVkZDE3ZWE1MTVkYWVmZmY0MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDZjNWJmYzFiZDc0ZTVhZTQxZjZiNTEwMGViYWI2NWJlMzU0NzA2NTE3ZTc2MzdmYjkwNTA2YjRkYWZkMmNmMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjVlMWZlNzM3Y2JjYzNhZmM1MTQ4ZTdiOTE1MGZiMGFhNmYyOTJmYTU0OWJiNjAxYTUxMTVkMTU5MWYwNTQwMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjIyODJkZjhiMTRmNmMwZjdmNDc0YjNmZDRjYzU1MGM5NDkxYTkwNzI1MDRiNzlhZWQyNTY1MTI4MGU5NzU4OCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_a5c8ec1aa2a94df29e5ba2211f643f8c",
+      "statement": "The module derives a chunk's paper id by string-splitting chunk_id at the colon rather than importing utils — keeping evaluators.py free of config/utils imports so it runs without API keys — and a test pins the derivation against utils.chunk_id.",
+      "evidence": [
+        {
+          "resource": "repo://evaluators.py#L51-L55",
+          "version": "repo-lines-v1:sha256:3bc82aa2d8da29a1ca94e7776d28983d66049732ff28f341676807c3da340241:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGMyMmZiOTE1Njg5MTQzZjRkZmZhZmJlZmE4YzQ0MzliYjU3ZDJhODA0Y2NkODE4NTM5NDI2MWE3ZDk3MjExNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWI4OGU1NDAwM2Y5NDIyNGEwNzYxNGIxODgzMzFkNzZhMjkxM2YzNDJiY2RjOGZiOGIxNzM2NjY2ZDIxOTA0OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGFmOTMxMDNiMDcwYmM4NmM4YWQ0NzNiNTg2NGZkMzRmNDFiNWM0OTVlNmQ4ZTgwM2E2MzUzMjJkNjk5ZTMyNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiY2UxZmZjM2FhYjRkZDg3YTUzMjY3MTM0OTIzMDMzMTQ2ZTUwODllN2JkMTViZGZmYTA4ZjIxOWM3YTg4YTk2YyJ9"
+        },
+        {
+          "resource": "repo://tests/test_evaluators.py#L453-L453",
+          "version": "repo-lines-v1:sha256:9c050a1ff35d436af257ecfd2159c43aa2962a9ce10c33dc213a0e3c52d1dbc9:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOWMwNTBhMWZmMzVkNDM2YWYyNTdlY2ZkMjE1OWM0M2FhMjk2MmE5Y2UxMGMzM2RjMjEzYTBlM2M1MmQxZGJjOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWMwNTBhMWZmMzVkNDM2YWYyNTdlY2ZkMjE1OWM0M2FhMjk2MmE5Y2UxMGMzM2RjMjEzYTBlM2M1MmQxZGJjOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTE3ODk0MTBhMTZjNzczYTQxOGJiMjFhYTE5OWYyZWY3YmFjY2VkNzU1ODQ1ZjcxOGNjMjM0ZmFlMDIzYjhhYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjRhNTlmOGUwZjc1MWYzNzdmOTlhOTkwMDUyZGM1MjUyNWYzYTUyZmM5MjZiNzQxM2YzZmVkODgwOWI1YTdjZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_dfb14309e02c4c99bb4aefe94a403fff",
+      "statement": "test_evaluators_oracle.py cross-checks recall, hit (Success), MRR, and precision against ir-measures (a trec_eval wrapper) over 300 randomized cases each at both paper and chunk level including k cutoffs; the test file documents that ir-measures P@k divides by the cutoff while precision_at_k divides by distinct retrieved papers.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_evaluators_oracle.py#L1-L115",
+          "version": "repo-lines-v1:sha256:7a7e7c5449828a310ff520b21a4a34eb33e93358df554b2dabdad6b4219b2dbc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJmMTBkMTM1ODE0ZjRhZWQ3YzNmZGFiMzFkNzc3ZTJmMmEzYzk2OWFlOGRhM2JjNGIxYjVjOTRhMzRiZTNmYjljIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxY2ZmNDBmNmFkOTYyNWYxNmY4M2RhMTUyM2QxNzY1ZWM4N2RlNDgwODQ4MmQyMzVjOGEwYTc0NDc5NzNiOGU5IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_582eb7d8b85d484aadd32a5d3a9a0d45",
+      "statement": "hit_at_ks returns a hit-rate curve over multiple k cutoffs (default 1, 3, 5) to show how much each extra retrieved position buys, feeding the CKPT-1 k-sweep experiment.",
+      "evidence": [
+        {
+          "resource": "repo://evaluators.py#L193-L205",
+          "version": "repo-lines-v1:sha256:01fa2e4af7ec2de8faea4e83d6d84dfdd3cdf339d591ed61d0361faf58e6fe7c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjMmNiNmJlNDlmZTQwZDZkNGM0ZTk0OGQ3ZTg5YzY2MjI0ZTI2YWQ1NTgxZGIzNTAwN2Q3MjU1ZGFlYmY5MDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA0MjQ5ZTQyZjhkN2E5NTRhZmZjNDljN2RmOWQ1YmZiM2IzMWY3ZTY5MjYyNjczYWJjMjM4NzY1ZjAxNDdkYmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlZTc1NzA3OWZlNjc2YzNjZTQwNWM0MGIzM2ZiNDkzNjIwNzU3ZTg4YjJkYWRkYWI1MmM1ODAyMDNhZTQwNzEifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.6.0",
+    "at": "2026-10-11T10:08:11.054Z"
+  }
+}

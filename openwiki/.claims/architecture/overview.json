@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:3830712e4702e3b6e7ec2cc64d8bbe1679540ebe5e99c4d201b95cf3ca01d8af",
+  "claims": [
+    {
+      "id": "claim_779986194bf84a1c805492c586c4e3f1",
+      "statement": "The arXiv Research Copilot is a cited Q&A assistant over 250 arXiv cs.AI abstracts whose primary deliverable is the surrounding evaluation system: a human-reviewed golden set, evaluators, and experiment decision gates organized around Barnett et al.'s seven RAG failure points.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L1-L15",
+          "version": "repo-lines-v1:sha256:6744cbcfe7e0c03da51798dcfdbe74a4887c6996899dee1f13d5510ef5a85315:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlYTllZDdkZGU2Yjk2MTFjYzE5ZmVhNmU2ZDI3NWY5M2YzM2NlOGJjZTE1YzQ3MWM3NTRlNjU0YTU1OWEzZGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE0Yjg1N2I2ODg4Y2I3MTk0ODUxYjE4NWNiOWQ0ZGE4MDk5MWFjMTAxMGRmYzg4NjI0MzVjNzcwYjY2NTlkMTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY5NzJmZDRiZDNiNWMwZjQ5ZmRiMjA5OGVmM2UwZWM5NjJlZjFkYjA5MWNmMGU1MmEwZGM4OTcxYTk4NTBkYTYifQ"
+        },
+        {
+          "resource": "repo://docs/plan.md#L1-L15",
+          "version": "repo-lines-v1:sha256:5e77fb6e7f48618ca2fff2ad39caaf81ff391eb8054d634ee4291a898e44ec6f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMwZjdiZGMxNDc4ZjNiYWU0YzRjNTk0MTVhODYzNTFhY2JmMmIwM2UxMGRkMThmM2IyNmY3MTI3Y2ZlMDhiNGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk5MDY0MzZjODQ4MGQ1NmQ3ODUzOTAzODlhZTRjMTExNzFjZTc5NWU5MDAyMDQ3NjI2NGJkMDA5ODYyYWMyODUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUxNDY0MzgwNmRiNjk0NTBjOTE1MTg2YmMxOTY0MDgwZTY4OWFhN2NkODdjNjAwMmQzNTQwNWY4NWY3NTY1MmYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_334574aeadc640b5a5c5114557e08fed",
+      "statement": "The runtime pipeline is a four-stage chain (rewrite_query, retrieve_documents, rerank, generate_response) orchestrated by arxiv_copilot; rewrite and rerank are disabled pass-throughs that raise NotImplementedError when their RunConfig toggles are enabled, reserving them as CKPT-5 and CKPT-4 extension seams.",
+      "evidence": [
+        {
+          "resource": "repo://app.py#L52-L112",
+          "version": "repo-lines-v1:sha256:acca15aa92658689516e5a0a30c5a2099674865ce02a67fa87c8a312b9a26007:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwYWFhMmZhYWE5YmVjNzVlNTM4NjhkMmY1ZjZkMTQ1MzBlNzI5NTNjZGRhNzJhNTM0ZDI1NTEyNzUwODExYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5OTI1YjEyMDNhYjhlZmYzMTc0MzVkNzJmODMwM2EzYzExYjIwODRkNzgyOTdkNjQzNjVkMmVjMDY5M2M1YmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmYmQwMDkzMTRiYzI3MDg0MTY3MzRhMDJhZTVmZjM5YTFlNDhhMDUwYmU5MWY0M2IyZmFhOTIwMDJjNjJiZmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_451bd473a6704e1bac26b4ecac18d5b6",
+      "statement": "The corpus is frozen by resources/corpus_manifest.json (250 arXiv ids with per-abstract sha1 digests, versioned in git); rebuilds fetch by id, verify every digest, and fail loudly on missing or revised abstracts, while the parquet caches are git-ignored rebuildables.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L119-L121",
+          "version": "repo-lines-v1:sha256:d9862272a788e0c7da67575b55b07920c093adcb90e0e04a92f991a4d29f4f73:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDU4Y2I2NzRkZjJiZTM1NTZiZTNjMjNjMTc5MDkxNmJlYTA2ZWJlMWU4NGZkYjY2YjJkZDMxMDJjMjgxOTdmNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjllMDM5Y2VjOTJhOTc3MDNkYmU4YmZhOWRlMGM5NzIzYzczYTkwZTBhZGYyN2VmMGU3ZTBiY2NhMmYxMmQ3MiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZmRmZWZmNDNhYWY0NmUyMGMwNDNkMmFkYWY1ZDhiYzZiOTQ4NDc5NGI3ZWQ0MTVkY2VlMWQ3ZTYxZTU0NzBmMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2Q5ZDJhOWE4YmFhMTkzNWNmNTc3NDViZTlkMDJhZjA4NmZmODA5ZDM2MGVlNzg1MDBmYjNmYmMxNWVmNzdlNCJ9"
+        },
+        {
+          "resource": "repo://utils.py#L221-L238",
+          "version": "repo-lines-v1:sha256:79d467d4d3571e64dab7aeeb8d3c62df496960fa3620db509664609e976fdde0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3MTJiYzRlYTM2MDM4N2E3NzNkMjU2YjhlYzdkMWYyNjUwODg0MWM2YjczNmQ3OTRhOTkxOWUyMTk5YTgwZjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4NmM5MWI5YzQyYWM5ODE3ZmRmMTdhMDE3ZmNmNmIwNzRiNzY4Njk1NDk4ZWYxNWE0OTFkOWEwYzA4N2M2NTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3MDE0OWUwNjlhZDY3ZWNjZjQ3MzY0NmZmMWM3NTAwNTBkMzI5ZDExMDAxOGRjNTc2Njg3OGVhZmExZDYwN2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI3MzkzY2YzMDQ2NWQ4YzhmMzVlZDEzODVjYmJlOTQxMzE5ZjBmYWFmNjM4OTE1ZGU1MDFhNjM4Y2EyNmNhZmYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9fde1901829d427093a6dbe2ba52de71",
+      "statement": "The golden dataset arxiv-copilot-golden targets a ~100-example core split across slices (answerable, unanswerable, deep-hit, multi-doc, format, persona, stale) and its builder syncs idempotently: complete slices are skipped, empty slices are bulk-created, and partially populated slices raise an error.",
+      "evidence": [
+        {
+          "resource": "repo://build_golden_dataset.py#L640-L704",
+          "version": "repo-lines-v1:sha256:a4d141e679300a0da53584b7c933272fe0ddd4ce67582746ea56ff9a13849358:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMzZGNjNzMxNTE1YWY1ZTY3NDYxMjQ4ZjYwYjkwZGE2NWE1ZjU1NjI5Y2QxZDY5MDU4YWYzYmRjY2Y1MzVjZWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU5YmE5NWNiNDQ1NTEwODQ4YmVhYTMzNGQ5Y2VhODQyNjI0M2IwYmJlMGQ5MThiOGIxNjIxNzJjYTgwMTg2NzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImViZGM5NzUxYWE2ZTFjZjllNDdlZjg3NWRhZjlkNzk1YWQ0ODk2ODM1MjI2NjdmMzg2OWQ0ODhmZTdjNGZiYTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkNDEzNDBjYzIzOWExNTljZTliNjAyMmU5ZjYzMjI4MzJlMmVhZDc2Y2FlOWU0NzU0ZDIxMGViOGZiNmQ1ZTgifQ"
+        },
+        {
+          "resource": "repo://config.py#L52-L64",
+          "version": "repo-lines-v1:sha256:156ee42348f0cce84ba632db0dc74726402cf5fbc3fdad56d7fc1ee53f0bab0a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEyMjYwY2YzMjYzNzNjZGI1YmJkNDkzZWFiZDQ1NzI3MjdiYjM4ZmQzZTIzYjE4NDU5YTQ2MmI0MGI1OWRkODYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjOGEyODVlOTQwMGJlOTIzMGRmMDQzYzQ4NjM3OGUzNzQzN2VhY2IyNDA4YWY4NTc4MGUwZTZlMGZhOGVkNGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJhZjM5OWQwODQ0M2JjMGZlOGRhNjQ3NTQ5MzIyODk0NDFhMWI4NTdjMjVlN2EwZWE4N2ViZTdiOTM4ZTc3MTAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c9d8889692004c83b75d58032580f91b",
+      "statement": "Experiments follow a checkpoint contract ending in a PROMOTE/REJECT decision gate that also requires no regression on non-target slices; each gate outcome is logged in docs/decisions.md, and core-set gates require at least a 15% delta to be credible.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions.md#L1-L10",
+          "version": "repo-lines-v1:sha256:29ac8e68e1c447e311a3f9d99ae129c24e245a6c601e564eab3bbc2a21c6489e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNmZDM1MGJkMTcyOTRkM2ZlYTI3YmJjMzYxZjQxOTczNzc2OGRkYmY2NWVkYjgzOWE1MzQ5YzRhMzkzOGZmZjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlZDU2ZWM2MGIyY2ZiZDIyMjE0NDAwZWNiZDY4ODQxY2RhN2I2YjIzZWNmZjM4ODI2MDU4YWUzNTM5ZTNjMjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIzMGJkMzQyMzczODBmNWVmNzIyNzRmNzFlYzM5NzBiNzE2MDRiMDA5MjlkZTU3MDZhMjQ1MmZjYmZkNWQxNmQifQ"
+        },
+        {
+          "resource": "repo://docs/plan.md#L174-L184",
+          "version": "repo-lines-v1:sha256:0f0de29118976c3dea557e30c930e1c65f7a3e2902f3e550afa244813c04d404:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3NjRlOWFjOTg5ZDYwN2M3OTc1NjVkYzYyMWU1Y2EyNzI3Zjc3ZTM3MDYxN2M3NjBkYjI3ZTIzZTNkM2UwNjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwNGJiZWM2ZTg3Y2NhMTYxYTcyMzNmZWFiNjZkNzE5MDc0ZTczODczODA3ZDEyZWUyM2MwYThlNmE3Y2I4ZTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAwMWYyZWMxNzU5M2MxMDU0ZWI0NjM2N2Q4NDUzZWYyNGExNzNjZTk2YjcxMTdkOTFmOWE2OGQ0NGZlZjhiMDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhlMGYwZTJiNTQyMTk5YzJkODQ0NDIxYjMyYTllNTdiNTFhMjk2NDc1ODgwOTE3OGVlOTI4OTMxODRiMmJiNWIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9aa61e1ea826429d97096da5e476164b",
+      "statement": "Retrieval and generation are instrumented as two separately measured surfaces, and every run carries the same metadata fields (app_version, embedding_model, k, chunk_strategy, rerank, query_rewrite, prompt_version) so any metric can be sliced by any configuration axis.",
+      "evidence": [
+        {
+          "resource": "repo://app.py#L38-L49",
+          "version": "repo-lines-v1:sha256:d94b8111b1dcb124bb0b94e6c9599aa7866edb986b9835f45c585092d42209d9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwMTk0NGRjMDQ4NWZlZGM5OWI1NjdiMjA0NGFlY2M3OWVhYjBjOTcwMDE0N2UxOTY2NDk3MjYyY2EzZmI3YjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlhN2E4YzFiMmVmMjEyZDJjNWNjMjRhMTI5NTYxOTdkOTI3MmQwNWFmMDQzY2RkYWMxZTI1ZmIwNmIwMzk1YjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJkZTllYzRkZGNlNjViNDY1ZWQ0MTI0NzU0ZTllNWY5ZTkyMTNjYjI1ZDYwOTRhOGRhOTAzYTlkMDRmMmRiYjAifQ"
+        },
+        {
+          "resource": "repo://docs/plan.md#L104-L121",
+          "version": "repo-lines-v1:sha256:90248ab2c25c5bdbcc2af434663127f624336e5a2779af92f3ae3df52300dd3f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1MTcwMGE4ZjQzMTc2YTQzZDlkZGNkZjBlZGU4M2Q4MGMzY2FhZjNjYTQ5MDM2NzgxODlkMTMwZDE5NTg2ZTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAwMWYyZWMxNzU5M2MxMDU0ZWI0NjM2N2Q4NDUzZWYyNGExNzNjZTk2YjcxMTdkOTFmOWE2OGQ0NGZlZjhiMDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdjZmI5MWM0Mjg3NDVmMDRkYjBiZDQxNzVjOTRiMjA3YjdmNGI5OGQxMzdkYWFmM2Y1M2QzODQwYjBkOWU3OGIifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.6.0",
+    "at": "2026-10-11T10:08:11.054Z"
+  }
+}

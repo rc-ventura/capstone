@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:163c96248bfec5e1f6e952e21c09893e59a956c940e8f99dfb908d66ce12deb0",
+  "claims": [
+    {
+      "id": "claim_d77d3548dfee413b9785d9262a58e390",
+      "statement": "arxiv_copilot chains rewrite_query, retrieve_documents, rerank, and generate_response in order, passing the rewritten query to retrieval and rerank but the original question to generation.",
+      "evidence": [
+        {
+          "resource": "repo://app.py#L102-L112",
+          "version": "repo-lines-v1:sha256:3784354b826d4384bce4ef9d1ced2fc9251b8ff72ea1c6460e8b167672dc03c3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwYWFhMmZhYWE5YmVjNzVlNTM4NjhkMmY1ZjZkMTQ1MzBlNzI5NTNjZGRhNzJhNTM0ZDI1NTEyNzUwODExYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5OTI1YjEyMDNhYjhlZmYzMTc0MzVkNzJmODMwM2EzYzExYjIwODRkNzgyOTdkNjQzNjVkMmVjMDY5M2M1YmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVkNmQzMTE3NmFjZDg3MDA3MTY2MThiOWZmZDA2MDhjNDdlNTVkYzI2NDNkYWIyZGIyYjU4NjE5OGIyMjBjZWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2fbc0518f45b4b7c8c04472488c52202",
+      "statement": "rewrite_query and rerank are disabled pass-throughs that raise NotImplementedError when their RunConfig toggles are set, and _prompt_template similarly rejects any prompt_version other than v1 — reserving CKPT-5, CKPT-4, and CKPT-6 extension seams.",
+      "evidence": [
+        {
+          "resource": "repo://app.py#L32-L35",
+          "version": "repo-lines-v1:sha256:46fd751cc9a6852f223a5296a9f5d2954a5c107599646da95f04c5a63195dad3:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjA2Zjc3NWFkMzFjMjA0NjQ5MGU0YWNmMDk2YjRlZDZlZWRkNjhiNzVkNjIyMmYxZTUyZDM4NGJiMDZjYjNjOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODc2ZDEwZWFjOGQ1ODc5NmY0ZWU1MzFkMTFkZDIwZjZhODRhMTY2ZDAyN2YzY2NhNjkyM2UyZmQwZmZiYTY1NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmRiMzA5MTE4ODQyZGU0NmRlYTY2ZDAwN2E2MmMzZDlmNmJkOWM3OGM5ZjY3MGVlMWI0NzgyMjRiMzcyYTcyNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjNlMjg4OGIxY2E3YzUwNWIzZTA4ZDQwNWFhYTFjOTIxMzQ4ODAxNzFiOWI4NzI5ZjhjN2M5NjQ4Y2UyMGFlZCJ9"
+        },
+        {
+          "resource": "repo://app.py#L52-L69",
+          "version": "repo-lines-v1:sha256:fbee58f455539ee8e08eadad789bd9ff49120cce787079d0807dfacf3bf76c08:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwYWFhMmZhYWE5YmVjNzVlNTM4NjhkMmY1ZjZkMTQ1MzBlNzI5NTNjZGRhNzJhNTM0ZDI1NTEyNzUwODExYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVlMjlmYWIwNTJjNTg5MjQ3YWNkNzdhNTYyNTM1YTc5MDQ2MmRkNjMwYTgwNWZmYWI5OWY2YmM4ZDg5NTU5OWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmYmQwMDkzMTRiYzI3MDg0MTY3MzRhMDJhZTVmZjM5YTFlNDhhMDUwYmU5MWY0M2IyZmFhOTIwMDJjNjJiZmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBiOWE5ZDc0YmRiZjhjMzI0MTcxYWZkNDQ5MGE0YWM4OTlkZDJmZTIxM2IwOWQxMGMwNGMwYTQ1ZGIyNDVlN2YifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0403041d377947689aa806a5c63dcd29",
+      "statement": "PROMPT_V1 instructs the model to say it doesn't know when the answer is not in context, cite the arXiv ID for every claim, and answer in at most three sentences; generate_response formats each document as '[{arxiv_id}] {page_content}', calls gpt-4o-mini at temperature 0.0 in a single completion with no retry, and returns the message content.",
+      "evidence": [
+        {
+          "resource": "repo://app.py#L19-L29",
+          "version": "repo-lines-v1:sha256:b1997e768393284c8218929fe8aa69e619051b2d5351be40693b89a8b797c099:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZhNjBiYWZkYTNlZGRkZjM4MjRiNTc1YTI4YzdmMTA5MDliZDYxZjM2ZDkzNWM1MTJhM2YyZWRlYThhZGEzNWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZiMzg1NzQ5NmM0MjViYzM4ZWZiYmY5YTdmNTUxODI3OTUwNDVjMDBkZWE5NGY1YTkzN2MzZjEyNGU5NTUzNTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjllYTY2NjI3OTdhNWJhZDcxYjI3MTNhMDlkM2E0NTMyZTQ3MDI1OGI4YTQ3MDZlZTJlMDk1M2NiM2NjYzgwYzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE4YThiNmVjZGYyNGI2MTRlNDAwYzM3NGQ4Nzc4NTQxOWFlZjI5N2Q2MTZlZjlkYWUwODcyN2MyNzJjZDI0MjMifQ"
+        },
+        {
+          "resource": "repo://app.py#L72-L99",
+          "version": "repo-lines-v1:sha256:d573575f91cf3b8bc681c8bd7bec8c489a62abd53ccf85205f10d2f8e7667e91:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4YTQyNzlhNjIwNjVjMWIyYzgxNzc5ZWJjZGFmZmFiYTIyODZlODMxY2U1MmU1YTlhOTQ1YzVlYjMwMDBmMjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNmZWVlY2ZhMjEwYTE2MzYyYjk5YWE5YmZjM2M5MjkwOGFjZjhmNmQwZTgyYTVlNDFkZjFkYmQ2YmM5NDdiOTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZkMjViM2E2YTllN2U4YzQxNjMwZGM2NzUxMWVmMDcxOTI2NjM1YTVkNjBmZmU0NmY4ZTFhNzU4ODBiMzU2ZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJkZTllYzRkZGNlNjViNDY1ZWQ0MTI0NzU0ZTllNWY5ZTkyMTNjYjI1ZDYwOTRhOGRhOTAzYTlkMDRmMmRiYjAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7efad416069446718a6bc9a705066edd",
+      "statement": "Multi-turn support is provided by an optional conversation list rendered into the prompt's Conversation slot, while a thread_id uuid attached to run metadata groups a conversation's runs in LangSmith.",
+      "evidence": [
+        {
+          "resource": "repo://app.py#L102-L112",
+          "version": "repo-lines-v1:sha256:3784354b826d4384bce4ef9d1ced2fc9251b8ff72ea1c6460e8b167672dc03c3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwYWFhMmZhYWE5YmVjNzVlNTM4NjhkMmY1ZjZkMTQ1MzBlNzI5NTNjZGRhNzJhNTM0ZDI1NTEyNzUwODExYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5OTI1YjEyMDNhYjhlZmYzMTc0MzVkNzJmODMwM2EzYzExYjIwODRkNzgyOTdkNjQzNjVkMmVjMDY5M2M1YmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVkNmQzMTE3NmFjZDg3MDA3MTY2MThiOWZmZDA2MDhjNDdlNTVkYzI2NDNkYWIyZGIyYjU4NjE5OGIyMjBjZWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://main.py#L23-L28",
+          "version": "repo-lines-v1:sha256:5bd700310dfc101e83d226099c0e4cf447f6e18f924f206ea6582be6b91fd42b:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjRiYzVjM2FlNmZmZjUyMTE3YjNiNGQ4NGE1ODA5NmUwMTc4MTdlZjkzNzA5Y2I3MjQyYzBhYjdjMTcxNzQ5MSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjJhZTAyYWMwMTAyMGVhNDQ1YzU0MjU5OThhZGE3Zjk3MTg4MjVhYmIxNWZmOTAyMmNlZGU5N2RiNTYwMDRkYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWFlNmI5MmRmZTQ0MGU0NWU4Y2Q5NTY3YTY1OGU1NjIwNDcwMGIyZDk2NWQ4ZGIyMTVjMDQxYTE5ZjQ3MGJlZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjg3OGViNDI5NzgwMWNlMWVjYjQ4YmY2YjFjOTdhNmY0NDllMjgzZjk4NDFhNTFlMmUyM2MyZDQ2MTI4Njk2MSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_3f2adaf5d6b24fed9bd6cef19543f885",
+      "statement": "All three LangSmith tracing mechanisms are used together: @traceable decorates the stage functions, the module-level OpenAI client is wrapped with wrap_openai, and generate_response wraps its LLM call in an explicit trace() context that ends with the answer as output.",
+      "evidence": [
+        {
+          "resource": "repo://app.py#L14-L14",
+          "version": "repo-lines-v1:sha256:ece090d96d357f48e90186b23f9050dd4b78715a090995d2e5d9ed4ef565bd6b:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWNlMDkwZDk2ZDM1N2Y0OGU5MDE4NmIyM2Y5MDUwZGQ0Yjc4NzE1YTA5MDk5NWQyZTVkOWVkNGVmNTY1YmQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWNlMDkwZDk2ZDM1N2Y0OGU5MDE4NmIyM2Y5MDUwZGQ0Yjc4NzE1YTA5MDk5NWQyZTVkOWVkNGVmNTY1YmQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmFjNDliZjA5MmFjMGVjZDAwNjAwNGZkY2EwMmYyMWQ2MzFhY2Q3ZTZlODk3MDM0MTQzNzkzMTMyODU5NDQxZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTllZWZmYjcxZTU4ZTZiMTVlODlhYzM0YjA1MTJlZTE4YjQzNWJjZTI2MDkyMTcyMjAzMzViYWQyMjZjNDMyNCJ9"
+        },
+        {
+          "resource": "repo://app.py#L86-L98",
+          "version": "repo-lines-v1:sha256:2f398c6d065b48e566c32dfbb35996bad79c56d282498125bc3da8f9bd9e16c8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkYTg3ZGU1MmI3Y2NhNmMxMWFlMjBkMzQwOGExYTQwODE1MWQ0MDlmZjQ0Y2IyMjM2YTk2OTkxNGFhYTg4YjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE4NjllYWE4NWY1YWMyYTdhZjg5ZjhkOWFiMjcwN2U0YjQxOWE2ODdjMzM5MDMwNzQzNTQ3YTg5YTBiNTM2M2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY3MmI2ZTA4ODlmNzk2ZDM5MTBjMjdjMGQyMmU5NjU2NmFjM2RkMjU0Y2NhNGJhZjhkOTU1MjFmZGY5MGExOTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVkNmQzMTE3NmFjZDg3MDA3MTY2MThiOWZmZDA2MDhjNDdlNTVkYzI2NDNkYWIyZGIyYjU4NjE5OGIyMjBjZWEifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.6.0",
+    "at": "2026-10-11T10:08:11.054Z"
+  }
+}

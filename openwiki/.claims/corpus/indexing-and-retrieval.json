@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:c9a36cc59a0de0a3277e92a87609a2bbb6b11f2f3c400f978e2c4a32a2c18196",
+  "claims": [
+    {
+      "id": "claim_12ef2d83b62948f48ac1eb99e5b5f4aa",
+      "statement": "chunk_documents treats chunk_size=0 as no splitting (one index record per whole abstract) and otherwise splits by characters with RecursiveCharacterTextSplitter — character rather than token length, because ~255-token abstracts would rarely split at 500 tokens.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_chunking_strategy.py",
+          "version": "repo-file-v1:sha256:26670e824704a5590dbf808e4185a9906b4bbd0e2e0f7775c81c2b388f73d618"
+        },
+        {
+          "resource": "repo://utils.py#L95-L116",
+          "version": "repo-lines-v1:sha256:ac991575878e31926caee6dbfb4748bbd989290b3b811efa99b46e3fc37b59c0:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmMzMzZDQ4MDJiMjAyYzg5YTA4YWEwOGQ1NmM4ZmI0NzY2MzZjMWRlMmEyYjc0N2RkMmQ4MDk0YWM1NmQ2MGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgxYmY4MjA4MzcwMDUxYWRhNGI0ZjFkZThlYTNlNjIzMzAxNDQ4NTEyZjQyOWFlNDdlMTAwNTljNGFmMzdkZGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM0ZGM3NjViNTVlZDhjNGJmNzRkZTU3ZDBjYTFkNWI4ZWY0NTU0MDZiYjNmODZmN2VkNGYzMzZhMTM1MjdjYjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY0NmIzZDhiZDE1MTgxMzcwMGJhZTJjMjExNGMwMmQ3ZjUzNjE1YTVmNjIyMzNmZmNjMDA0ZWNlNmNlYmIyMTAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2eebbf02fb73492ea213e2af3c0a7d36",
+      "statement": "chunk_id is a deterministic content-addressed identity (arxiv_id:sha1(page_content)[:12]) used as the single source of truth for retrieval gold labels, since vector-store UUIDs are random per build; because ids change with chunking, chunk-level gold cannot be compared across chunking configs.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adrs/0005-retrieval-unit-whole-abstract.md#L25-L31",
+          "version": "repo-lines-v1:sha256:57926df845833160d93c9bf6119c5e1a0a89ba257855735577e6069ff46130f3:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmM3YTEyYWZjNjQ5Yjk5MzYwMWVhZDQxMmFiMzJjYWNlZGRhMGYxNjY0YTRlZmQzNjBkZThlNTMxYTNjNzViMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYzYzMjE0MTIzMDA4ZWM4YjM5NTZiMjI2MGI3ZTAyNWI3YjllNjA4YjcxYmRhMzM2ZTAxMDFhODNjNzQ2YTdkMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmRjODc2MmY3YmFkNjdkYzA2NjZiNjI3MzEwMjEwNzQzZmI1ZjBhZTM5ZjEyMzYyZjFiOTNjYWU2NWZlZDA1MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTZkZGZlOGM1NGE5NGMzNTkxN2E4NmM2MzJlYzExYTFiZjZiZGQ5OGU0MTE2ZGMzY2YzODZiNTY5YTMxZDUwZCJ9"
+        },
+        {
+          "resource": "repo://utils.py#L83-L92",
+          "version": "repo-lines-v1:sha256:5b343c7a2cb4957e94aa6c9d169166938d4fe11d24bba9b41fc1bcd52cd44f05:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0NjcxNWJmNGJmM2MzMTc2ODdmYzJjMjFjMmRhNGNjYmJmMzg0NjI2NGJkZGE5MDcxMTljY2VkOGVlY2FhZTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0ZmMwN2NjNjU2MzAwODA5ZjViMjc0ZjFiYzk1Yzc2NzhjMzU4NDE3ZjI4MDdkNTQzYzUyYTg2MDA3Y2Q0ZTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlhMmJlZGViN2JiMTc2NjdhZjJkM2YzNWUyMDUxZGFkNjg3NzhkOGExZTM1ZmM4NWZhZjUxMWM3YWE5Y2IxODQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFlYzZiOGFlZmJmZjNlNjFjOTc5YjA4YjEzNWJiZjhhNTcyZDQzMDI0MmY4NjRjYjk5OTJiNjA5NzQ5YzgzOGYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a8dcaa16b8094b16a03c5b9e726662e1",
+      "statement": "get_vector_store is cache-or-build per experiment arm: the parquet path is derived from embedding_model plus chunk_strategy (e.g. arxiv_text-embedding-3-small_abstract.parquet vs _500-0.parquet), an existing cache opens an SKLearnVectorStore, and a miss triggers corpus load, chunking, embedding, and persist.",
+      "evidence": [
+        {
+          "resource": "repo://utils.py#L119-L121",
+          "version": "repo-lines-v1:sha256:a1774310fe1ce1db2fb1fa11bcf90c1adc57ed54c14ae43599b5932624482378:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTE2N2Y1Mjc0MWRjMjJiNTk0MGU2N2VhNmNmMzEyNjA5YzJhZDJmMDkxNjdjYzQ3NTVjODJkNDE3MWM0YzUzZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjBiYzJiNGUwN2NhOTNiOTcxYzE1OThhZjlmYWIzMjg1MzQ1ZmJkNWNlNmU4NDQ5MTI4ZmQxMDk3ZDZiZDhlNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzIzZTQxN2NlZjE4YjA3MzVjNzQ3NDdhYWMzY2ViYzY4ZDBhNzVkOWE1OGRmNDc3ZmRjMzBkYjUzNmEyNzQwMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTQ1NzRjN2VhMTZiMDBjYWU1ODUzNzYxZGM3NTM3MzJlNjFlZWYzZmRjNmU2NDc1ZTM5ZTVkYWI1NDUxZmU2ZSJ9"
+        },
+        {
+          "resource": "repo://utils.py#L241-L270",
+          "version": "repo-lines-v1:sha256:a38d46f25a099d24360eec7b86e718d1e2eb9450b2aaa438499a892b52712ad0:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiYTY1YWM0ZjM1YThlMWNmYzY5NDQ1OTNlMGQyNDljNTMzZDBjNDYyMTBhM2EyNjhkNDczY2UyOTM0ZDU1MjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhYjBmMTUzODcyZjQ2Mzc2YzdjNzYwNzIxOGQ3ZDUwMzUyOGRkMThmYmQ3MDU1OGQ2NGFjMjQzY2ZiOTJjMTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzNGEzMTIyYmNhODQxMDBlZWM2MWRiYjJiNmRmZTI4OWQ3NzAxYTczNDU1NzI5NTRmMmJjNzE4ZjFiZDc0NmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdlODNlY2RlNWRmMjVhMTZhYjE0NTdmYzBhMWU5OWVkOTMwZDRlOTA3ZjhiZmMyM2U4ZDliOTg4NzAxMTliYzYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6f294746774a45cb986316ceea713ca3",
+      "statement": "get_retriever wires only run_config.k via as_retriever(search_kwargs), while load_cached_chunks reads a parquet cache back into Documents and raises rather than rebuilding when the cache is missing — it exists for the golden-set builder's source-chunk sampling.",
+      "evidence": [
+        {
+          "resource": "repo://build_golden_dataset.py#L502-L505",
+          "version": "repo-lines-v1:sha256:bebc533a20157c5844a330847177fee608f92216e79f4b6327b9a3814f898723:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmZhZTBjNzc0M2M4ZDY0YWNlOWFhZGZmMDhjYjNmNzBkNTU3MGYxMTQ4NTg5MGIyM2UyMThmOWU0NDRhOWE4YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjRlNmRlZDJkMTZhZDRhNzU1MTU3ZmRiMzNhZmU0YjQ5Zjc3ZDYyYjQxYzc0ZGE0YjU1YTgwYjdlZjA3MmZkYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzg1ZWVmN2UxM2ZjNWNhMGFlMjE4YzBlZDliMDFkMGYwYjY2NDc0NmYyNDBiYWU0NTMzOWNiYzIyYmFlZTAwMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzZlNWFkNTE0MDY2Zjc5NWVhZDNhODRkYmVkYzI5NjMxNmUwMDQ1MzE1N2FiZWRiZjViZmI2ZDJmMzdmODhhOSJ9"
+        },
+        {
+          "resource": "repo://utils.py#L268-L282",
+          "version": "repo-lines-v1:sha256:50ab7312da1227d9cb1fdc9322b512bcbe486e39878fe509cb3b33015e26d9c1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmMjA5NzhkMjk5ZWI5YTRkYTY1M2I2NzNiYzQ5Mjk4NTdkZTQyOGU3OGNkMWVkNWY5ZWMzOWI3Y2M0YjhlNzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMxMzJlMDJlMjJkMjY1NTYyYWM4YjA1YjliNjg5YjQzZGM5Njc3NDdmMzIyNzg0YzRkODk1Nzk1MjM2MmViYjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ5ODc1YTc1MzdhYzI3NWNlMTEyNjU5NzFhMmRjMGU4NjM3NWQyYzg3YzIyZmMyZTNiOTU5ZTAxNDVjODFmMWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_62f5d910261c43368f41c23c642c60f7",
+      "statement": "ADR-005 chose whole-abstract records as the baseline after measuring that 500/0 chunking repeated papers in the top-5 (3.80 distinct papers of 5) while whole abstracts kept 5 distinct papers at roughly 2.2x generation cost, with the chunked index retained as the CKPT-3 experimental arm.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adrs/0005-retrieval-unit-whole-abstract.md#L33-L52",
+          "version": "repo-lines-v1:sha256:cfd71234e3473b7d4b62e24d98d2286bfe5fff1be7fc280cadf2b31e5771b005:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc3ZjhhZTliZjljN2E4ODk4MWRjODU5MzYwOGFlNDg0ZDVjZDRmZmIxOGM1NGZlYTgyZDU4NGUzYTgzNzRmMmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyNTE3YzJmYzM1MTEwODYwZGFmNWQwZGJjMDJiZmZhMDBmYmFmZjY5MzExYTkyMGRhZWQzYTU4NWZiNTFhODkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg4ZDRiZjM4NzVlMWE4ZDgzNjJkMTc4Y2EwOTg0ZWFjZTkwNzk5ZDFjNzE2ZGUwOTczYTAzZTAyMWU2NGI1ZjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ2ZmQ3OTAwZTkxMzFmMzM3NWU1N2IzOGViMDIyYWVmYWE1ZDMzYWExZDE4NDI3MjRlZWU1NmFiMDNkZjI2ZGMifQ"
+        },
+        {
+          "resource": "repo://docs/adrs/0005-retrieval-unit-whole-abstract.md#L59-L80",
+          "version": "repo-lines-v1:sha256:90ace5419342e62023c9dff22f11117d81495c36d513b00c63fef2f32bba0394:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkM2RiYzRlN2U3Y2JlNWRkYzg5MWIwODA3MTJmNjM1MWM5NGI3MjhlYzhiZDg1NTZmNDYxMmIwNzBkMjdiNDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMzMDhlMzBkMjJkNjYyMzIzYTFhMmMzNTI2ZWEwZDA0ZGMyMGVhMmU1NTE3ZDcyNmUyYTI2ZDEwY2U3YmI1MzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYyZWU5NWFmZDQyNmE4NmYzNDA4MGJlOWNlNzg0NDA4NjNhMjQ5ODIxNjY4ZGFhN2MzNDVkZmJjNTM3NWFjNjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc4NTNkNTFkYjA2ZDhlN2Q4ODNmMWUwNzQxZGQzYWY1ZmEzMTNiOTI3MmUyNjAzNmUyNjEyNzE2NzU0YzA1YTAifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.6.0",
+    "at": "2026-10-11T10:08:11.054Z"
+  }
+}

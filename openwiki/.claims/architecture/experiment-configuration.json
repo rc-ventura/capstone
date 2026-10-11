@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:a8d9531eeea8597e8af8d53f93f8043d5bedac2559ec09e0873ff0ba24e9901f",
+  "claims": [
+    {
+      "id": "claim_d435bde707634f57899213bc15b34135",
+      "statement": "config.py loads .env at import and requires OPENAI_API_KEY and LANGSMITH_API_KEY, raising RuntimeError if either is missing; LANGSMITH_PROJECT, CORPUS_SNAPSHOT_DATE, GENERATION_MODEL, and RERANK_MODEL are optional with defaults.",
+      "evidence": [
+        {
+          "resource": "repo://config.py#L10-L23",
+          "version": "repo-lines-v1:sha256:6974831d0c312b7c52d4f31c7ffe74576e75abd183e87d14aac32e7ff0e5cc79:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkZmQyMGI2ODA2YjY2ZTJhNzA3NmVkODRiYjA2NWM5NTRjYmY5N2YwZDhmZjk3MWQ0NDQ5YmJhOTg1ZmI0MzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZlYTczMmUxNDAxYjQ4MmJlZTg2NmExYWQ1ZmQwOWEyNTY0M2Q3YmM4ZjI5Y2U4NzFkMWQyNTYxNjg1OTEyOTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQzOWRlOTg1YmJkN2Q4NzYyM2RkNGJkOGYwMTNhNmI0YjdkNzAyMjI0ZjNkYjhhNDdlMzM5YzFkOTBiZTFjZDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg4NjY0NmJlNzJhMGY4ZTVkN2NkYzg3ODdiNjQzMzEwZmY0OWM1ZWM3MWMwNzZjNTQxMWE0Mjg3ODA4MmRkNjIifQ"
+        },
+        {
+          "resource": "repo://example.env",
+          "version": "repo-file-v1:sha256:c35e84664dfeda5119b5fc61dc4f12a954a1c8c196caa72d51e2a5b90d9afe23"
+        }
+      ]
+    },
+    {
+      "id": "claim_4384e63f40c7461db4316a235e006b92",
+      "statement": "RunConfig is a frozen dataclass representing one experiment arm; chunk_size=0 is the sentinel for whole-abstract retrieval (rendered as chunk_strategy 'abstract'), and __post_init__ rejects nonzero chunk_overlap when chunk_size is 0.",
+      "evidence": [
+        {
+          "resource": "repo://config.py#L71-L94",
+          "version": "repo-lines-v1:sha256:a09512bf2fb8514450c255cd8d4d6cd06d353428d5ac40a4be0469a32a3bc944:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2OWExMzk3NWMyNTZlYzgzMjBlMjAxNjA4M2M5NmRmNjM3Y2EzZDM1YmViZGUyMzE0YmVlM2E0NzExYjU2Y2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyOWQwMWQ3MWQ3MGIzZTcwNzRkMTE0ZjdlNDNkMjUwMTNiYzVkNTcwODcwZmVmYTU2MWE0YjlmZGQ5Y2M2NzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM4M2QyOTczMTk4NGQzOWE2MDIwY2Q4ODhkMzhjODI2YjhmYjRhMDkxOWQ0YTgwZTEyNjc1NWExNzlkMDk4ODIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRhOGQ2ZWJkYjcxNjAwNWI2NDgxYTdhNzcyOWUyODdiYmIzNzkxOGUzODYzOTBjZGY3MjEyOGI2NGZjZWMzNTcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ad960f61967a474691624a56e9d25ea2",
+      "statement": "Two arms are predefined: BASELINE (text-embedding-3-small, k=5, whole abstracts, prompt v1, no rewrite or rerank) is the reference every experiment gate compares against, while CHUNKED_500_0 (500/0 chunks) is the CKPT-3 chunking arm and the unit the golden-set builder pins when sampling source chunks.",
+      "evidence": [
+        {
+          "resource": "repo://build_golden_dataset.py#L502-L505",
+          "version": "repo-lines-v1:sha256:bebc533a20157c5844a330847177fee608f92216e79f4b6327b9a3814f898723:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmZhZTBjNzc0M2M4ZDY0YWNlOWFhZGZmMDhjYjNmNzBkNTU3MGYxMTQ4NTg5MGIyM2UyMThmOWU0NDRhOWE4YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjRlNmRlZDJkMTZhZDRhNzU1MTU3ZmRiMzNhZmU0YjQ5Zjc3ZDYyYjQxYzc0ZGE0YjU1YTgwYjdlZjA3MmZkYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzg1ZWVmN2UxM2ZjNWNhMGFlMjE4YzBlZDliMDFkMGYwYjY2NDc0NmYyNDBiYWU0NTMzOWNiYzIyYmFlZTAwMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzZlNWFkNTE0MDY2Zjc5NWVhZDNhODRkYmVkYzI5NjMxNmUwMDQ1MzE1N2FiZWRiZjViZmI2ZDJmMzdmODhhOSJ9"
+        },
+        {
+          "resource": "repo://config.py#L97-L105",
+          "version": "repo-lines-v1:sha256:c4c506cae4c137c4951db55632a1020b6e1b80bf2595f78242b241fdf9caa56c:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTk0OThjNDE0ZDUwNDM4ZjAzYmRhNGZhYWI3ZGVmN2FjOTE0OTM5Y2EyMTc1NzU1ZjgzMzE4OTdhNWE3NzhlYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjc2ODE4YjE4Yzc0MmM5Y2IyMzc0NDY0YTRiZDVlMDJmYmFiNjQ0ODFkNTE4YmMzNzg0ZWM3MTYxM2Y3NGExYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjE0MTRiZWEwZDMxODk2MjM5ZTU0NjZjMjU2YTVhMWNhMzM1OGYyYzFjYzBkMWEyZTQ2YTk1OWZkMDNlNzA2ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_74615ab6d9864c42a73dff542f8c9c4c",
+      "statement": "Every RunConfig field doubles as observability and storage identity: app._run_metadata copies the fields onto every LangSmith run so metrics can be sliced by any config axis, and utils._persist_path derives each arm's parquet cache filename from embedding_model plus chunk_strategy.",
+      "evidence": [
+        {
+          "resource": "repo://app.py#L38-L49",
+          "version": "repo-lines-v1:sha256:d94b8111b1dcb124bb0b94e6c9599aa7866edb986b9835f45c585092d42209d9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwMTk0NGRjMDQ4NWZlZGM5OWI1NjdiMjA0NGFlY2M3OWVhYjBjOTcwMDE0N2UxOTY2NDk3MjYyY2EzZmI3YjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlhN2E4YzFiMmVmMjEyZDJjNWNjMjRhMTI5NTYxOTdkOTI3MmQwNWFmMDQzY2RkYWMxZTI1ZmIwNmIwMzk1YjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJkZTllYzRkZGNlNjViNDY1ZWQ0MTI0NzU0ZTllNWY5ZTkyMTNjYjI1ZDYwOTRhOGRhOTAzYTlkMDRmMmRiYjAifQ"
+        },
+        {
+          "resource": "repo://utils.py#L119-L121",
+          "version": "repo-lines-v1:sha256:a1774310fe1ce1db2fb1fa11bcf90c1adc57ed54c14ae43599b5932624482378:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTE2N2Y1Mjc0MWRjMjJiNTk0MGU2N2VhNmNmMzEyNjA5YzJhZDJmMDkxNjdjYzQ3NTVjODJkNDE3MWM0YzUzZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjBiYzJiNGUwN2NhOTNiOTcxYzE1OThhZjlmYWIzMjg1MzQ1ZmJkNWNlNmU4NDQ5MTI4ZmQxMDk3ZDZiZDhlNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzIzZTQxN2NlZjE4YjA3MzVjNzQ3NDdhYWMzY2ViYzY4ZDBhNzVkOWE1OGRmNDc3ZmRjMzBkYjUzNmEyNzQwMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTQ1NzRjN2VhMTZiMDBjYWU1ODUzNzYxZGM3NTM3MzJlNjFlZWYzZmRjNmU2NDc1ZTM5ZTVkYWI1NDUxZmU2ZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_2b23eb7238ae430188a49be977d81996",
+      "statement": "The corpus date-scan fallback is bounded by an additive skip budget: it requests CORPUS_TARGET_SIZE + CORPUS_SNAPSHOT_SKIP_BUDGET (2000) raw results, keeps only papers published on or before CORPUS_SNAPSHOT_DATE, and raises a RuntimeError if the budget cannot fill the corpus.",
+      "evidence": [
+        {
+          "resource": "repo://config.py#L42-L49",
+          "version": "repo-lines-v1:sha256:5736cf9ea9c68bb5a1c4a55bce43b71787370cb85669374c0025b7832548dcd5:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTVhMDI0YTU2MzlhMjNiOWMwNzEyMDlhNTU4MzU3OThlZTZkNTkwM2Q3MDQ1MjJlYmNiNTQzNDRmODViY2FhYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDgyZWFmZmY4ZjQ0OWU2ZTNkYWEzNWIzOGUxODk4MzQ1OTVjN2JlZTRiNWNiNTk5ZjQyNmQ2MWI0NTUwYmE5NCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmY5OTM3MGQzMTRkZTk0ZjczNWQwNGI4OTRkZWVlYzE0ZGQwYjhjMWMyNzJjNDY3YjQ5NWZhYTQ1YTkwY2M1MCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDY0ZDgxNWI4OTFiMGNlMmViYmYwZGIzYzJkNTQ3N2Q1Y2QxYWNhNzRlZDQzNGZjNTk1ZmZiZmEyODQwNjZkNSJ9"
+        },
+        {
+          "resource": "repo://utils.py#L54-L73",
+          "version": "repo-lines-v1:sha256:f83ef8fe2d26a9ab7639da4358b4ce5a1a9e7d42f13b96d1fcf0d2c75e90d8c2:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhYTIwZDY5N2MxY2I1MGQ5MWE1MzY2NDNlNmRjNWY2M2UxYjZmMmEwZDIyZDVjMTc2MGFiM2JlYjZjZGVjNTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJhMWJkYjkzNGJhM2Y1NjZhY2RmNzY5OWNjMmQ0YTJkZTU2ZTM3MjU0ZDY4NzZhNmVhYTAxZDQ2NTIwZjBkMmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZhNWViYTUyZTY4ZWJjMGYyYjY1ZjRjN2UxMjI3YmViMmFmYzEyMjBiNmNjOWY3NWVjNThkMGM2YTE3ZjQxZmQifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.6.0",
+    "at": "2026-10-11T10:08:11.054Z"
+  }
+}

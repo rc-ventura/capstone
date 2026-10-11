@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:2946f2495e589b1aa1857b0ffb2309a92de897f2f1726d70e7fa091c0f11f2bf",
+  "claims": [
+    {
+      "id": "claim_323b03934348402eb675ade454d86d8b",
+      "statement": "Every checkpoint follows a HYPOTHESIS → CONFIG CHANGE → TARGET SLICES → EVALUATORS → DECISION GATE → ARTIFACT contract; gates require no regression on non-target slices, core-set gates require ≥15% deltas, and EXP-0 runs twice to measure LLM-judge inter-run variance as the noise floor for later gates.",
+      "evidence": [
+        {
+          "resource": "repo://docs/plan.md#L174-L194",
+          "version": "repo-lines-v1:sha256:f1639c981d4ed4422a4ab76aca494e2749357beefd3bbdfeaad0b89941a6143b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3NjRlOWFjOTg5ZDYwN2M3OTc1NjVkYzYyMWU1Y2EyNzI3Zjc3ZTM3MDYxN2M3NjBkYjI3ZTIzZTNkM2UwNjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI2MTZjZGI1NjY0Y2I3NjdmYWRmYzI5YzkzNGJhYWMxZTBmOGM2YWNhMTllNWE1MTZhOWYyYjRlNDYwYjFkYjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAwMWYyZWMxNzU5M2MxMDU0ZWI0NjM2N2Q4NDUzZWYyNGExNzNjZTk2YjcxMTdkOTFmOWE2OGQ0NGZlZjhiMDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImViMjE0YzZhMjRkMTBjNmE2ZmRmMDk0MzVhNDE2NmQzZGQ0MDA3OWNmNTMwMjAxZGMzZDBhZWYzNDMyMmFiZTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8c9e63283446452e82d10c043d06f39b",
+      "statement": "The experiment ladder changes one axis per checkpoint: EXP-1 sweeps k, EXP-2 compares embedding models (promote 3-large only if recall@5 gains ≥3pts), EXP-3 compares chunking arms at paper level, EXP-4 tests LLM rerank (MRR ≥15% on deep-hit and <800ms added latency), EXP-5 tests rewrite and decompose arms independently, EXP-6 compares prompt versions with a ≥90% abstention gate, and EXP-7 is a pairwise A/B on the extended set requiring ≥60% non-tie wins.",
+      "evidence": [
+        {
+          "resource": "repo://docs/plan.md#L196-L263",
+          "version": "repo-lines-v1:sha256:bae7d74074d5adecc2942e6731a3adfca558f7b5b8c342ac4b06e81915d1d461:eyJzZWxlY3RlZExpbmVDb3VudCI6NjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxMWM1ZjQ2NTkyMDg2YmExM2M1YTJkOTA2MjBmN2Q1OGU1MzlkNjIzODA3NDNmY2EyMjFkOGNjYzlmNmJlNzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljN2MxOTgxMzBhOWFjM2JhNWI5YjU1MTNmYjRhMzRmMjJhODNlNmMyMGFiNzkxZGFmNDg0ZDU1ODNkOTlmNDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk3ZmI0OGE5OWQxYTkyYzg3ZGE2YjQ5MTZiYmU3ZThjM2YxYzUzNTBhMzdiOWE1Y2Q2MjkzYTM5NmJjMDc2M2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAwMWYyZWMxNzU5M2MxMDU0ZWI0NjM2N2Q4NDUzZWYyNGExNzNjZTk2YjcxMTdkOTFmOWE2OGQ0NGZlZjhiMDEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e48ec0d2a7af4d1d90d366fb2c47cafa",
+      "statement": "docs/decisions.md is the experiment ledger with one row per gate (date, config change, metric before→after, regressions, PROMOTE/REJECT verdict) plus an Observations section for non-gate findings that changed the system, including the manifest rebuild mechanism and the abstention-metrics redesign.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions.md",
+          "version": "repo-file-v1:sha256:fe1a45917cf44ef522fae83622c4b08c031a960687fc9ba9fa4443793747f4cb"
+        }
+      ]
+    },
+    {
+      "id": "claim_2417f30123b24d77850f3961b6de28fc",
+      "statement": "Documentation conventions require a written roadmap plan before each checkpoint's first line of code, an ADR per architectural decision, a decision-log row per experiment gate, and a learning lesson per relevant technical discovery indexed in CLAUDE.md.",
+      "evidence": [
+        {
+          "resource": "repo://docs/README.md",
+          "version": "repo-file-v1:sha256:19e36a6ccbc970b6d56f022cf3ca3d1f391e77f6bc23538d6dbeb6193b339d9b"
+        }
+      ]
+    },
+    {
+      "id": "claim_fc9cd6253b01436185ccdf7380c28b5b",
+      "statement": "The definition of done requires every failure point to have a measuring evaluator, a golden-set slice, a mitigation experiment with a logged decision, and a production metric watching it; the README maps Barnett FP1–FP7 to their slices and evaluators.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L131-L142",
+          "version": "repo-lines-v1:sha256:d1bdabd1b3aa8c03dc271caa93bfc3c69fbd93b34ce7394cd120e100fafe49fb:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkMDM5ZmZjYjdmMWIyYzA4ZDZkYzUzZTExMGRlYjE2N2NkYTg1YzlhZTNkNmJmZGUzMzg2YWI1NDE3MGRiNGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU4ZTQzZjk4M2FmYWM5MGY0NTZhNzNiNmUyYTczY2E3MmM1MWMxNDUzMjk5ZTllMTA1NGRjYjRmOGM0ZWEwMjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBiNTFkZjg4OGZjNDVjMmQzZjc1MTk3NTczYmMyMDkyOTUyNTE2NWRiY2QzNWRkOGVjYWMyYWM4YTdjZDk0MjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkNDI1Njk3YTk2OTk0ZmIxYzRmYzg0NGQ1YTdkOTRlMTlmMzBkMmI1MDBjYzVlNGEyYTI4MjYzNWM1YTc0NTgifQ"
+        },
+        {
+          "resource": "repo://docs/plan.md#L332-L335",
+          "version": "repo-lines-v1:sha256:605774a2db185b73c7c85ca498cb7069dc0dd3a74681251b8aa63504a771acec:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDk0OGU1ZjQ2NTJmM2RlNWUyYjU0OGNkNzk4NDQ1ZmJhODY0NzMyMTFiMzJlNzNmM2I5N2VlM2QyYTM4M2RiNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2NiN2VmM2VjMjEwNTlkZGNlYzY4NjNjODcwMmU1Njg2ZTk2Mjc2NTllZGZjNzM3OTgwM2VlOTM1OWJlZjVhMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTBkYTVmZWNhMjBlOWRmYzE1ZDVhZTMzMDE3N2NiZGVlNTdkMWUyNDYyOTNjNDhkNjc5MDg0ZWRlNDNlY2ZmNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_2b3beaeb8e4c4dcbba288972a4b99ef9",
+      "statement": "The experiment runner (experiments/run_experiment.py), server.py, monitor.py, feedback.py, and prompt_management.py exist only in the plan's target directory layout — as of the documented status, foundation, golden set, and retrieval/format evaluators are done while LLM judges, the runner, and EXP-0 remain planned.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L59-L72",
+          "version": "repo-lines-v1:sha256:cdfe4d2e7fdd681d801e7e41ccbd34b288cbbc2cf958cc8b4f136cfc5b003bd8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2MGRhMWNlMzQ0MzdmNWRhM2E3MjlmNmUzNDQ2MmE3MTUzOTI0NTg2ZDhlZGFiMGM3NWY2MzRmMzEwZDcyOGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFjZmNjNmQ4YmFhZmQ1OTc0N2E1MzhiZDY0ODRhMGU1NTM0OGUxMjBmNDdkNDhhNzk4NzI2MTQ0ZTY5Y2NhYTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNjZDMwNGJhZDBmZTZmOTA3YTU4ZTcwODhiMzc4NTUwNzU5ZjZmMTNhNDIwMGZmNmE4OThlMTcyZTMxMzdmZTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEyMDQ5NDEwOTMyYTdiOTc4YTQwZGZlNjFiMzFiNGY0NjFhODFhMTYxYWUyNDc3ZmVhMDI1MmE5M2M5MzcxNmQifQ"
+        },
+        {
+          "resource": "repo://docs/plan.md#L288-L304",
+          "version": "repo-lines-v1:sha256:7be5888f9e420b29266bfddf95b0f8e08bd6285743d1d399c2a92331e7a275a4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlMjQ1OWY3MmY2NWExZmVhODBiMzM3Y2UxNmYxZmIzZDI2ZDVkMTU1MDQ0NzUyZTAyZWRiOGZiYmU0Yjk3OWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3YzA2YzU2MWQ1YzMyNzM0MzY4NTI2OGE0NmIzMzkxZjM5OThlZWU4OTBkMmJlNTFmMGQyMWNjNGE1M2FlNmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg5MjBhYWRiMjE4YWM2ZWNhNTMyNzRlMDg1MGJmZDQ2ODZhZjE0YjJiODU5MDE3ZmMyNzdmYjEzZDU3ZTdlM2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAwMWYyZWMxNzU5M2MxMDU0ZWI0NjM2N2Q4NDUzZWYyNGExNzNjZTk2YjcxMTdkOTFmOWE2OGQ0NGZlZjhiMDEifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.6.0",
+    "at": "2026-10-11T10:08:11.054Z"
+  }
+}

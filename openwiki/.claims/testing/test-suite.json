@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:efe9df3d7d8178e173c4b082ecfdf508279d7169fc35cf92c32a9fd5d0fbd73f",
+  "claims": [
+    {
+      "id": "claim_f5d0deb1673148628d83d05aedc7b15a",
+      "statement": "test_evaluators.py is a ~530-line offline suite pinning evaluator contracts: metric skip semantics (None for undefined), level handling, precision gating on adjudicated metadata, format checks, abstention markers including the documented hedge false positive and English scoping, Wilson CI anchors, the separate recall/over-refusal reporting, and the exact LangSmith results return shape.",
+      "evidence": [
+        {
+          "resource": "repo://pyproject.toml#L27-L29",
+          "version": "repo-lines-v1:sha256:e8c4628ed8f1f109ed9455dff39a67374c0711c7e24e6a5114517abe41fb61db:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODY3NmU2NDE0NjVhNjU1MWU5ZTljZmZkN2ZhYTFlNmE0MmY5YjcyNDgwOTgxM2M5MDNkN2VkY2I1MmYzMDA2ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDEwODVhZDA5MDQyNTcxMWFkYjRmMTVmMjhlMjVjMTcxMDc5MmMxZDQ1ZGE3Mzk0ZWU5MTJlMDM4MTkwNDU5MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDcxMzIxM2I4MmE0ZTlmZTVlNGRiY2YyNjY2ZWM4MDA4YWJhZGQyOGM3MTc5ZTJiNmU3MDQ2NDNmMjg0N2ViYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        },
+        {
+          "resource": "repo://tests/test_evaluators.py",
+          "version": "repo-file-v1:sha256:cd64b1ab8bc18b1a86a0a0e5b69c85d968ced19482b5f12435670f2d3d343436"
+        }
+      ]
+    },
+    {
+      "id": "claim_a4c00f28e1e64dd7a703e552dd356fde",
+      "statement": "test_evaluators_oracle.py cross-checks the four retrieval formulas against ir-measures over 300 randomized cases each at paper and chunk levels including k cutoffs and the hit curve, documenting that the oracle ranks by score and its P@k divides by the cutoff while precision_at_k divides by distinct retrieved papers.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_evaluators_oracle.py",
+          "version": "repo-file-v1:sha256:7a7e7c5449828a310ff520b21a4a34eb33e93358df554b2dabdad6b4219b2dbc"
+        }
+      ]
+    },
+    {
+      "id": "claim_02ad8096d09649079b281568dffe6fad",
+      "statement": "test_corpus_manifest.py pins the frozen-corpus contract offline using stub fetchers: whitespace-insensitive digests, manifest round-trip, manifest-order rebuild, and RuntimeError on both a missing arXiv id and a revised abstract.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_corpus_manifest.py",
+          "version": "repo-file-v1:sha256:cab6ddd36220627a7ac51dc4b2940db478947fdcbf2b78d73e5c8c3a31c28b53"
+        }
+      ]
+    },
+    {
+      "id": "claim_3e033388c05e459fb50de45ec680b1cd",
+      "statement": "test_chunking_strategy.py pins the retrieval-unit invariants: whole-abstract mode returns one untouched record per paper, 500/0 splitting preserves metadata and the character bound, BASELINE is 'abstract' vs CHUNKED_500_0 '500/0' with distinct cache filenames, overlap without chunking raises, and papers_from_chunks round-trips losslessly.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_chunking_strategy.py",
+          "version": "repo-file-v1:sha256:26670e824704a5590dbf808e4185a9906b4bbd0e2e0f7775c81c2b388f73d618"
+        }
+      ]
+    },
+    {
+      "id": "claim_690ba35b6a9b494aa2c34cb39e4e725c",
+      "statement": "The entire suite runs offline with no API calls — the API keys only need to be set because config reads them at import — and the ir-measures oracle is dev-only since per-example evaluator calls in LangSmith would make building qrels/run objects pure overhead.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L78-L82",
+          "version": "repo-lines-v1:sha256:66051b3eb8d5436cc1770e1eafcb9b434bb1c8fc80ace80c1631c9806648ad09:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWRlMmY1MzI4ZWU2ZTgwNTBlOGFhZmQ4ZGM4NjlhMDY5Y2Q5NTg0ZWRhYWY1NGZlNTg5ZDczYzNiN2RjZDc5OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDdjMDZjNTYxZDVjMzI3MzQzNjg1MjY4YTQ2YjMzOTFmMzk5OGVlZTg5MGQyYmU1MWYwZDIxY2M0YTUzYWU2ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmE5NjEyYzg2Y2UwODQ1YzM0NDljZTQ2MTcyNTExYjcwMjlkNjEwZDgzZjlhNGNjOGQ5MjJhOTE4MzE4ODc4NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNmVjMmE0ZDgyZGI1YjU5YTU2MzNhNDBkYmJkMWUyYTMxNDBjOTU5NjdkN2VhNzlmYTFkNGNhMDkxMmE2MDM2ZCJ9"
+        },
+        {
+          "resource": "repo://tests/test_evaluators_oracle.py#L3-L8",
+          "version": "repo-lines-v1:sha256:bc09c2e8fabe1efb67af7bcc9e82a151f4d513d6a10e9a668a5ce7cdcc71724c:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDU0YjI3NTMzNTZlZjUyZjE5ZTQ0YTVkN2I2YTE5YWIzNGJmOTg2ZmMxM2I4MGNjNGEwNjI0Y2ZmODdiNzgyOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjIsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDUyYzhkMTYwNWUyZjAzYTE1YWUyZGY2NDg3ZDcwYzcxZGUyYmNmYjAwOWQ4NWYxYTViMDBlMTRmN2JjNzEyNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGVmOGUzYzNiYTM1ZTJlYmQwM2RiMDQ3OThjZjVmYWRjZDY5NmI1NWVjZTRiNDM5OTI1NmUzZTQ4NmZkY2Q3NCJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.6.0",
+    "at": "2026-10-11T10:08:11.054Z"
+  }
+}

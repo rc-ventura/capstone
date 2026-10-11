@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:4c871e184f223f4ea3ade427068cfcb4a7e958e34b081ec575bd99c651be7a80",
+  "claims": [
+    {
+      "id": "claim_cb22880687fd46b9815aa0260c63dc6f",
+      "statement": "Setup requires Python 3.12-3.13, uv, and OpenAI and LangSmith API keys copied from example.env into .env; uv sync installs dependencies and uv run pytest runs an offline suite where the keys only need to be set because config reads them at import.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L74-L93",
+          "version": "repo-lines-v1:sha256:1c908f32da104101e29b596702562a43cb2179a5ffd35e5691f0fdf8ef58949d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA1M2ZiMjQ5MTZhYTk5ZDZkNTdiMTI2NzM1ZDVjZDNlNGJkOWVlNmQwNGU3YTFhYzViYTE5MjNhNGQxMTJhMGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjMjgwYTQ3MWM0YTM4MWRlNGZmNWFlYTBjNzY0OWU5MTBmMGEwNGYxYmI2NDZhZjQ3NDI4YzhiNDU5OWZkZGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdjNjgzZjdjMzRlNzNmYzU1NjNhYmE0OTBkMDc2ZTBiYWZjYTRkOTdiM2FmMjgwOTc2OTJmYjVjMjExODRjZDMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEzYmQ1NTE4YjgwOTAzMjdhNDEyODc5MmEzYTIyODgzYWNmZGZkNDU3YjQ5MzUxNmZlZTM3MWIwM2MyYjc0ZDEifQ"
+        },
+        {
+          "resource": "repo://example.env",
+          "version": "repo-file-v1:sha256:c35e84664dfeda5119b5fc61dc4f12a954a1c8c196caa72d51e2a5b90d9afe23"
+        },
+        {
+          "resource": "repo://pyproject.toml#L1-L19",
+          "version": "repo-lines-v1:sha256:7156c72378ccaa0c59d744fb7c32ee47636afc88db3fbe3221d0f00dbfe3f237:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwMmE4MWMzODM2ZWRlZjJkMGJhMTFkMjM1M2ZiNmRhYmM3NzcxNTBhN2NhODNlYTBkOWU5YTcwMzEzZmVhYmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5NDE2ZTA5Zjc4YmEzMTZjMDMyNTY4MjEzYjg1NWVlNzU2ZTQxNTY1ZDkxOGYwOTUxOWM4MWZkNjIwZjQwNjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI4NGI4NmI2MjEyOGI2YmJkNGE1MmQ0ZDM4NjYzYTZmNzk3NWMwMDNmN2FmZTU3NzEwMDQ3NTlmNTllYWJmZDQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_762ecdfa40b94f6bab6af5f3fcb1cc8d",
+      "statement": "python main.py performs three steps: it builds or loads the baseline vector store (rebuilding the manifest-verified frozen corpus and embedding it on a cold cache), runs one built-in question through the traced pipeline, and syncs the golden dataset idempotently.",
+      "evidence": [
+        {
+          "resource": "repo://main.py#L14-L36",
+          "version": "repo-lines-v1:sha256:bb514e92cb3bd1d34110716b4501d1389b93ad527b6f6378026d922bcb528ee4:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg4MWU1MWUyZTdiMDExNTI3ZWMzMWMzMTcwMTE4Nzc2YTg1NTI4NDM2NmMyYWE0MGUyMDM4ZjgxNjA0MDhkZTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhjYTU5OGUyMjIzZThmNDk2OTExZWI5NGUwY2I5Nzg4NWZiMDNiYTNjYjY2M2Q4Mjg4MTNkMzZiZTgyMmFkMTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYyMDA5N2U0YWE1MDA2OGJhMTU3ZjlhMjczOWZhZDg2OTk1ZTFlMGNkY2NkYWRjNTg5N2MyMDM0Yzc0ZDNlZmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkNDEzNDBjYzIzOWExNTljZTliNjAyMmU5ZjYzMjI4MzJlMmVhZDc2Y2FlOWU0NzU0ZDIxMGViOGZiNmQ1ZTgifQ"
+        },
+        {
+          "resource": "repo://utils.py#L221-L265",
+          "version": "repo-lines-v1:sha256:2ae987e4021b3e35d437a5abb7f9057116df089fe47672047bda8469bbc95344:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3MTJiYzRlYTM2MDM4N2E3NzNkMjU2YjhlYzdkMWYyNjUwODg0MWM2YjczNmQ3OTRhOTkxOWUyMTk5YTgwZjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE5MjExODI5YWJiNjdiNjJiM2QzYzBjNWIyMGI2MmI3NDFlOTMxMjRiNDEzZGY1MjBmNTUxMzI1M2JhYTkxYmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3MDE0OWUwNjlhZDY3ZWNjZjQ3MzY0NmZmMWM3NTAwNTBkMzI5ZDExMDAxOGRjNTc2Njg3OGVhZmExZDYwN2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFiNDM0Y2MxNGM5MDE3Y2Y3ZGNiNDMwYWU4NmFkMTE2ZDgyNGE5MDVlZjlkNGNhNjg0ZDgxYzFlOTFmYzBlM2MifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_32804478f5dc49159cf7221f812e3ffe",
+      "statement": "The retriever can be inspected by hand without LangSmith writes by calling utils.get_retriever(config.BASELINE).invoke(query), and app.arxiv_copilot answers free-form questions directly.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L95-L101",
+          "version": "repo-lines-v1:sha256:1a9eb4d3e9dafc89a50290235a0ffe2ea57927a40d22e4f00a6ba8c79ebd33d8:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTQ4M2JiZDQ3YjcwMzMyMGI2Y2E4ZTdhZGZlMzBkZTMxNDNlYjJmZDlmNmM5MjE4ZmQwN2IwZjA3ZGQ4ZDQzMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDdjMDZjNTYxZDVjMzI3MzQzNjg1MjY4YTQ2YjMzOTFmMzk5OGVlZTg5MGQyYmU1MWYwZDIxY2M0YTUzYWU2ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmVmYmE4NDBhNjAzMjIwN2MzMmM2MTA1YTg2NzhlN2Y2YjJkZDNlZWQ2OGRiMGJmMjJiOTA3MmUzNjk4ZTIxYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzEyNGYzM2Y1NjI1N2Q4ZmFiZDZjYWM2N2E2ZTVkZjIwMDU5MGJjNTkyMzFhMTQ4OTdiOGQ5MWU2OGJlMjBhZCJ9"
+        },
+        {
+          "resource": "repo://docs/manual-usage.md#L33-L51",
+          "version": "repo-lines-v1:sha256:86cec1aeebf8d3cfd45e280e02f495db2fa0ebc14fecb4741ddced2268a5fb6a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyNDYyMzliYTdjYzhmYzUwNjU5ZjlmMDFlODRkNTE4NTEzOTgwM2EzNmJkZTRmNTA1ZGZkN2JmMTk4YWIzNjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3YzA2YzU2MWQ1YzMyNzM0MzY4NTI2OGE0NmIzMzkxZjM5OThlZWU4OTBkMmJlNTFmMGQyMWNjNGE1M2FlNmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlZmE1MDNmOWMwMWIwNGFjNmFmZWZhZDRlNzYwMDFkNDllYjFjYzA3MGZlZjUwOWRhN2U2YmU2MWVmYzZlODEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBmOGQ3ZTZmYzkwYTBjYjQ4NmMxYmQyZTcyZmVhOTY4NzgwNDI1NzYzMjlmYzlkNDM0YThiMTM1ZWQwYTQ5MjAifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.6.0",
+    "at": "2026-10-11T10:08:11.054Z"
+  }
+}
