@@ -3,15 +3,19 @@ type: evaluation dataset
 title: Golden Dataset
 description: The arxiv-copilot-golden LangSmith dataset — the uniform example schema, two-axis provenance model, six slices and their construction methods, synthetic-by-construction generation, and the idempotent sync contract in build_golden_dataset.py.
 tags: [golden-dataset, langsmith, evaluation, provenance, slices, synthetic-data]
-verified:
-  - by: openwiki/0.6.0
-    at: 2026-10-11T10:08:11.054Z
 sources:
   - id: openwiki-source-0bfdf81f1534614019fe4429
     resource: repo://build_golden_dataset.py
   - id: openwiki-source-2b7d80a0e7d874afa5d401f9
     resource: repo://docs/adrs/0001-golden-set-provenance-data-model.md
-generated: { by: "claude-code", at: "2026-10-11T10:08:11.054Z" }
+  - id: openwiki-source-8f04a5996c3b2c8616f1e345
+    resource: repo://docs/adrs/0009-incomplete-gold-and-pool-bias-mini-pooling.md
+  - id: openwiki-source-a2b903fa68b9b04e7d5df273
+    resource: repo://evaluators.py
+generated: { by: "claude-code", at: "2026-10-12T14:24:36.766Z" }
+verified:
+  - by: openwiki/0.6.0
+    at: 2026-10-12T14:24:36.766Z
 ---
 
 # Golden Dataset
@@ -57,7 +61,7 @@ Target counts live in `config.GOLDEN_SLICE_TARGETS`; builders live in `SLICE_BUI
 | `multi-doc` | 15 | FP3/FP7 | Topic-authored hybrid (ADR-003): **10 known-item** questions naming the required paper ids (mechanical `gold_arxiv_ids`) + **5 open-topic** questions naming none | known-item: `gold_arxiv_ids`; open-topic: `pending-adjudication` |
 | `deep-hit` | 15 | FP2/R5 | **No builder** — to be found empirically during EXP-0 (questions whose answer doc ranks low in baseline) | filled at EXP-0 |
 
-Open-topic multi-doc examples carry `retrieval_gold: "pending-adjudication"` — `is_retrieval_evaluable` skips them until a human judges the retrieved pool (the EXP-0 mini-pooling adjudication). Their gold answer doubles as the completeness reference.
+Open-topic multi-doc examples carry `retrieval_gold: "pending-adjudication"` — `is_retrieval_evaluable` skips them until a human judges the retrieved pool. Per ADR-009, that adjudication is a **pilot mini-pooling** at CKPT-0.8 (~80 judgments: the 5 open-topic questions + 10 stratified random single-gold examples + up to 4 where the gold wasn't rank 1), not a full review — papers judged relevant go into `gold_arxiv_ids` and the example's `review.state` becomes `adjudicated`, while judged-irrelevant storage is still an open data-model question. Their gold answer doubles as the completeness reference.
 
 ## Generation mechanics
 

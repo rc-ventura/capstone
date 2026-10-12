@@ -5,7 +5,7 @@ description: How config.py models one experiment arm as a frozen RunConfig, defi
 tags: [configuration, runconfig, experiment-arms, environment, metadata, baseline]
 verified:
   - by: openwiki/0.6.0
-    at: 2026-10-11T10:08:11.054Z
+    at: 2026-10-12T14:34:48.400Z
 sources:
   - id: openwiki-source-17dded95897e01ee430228e3
     resource: repo://app.py

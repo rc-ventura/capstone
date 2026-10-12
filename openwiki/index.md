@@ -11,5 +11,6 @@ okf_version: "0.2"
 - [architecture](architecture/)
 - [corpus](corpus/)
 - [evaluation](evaluation/)
+- [interface](interface/)
 - [observability](observability/)
 - [testing](testing/)

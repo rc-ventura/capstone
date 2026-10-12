@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:efe9df3d7d8178e173c4b082ecfdf508279d7169fc35cf92c32a9fd5d0fbd73f",
+  "pageVersion": "sha256:3aee182188f357a1b1b3faf3ea0e8c7d9b8a85445e46f1bb5dae29d85b41968b",
   "claims": [
     {
       "id": "claim_f5d0deb1673148628d83d05aedc7b15a",
-      "statement": "test_evaluators.py is a ~530-line offline suite pinning evaluator contracts: metric skip semantics (None for undefined), level handling, precision gating on adjudicated metadata, format checks, abstention markers including the documented hedge false positive and English scoping, Wilson CI anchors, the separate recall/over-refusal reporting, and the exact LangSmith results return shape.",
+      "statement": "test_evaluators.py is a ~680-line offline suite pinning evaluator contracts: metric skip semantics (None for undefined), level handling, precision gating on adjudicated metadata, format checks, abstention markers including the documented hedge false positive and English scoping, Wilson CI anchors, the separate recall/over-refusal reporting, the ADR-010 normalize_text and arXiv-id-removal rules, token_f1/word_recall semantics including reformatting and id-spelling invariance batteries and the function-word floor, token_f1_summary slice scoping and per-slice keys, and the exact LangSmith results return shape.",
       "evidence": [
         {
           "resource": "repo://pyproject.toml#L27-L29",
@@ -12,7 +12,7 @@
         },
         {
           "resource": "repo://tests/test_evaluators.py",
-          "version": "repo-file-v1:sha256:cd64b1ab8bc18b1a86a0a0e5b69c85d968ced19482b5f12435670f2d3d343436"
+          "version": "repo-file-v1:sha256:34a2b1969cbd736a1d9dd95b51833592d9987837e61d85be20232bff575a0e21"
         }
       ]
     },
@@ -59,10 +59,20 @@
           "version": "repo-lines-v1:sha256:bc09c2e8fabe1efb67af7bcc9e82a151f4d513d6a10e9a668a5ce7cdcc71724c:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDU0YjI3NTMzNTZlZjUyZjE5ZTQ0YTVkN2I2YTE5YWIzNGJmOTg2ZmMxM2I4MGNjNGEwNjI0Y2ZmODdiNzgyOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjIsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDUyYzhkMTYwNWUyZjAzYTE1YWUyZGY2NDg3ZDcwYzcxZGUyYmNmYjAwOWQ4NWYxYTViMDBlMTRmN2JjNzEyNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGVmOGUzYzNiYTM1ZTJlYmQwM2RiMDQ3OThjZjVmYWRjZDY5NmI1NWVjZTRiNDM5OTI1NmUzZTQ4NmZkY2Q3NCJ9"
         }
       ]
+    },
+    {
+      "id": "claim_a6f4b7e21baf44349e7172ab11e58668",
+      "statement": "test_ui.py pins the ui.py helper contracts offline with controlled Document/history inputs: format_sources dedups by arxiv_id preserving rank, renders the exact line format, and returns the neutral empty message, while filter_history keeps only role/content, drops metadata.title sources blocks, handles both dicts and gr.ChatMessage objects, and ignores non-string content.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_ui.py",
+          "version": "repo-file-v1:sha256:376e471fe25a625182fd816864e1d2e948d9a770eb631bed3cd548c4bfa0333f"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.6.0",
-    "at": "2026-10-11T10:08:11.054Z"
+    "at": "2026-10-12T14:31:19.877Z"
   }
 }

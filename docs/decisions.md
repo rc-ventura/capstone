@@ -4,6 +4,7 @@
 
 ## Observations (non-gates, findings outside an experiment)
 
+- **2026-10-12 — lexical correctness signals implemented (P9a; ADR-008, ADR-010, D-14/D-15).** `f1_summary_evaluator` is now `token_f1_summary`: it reports mean token-F1 **and** mean word Recall, total and per slice (`answerable`, `persona`, `multi-doc` only; the slice comes from `examples`, never guessed), both as *diagnostics* until the EXP-0 calibration. The key `f1_summary` no longer exists. Cleaning rule (`normalize_text`): arXiv ids removed anywhere → lowercase → punctuation becomes a space → drop `a/an/the`; no stopword list. Accepted consequence: an answer with no content still gets a Recall of about 0.22 on the `multi-doc` golds, so the Recall *level* is not quality. Tests pin the rule (hyphen/dash/case/id spellings keep a same-content answer at 1.0; ids-only answer = 0.0); two deliberate defects (literal SQuAD punctuation, ids only inside brackets) were confirmed to fail them.
 - **2026-10-06 — abstention metrics redesign (P7/P8, D-5/D-6; implemented 2026-10-06).** Two rules enter the
   gate's fine print:
   1. **Regression rule:** *a gain in `abstention_recall` cannot come from an increase in `over_refusal_rate`.*

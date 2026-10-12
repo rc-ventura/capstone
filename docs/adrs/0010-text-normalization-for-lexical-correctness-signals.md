@@ -3,7 +3,7 @@
 **Status**: Accepted
 **Date**: 2026-10-11
 **Related**: [Roadmap §5 decisions D-14, D-15](../roadmap/ckpt-0.6.1b-metrics-roadmap.md) · [ADR-008](./0008-answer-correctness-signals-and-calibration.md) (the three correctness signals; this record fixes the part ADR-008 left open: what "normalized" means) · Reading notes: [Owczarzak 2012](../research/fichamentos/owczarzak-2012-rouge-accuracy-tac.md) · [Loukina 2014](../research/fichamentos/loukina-2014-rouge-spoken-summaries.md) · [Adlakha 2024](../research/fichamentos/adlakha-2024-correctness-faithfulness-iqa.md) (addendum on the released code)
-**Code**: `evaluators.py` (`_tokens`, `_token_f1`, to be adjusted by slice P9a). **Not implemented yet.** **Evidence (reproducible)**: [`evidence/0010-normalization-synthetic-tests.py`](./evidence/0010-normalization-synthetic-tests.py) and its recorded output [`evidence/0010-normalization-synthetic-tests.out.txt`](./evidence/0010-normalization-synthetic-tests.out.txt).
+**Code**: `evaluators.py` (`normalize_text`, `token_f1`, `word_recall`, `token_f1_summary`; slice P9a, implemented 2026-10-12, uncommitted); tests in `tests/test_evaluators.py` (the cases T0–T4 and U1–U5 below are unit tests there). The embedding-cosine evaluator that must apply D-15 is **not built yet**. **Evidence (reproducible)**: [`evidence/0010-normalization-synthetic-tests.py`](./evidence/0010-normalization-synthetic-tests.py) and its recorded output [`evidence/0010-normalization-synthetic-tests.out.txt`](./evidence/0010-normalization-synthetic-tests.out.txt).
 
 ---
 

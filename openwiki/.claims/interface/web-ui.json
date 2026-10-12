@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:9316928cd5c5899d289c263a7c6a062d288456a634ef38a2baffe373ff1795f8",
+  "claims": [
+    {
+      "id": "claim_c534fa4040044a0bb785407915182b94",
+      "statement": "ui.py is a local demo/debug tool only — a single-page chat hardwired to config.BASELINE that precedes and does not replace the planned CKPT-8 FastAPI server; config controls, share=True deploy, and feedback buttons are explicitly out of scope.",
+      "evidence": [
+        {
+          "resource": "repo://docs/ui/ui-plan.md#L5-L8",
+          "version": "repo-lines-v1:sha256:3d46de8bafc46f622220b3f82a926be2386c667adb9fb5131ef816099f5fac5a:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMGNmYTU5MDM1OWEwOWI5MDNjODQyY2ZkMDdmZDMzMGYzOTYzOWJkYmQwNjNkNjBmYzliNzgwNWYxNzhlMzUxZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTgyMjRkOWZiOGE1YTYxYzgwMGJkMjU1NTYyNDg4ZmU3NDY0MmYzMTA1MzgwOTdkMjk4ODI1Mjg1NTMwZThmNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWZjYjBhZDZhZWJjMjU4OTdhYzY4OTA5NGFkNTQ5NmFmN2U0ZTY2OTA0YTA2ZWI3ZmRmMDMwNWM4Nzk4Y2UxZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmJlOTI1MDQ5ZTIwM2I3MDhjODQwMmZlMDYxOTQzZjk5ZmRiZWYxNjRmMTg0OWIzYTFhMzMyMTUxOTFhMGY4YiJ9"
+        },
+        {
+          "resource": "repo://docs/ui/ui-plan.md#L75-L78",
+          "version": "repo-lines-v1:sha256:9178cd87571cdab08921e794de1148ecabd2453f31e0090cbb0e6ef658bf379d:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNmI3MWJmNjI1MWQ0NGFkOTNmNTE2MjRiMDY3MWQxZWYxODM5ZTNhMTM4MjJkMmI3OWVhMDEzNDQxNDg2OTJiNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODkxYzdiOTI4YWE5ZGI4NGRjZTk5OTEyOTJjNjQ2MGJkODZiN2YzODA0YzliMTIxMDE1MDc1ZDI3Nzc4MDE4ZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTA1Y2NjYTFkMmVlYmFkMWY2YzAwOGQ5N2ZiNDkxMjNkMDljMDgxMWUwNmIwMGU5NmMwYjE5ZDllNDZkNDcxZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODM4MjZjYmI3OGM2NmI3ZDI5NTZlNjM3MDk3ZTg2MjgwYTE3ODYyYWY5Mzk2NThmYjY2YTY5ZTc2OTI2YmQyNSJ9"
+        },
+        {
+          "resource": "repo://ui.py#L1-L6",
+          "version": "repo-lines-v1:sha256:0eaa96248d861709dfae2320a5c311408da9b7ec27950112b9294bd2d6535d3f:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2RiOTVhZjBiYTIxMWVmMzBjNmNmZGVlZGQyOWQ0YzNhOWJhNDFjNjQ2OWNhZjgzOGFkY2NhNGE0MTY3YmU0OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTMwM2VjZGQ0YTRkMTBmMTljNzNmZDQyZmQxMjQzN2ZkMzM1NGE4MjY4MTYwNWRhNTI1NWE5N2EzOTA2OGRiYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTViNmU4NzA2YjQzMDQ3ZjJhNmRiNjdmMTMyNjM4NTk1NjA0ZTY3ZjM2OTY2ODc2Y2UwMTU4ZjAwNTNlNmJkMSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_9378a2c9ebf14b6889bfc9286477781b",
+      "statement": "respond() calls app.arxiv_copilot_with_sources with conversation=filter_history(history) and langsmith_extra metadata merging app._run_metadata(RUN_CONFIG) with the session thread_id, then returns the answer plus a sources ChatMessage whose metadata.title both renders it as a Gradio accordion and marks it for removal from the next turn's prompt.",
+      "evidence": [
+        {
+          "resource": "repo://ui.py#L44-L82",
+          "version": "repo-lines-v1:sha256:39a60fe29d99f766c07c2db0f23bc87f1c21e9178f0572b7aac0cf8a8bcece2a:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIxZmZhM2FiNmQ0N2NlZjhkMzc4NzQ5YTQ5ZGUzZTgyMTg4NjhjNWYwMGQwMDU3NWY0NjcyNjVjZjhmM2EyYmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkZDI0NDU4MmI2ZmIwM2QyM2I4NDE1YWJlY2QzNDZiMGM5ZjQ2NmI2Zjc1MmIwNjgxODljZTdlOWEyZGMzNTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFlZWE1MzYyYzUzMzQ3MTI5ZDg1NzBlZDYyNTlkOGVkY2E0MDcwODJiYTk0OGYxOWJiM2QwOTQ2NzNlZDE5ZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNlYjAzMzkxNjdhMWIxNzEwYmEzMDI3ZTQxMDQ5NDY3ZWJjNTZiMWMzODZiYzZmMmM5ZDEzYmYzZTJkNmI1YTAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7fab6ad6b17a487c8a5d68ad01a28ad9",
+      "statement": "format_sources dedups documents by arxiv_id preserving retrieval rank and renders one line per paper ('**[id]** title · published — [abs](url)'), returning the neutral 'Nenhuma fonte recuperada.' for an empty list.",
+      "evidence": [
+        {
+          "resource": "repo://ui.py#L23-L41",
+          "version": "repo-lines-v1:sha256:8aeed152c278065423c2af24e0cdea7077df41725d2496771ccf967fc421fe76:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0Zjk0YjY3ZTRkYjRiODM4NWY2MGY2ZDg3ZDM5ZDZmMzliNzhlYmUxMjlkMWUwNDYwMmJjNWEyOTQzZGM4ZmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIyZmIzMjdhZWNiY2ExNTc0NDUzN2UyYzhkNDhjYmQwYTExOTEzY2Q0YmRjZDc0YzJmNWUzMWExMzYwM2YzYjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM4NWVlYzc5NzZkNGEwMTk4YTRiM2MwYzczNjhhM2RkYjI1NThhM2U2MGEyOGNhYzU4NTRhYWE2OGM1Mzk1NjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIyM2RlZmFmNGY3YWMyN2U0N2IyNjQzYzg1ZGNlMjE2MGMwNWM3MmJiYzVhMzkzN2ZkZTUwMDVkYzc1NGIzNGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7a48611356034a7ab5d315c7f5c36f58",
+      "statement": "filter_history keeps only user/assistant messages with string content and drops every message carrying metadata.title — without it the sources accordion would leak into the next turn's prompt; it accepts both dicts and gr.ChatMessage objects.",
+      "evidence": [
+        {
+          "resource": "repo://docs/ui/ui-plan.md#L39-L41",
+          "version": "repo-lines-v1:sha256:cdc99dfb28df13a872bd460a034f58d98db5c1b3ad111d451efd8f86651e9ca1:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2E2N2JlZGJkMTk0NzZkY2EyOWVjMGU4OTYwMjNhZDQ4NWY0YWM5M2YxMzIzYmQ4ZjU1ZGYwYTc1YjI3YmJkYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjc0NGQ0N2Y0ZDlkYWQ0ZmYwYjNmODY0NDVkY2I1NTNiYTQ4MDI2NTFmMWU0ZWU2MjE4ZTU1ODg2OTlhODgxNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTUxYTc3ZDEwZjkzMjM3MWI0ZDg1ZGYwMjRmZTQ2NTU1NTg4NzQ2M2ExOTA4MGU1NDY0Y2EyNzQ3YzRhODg4NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTM2YTMxOGU2NWMzNzQzN2Y4YWZkMzRiYzliMjFiNDY3MDU2NTQ2NTA3YzE5N2ZkNzUzYTZmNmE5Y2JlOGI0MiJ9"
+        },
+        {
+          "resource": "repo://ui.py#L44-L63",
+          "version": "repo-lines-v1:sha256:21b5f5fac81b7bb72eafa2bd7de9ceb507f787bdfd41396e6edacd4fc5473ff3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIxZmZhM2FiNmQ0N2NlZjhkMzc4NzQ5YTQ5ZGUzZTgyMTg4NjhjNWYwMGQwMDU3NWY0NjcyNjVjZjhmM2EyYmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmYmY2MDJiYjQ0M2Q5OTJmZmMzMTAwZjU0ZThlYzA0ODllYTU0MzBjNDg2ZTU4M2NlMWUyNjUxMmM4OTU3YWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFlZWE1MzYyYzUzMzQ3MTI5ZDg1NzBlZDYyNTlkOGVkY2E0MDcwODJiYTk0OGYxOWJiM2QwOTQ2NzNlZDE5ZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZiYzFkYzAwMDVjMTE1YWE5NDliNWMyMzY1YmFmY2FkMzA0NDk5YWU4YTc4ZmYzNGEwNDI2Mzk1NmMzZTljZjQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9ab695f2c4c448eba41d1cb684720287",
+      "statement": "thread_id is one uuid4 per browser session held in gr.State and regenerated on chatbot.clear, so clearing the chat starts a new LangSmith thread.",
+      "evidence": [
+        {
+          "resource": "repo://ui.py#L104-L118",
+          "version": "repo-lines-v1:sha256:cf04862ff4fa2b1e4bea26739e84f29d15dd42d503e1fb234ccc228ca556c27c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUyZDU3NGNlMjhlNjAzZmU1NzQ5MThhN2Y0MmMzNzEzMGNkNjY4MTMyOTMwZjkyNjg3NzVkN2Y5MGY3NWEzZmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI2MTY3ZGUzNTljMGFkYTM3NGZiYjE5MWVkZTliNTgxNmU4NzAzM2I3YjZjMDBkYzc2NDU5MDFlMzNkMzdlMjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjczMmM0MzhmZDMyMWFiMTRmMzRhZDEyNDVkMTc3OGE3MDViNzYzOGI1YmFhMWYwMjg2ZWZmY2FhMzdiYjZiN2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIxOTc1YjI1ZTVlOTcyMzAwMzY1NGViMTBhZjJjN2UzMDIxZGE3ZmU3Yzg0MWNmOGI5ZTZiMTZkMDQ4NWQ1NDIifQ"
+        },
+        {
+          "resource": "repo://ui.py#L85-L86",
+          "version": "repo-lines-v1:sha256:b5a220b43532e0bb8a07122b3789c2c910cbd00a97d35232196fcfe7b497ffa7:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjhjZjY2YTkzNTliZTY1ZmNjMWJkZjRjMjM5N2QzY2VkMjY4ZTEyOWZiMDUwODNiY2Q1YmE0OGQ2MDBiNGVlMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjc5YjQ4MjdmODQzYWUwNzA1MWEwNWY3MzM5YzBlMjA1NTcxMzFkZGUzMmQxMDg5OGFlZDZhOTAwMjMyNWMyMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWE4MmViZTllZDQwN2MzYTZiYTRiMDAzNDI5MmJhYTUyYzExY2U1YWUyODYxMDc0MDJkZTQ3OTJlZWVjYWNmYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNmZmNGMyN2Y4NmJiZGJiM2U5OWEwZDUxMWZhYzI3MWMxMjE0YjNiYWQxYTI2N2YzOWMxZDlhY2IzYWE0OTAzYiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_dbdf75882bb5494d8e8335e57bf9e2bb",
+      "statement": "__main__ warms the vector store before demo.launch so the first question skips the parquet load; Gradio 6 takes theme/css on launch() rather than Blocks, and the dependency is gradio>=5.",
+      "evidence": [
+        {
+          "resource": "repo://pyproject.toml#L19-L19",
+          "version": "repo-lines-v1:sha256:1f346f028e955e16095248c13d80b29fb35bfe122fb60dea9e6775a8425dd8f2:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWYzNDZmMDI4ZTk1NWUxNjA5NTI0OGMxM2Q4MGIyOWZiMzViZmUxMjJmYjYwZGVhOWU2Nzc1YTg0MjVkZDhmMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWYzNDZmMDI4ZTk1NWUxNjA5NTI0OGMxM2Q4MGIyOWZiMzViZmUxMjJmYjYwZGVhOWU2Nzc1YTg0MjVkZDhmMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWY1MWQ2NWFiOWYzNmQ5YWZhYmM1Y2QxZmU4OGI5Njc0ODA0YzQwZmNiZjk3NmExZWY0NzM4ZTg2ODkyZjEwMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDQ4MDYzZjk1MWU1MjAzODA3NjIwNDEzZmNiMDFlNThiNjliMGUzYzU3ZGIyYmZiZWJlMjY1MWY2Njk5ODNkZSJ9"
+        },
+        {
+          "resource": "repo://ui.py#L122-L128",
+          "version": "repo-lines-v1:sha256:7c868b5e2c16a1b18d70cd2f2a625909287188dbf47f1adbec8ba0ffd4232220:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjQ4NmZmNWNmOTM2M2I0NDI5MzM2ODAzYjJjOTYwZTczZGE4YzQ3ZmEwYzZmNjc2NThkMTRiMzIzY2QyMmQzNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzBjMWYxODhmMTQyZWQ3YTgyNDY4MGIyMDcxNzJjNTUxOWJjNjE0YTQ4ZmRhN2NmMTY3ZWRiOGRkZjc5OTU2YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMjE5NzViMjVlNWU5NzIzMDAzNjU0ZWIxMGFmMmM3ZTMwMjFkYTdmZTdjODQxY2Y4YjllNmIxNmQwNDg1ZDU0MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_8c2e8d97fc1241fda7b4475edaa8d083",
+      "statement": "tests/test_ui.py pins the two pure helpers offline — format_sources dedup/order/line-format/empty-message and filter_history for dicts and ChatMessage objects — while respond() itself is verified manually per docs/ui/ui-plan.md.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_ui.py",
+          "version": "repo-file-v1:sha256:376e471fe25a625182fd816864e1d2e948d9a770eb631bed3cd548c4bfa0333f"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.6.0",
+    "at": "2026-10-12T14:31:19.877Z"
+  }
+}

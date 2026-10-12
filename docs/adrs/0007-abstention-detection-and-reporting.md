@@ -3,7 +3,7 @@
 **Status**: Accepted
 **Date**: 2026-10-06
 **Related**: [Roadmap §6 P7/P8 and §5 decisions D-5, D-6](../roadmap/ckpt-0.6.1b-metrics-roadmap.md) · [Reading notes: Abstention/Refusal benchmarks](../research/fichamentos/abstention-benchmarks.md) · [decisions.md, 2026-10-06](../decisions.md) · [ADR-001](./0001-golden-set-provenance-data-model.md) (the dataset field that says when refusing is the right answer)
-**Code**: `evaluators.py` (`abstained`, `wilson_ci`, `abstention_summary`, `f1_summary_evaluator`); tests in `tests/test_evaluators.py`
+**Code**: `evaluators.py` (`abstained`, `wilson_ci`, `abstention_summary`; `f1_summary_evaluator`, now `token_f1_summary`); tests in `tests/test_evaluators.py`
 
 ---
 

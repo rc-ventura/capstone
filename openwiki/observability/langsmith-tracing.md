@@ -3,9 +3,6 @@ type: observability subsystem
 title: LangSmith Tracing & Datasets
 description: How the system is instrumented for LangSmith — the three tracing mechanisms used in app.py, the uniform run-metadata model that makes metrics sliceable by any configuration axis, thread_id for multi-turn runs, and the LangSmith surfaces (project, dataset, evaluators) the system writes to.
 tags: [langsmith, tracing, observability, metadata, datasets, monitoring]
-verified:
-  - by: openwiki/0.6.0
-    at: 2026-10-11T10:08:11.054Z
 sources:
   - id: openwiki-source-17dded95897e01ee430228e3
     resource: repo://app.py
@@ -21,7 +18,12 @@ sources:
     resource: repo://example.env
   - id: openwiki-source-833e692518af9eeaf8564cc6
     resource: repo://main.py
-generated: { by: "claude-code", at: "2026-10-11T10:08:11.054Z" }
+  - id: openwiki-source-4b14f496b381980b39391eea
+    resource: repo://ui.py
+generated: { by: "claude-code", at: "2026-10-12T14:31:19.877Z" }
+verified:
+  - by: openwiki/0.6.0
+    at: 2026-10-12T14:31:19.877Z
 ---
 
 # LangSmith Tracing & Datasets
@@ -34,7 +36,7 @@ LangSmith is the system's single observability backend: pipeline traces, the gol
 
 | Mechanism | Where | Effect |
 |---|---|---|
-| `@traceable` | `arxiv_copilot`, `rewrite_query`, `retrieve_documents`, `rerank` | Each stage becomes a named run under the root `arxiv_copilot` run, with `run_type` `"chain"` or `"retriever"` |
+| `@traceable` | `arxiv_copilot`, `arxiv_copilot_with_sources`, `rewrite_query`, `retrieve_documents`, `rerank` | Each stage becomes a named run under the root `arxiv_copilot` run, with `run_type` `"chain"` or `"retriever"` |
 | `wrap_openai` | module-level `openai_client = wrap_openai(OpenAI())` | The raw OpenAI call inside `generate_response` is auto-traced as an `llm` child run |
 | `trace()` context | inside `generate_response` | Groups the prompt-formatting + LLM call as a `chain` run with explicit `inputs` (`question`, `formatted_docs`) and `outputs` (`answer`) |
 
@@ -51,13 +53,15 @@ arxiv_copilot (chain, root)
 
 `@traceable` stage calls receive `langsmith_extra={"metadata": metadata}` so the same dict lands on every run; `generate_response` sets metadata directly on its `trace()` context.
 
+Two public entrypoints share the pipeline: `_run_pipeline` does the actual orchestration and returns `(answer, ranked_docs)`. `arxiv_copilot` discards the documents and returns the answer string; `arxiv_copilot_with_sources` returns both to the caller (for the planned UI per `docs/ui/ui-plan.md`) but **traces identically** — same run name `arxiv_copilot`, and `process_outputs` reduces the tuple to `{"output": answer}` so the two entrypoints are indistinguishable in the LangSmith project.
+
 ## Run metadata — the slicing contract
 
 `_run_metadata(run_config)` emits the fields below on **every** run (plan §3: "enables slicing any metric by any configuration"):
 
 `app_version`, `embedding_model`, `k`, `chunk_strategy`, `rerank`, `query_rewrite`, `prompt_version`
 
-This is what makes the experiment model observable: an EXP-4 rerank arm and the baseline produce identically-shaped traces differing only in metadata values, so per-slice metrics can be filtered and compared by `RunConfig` fields without any extra bookkeeping. `main.run_pipeline` additionally attaches a `thread_id` uuid, which groups the runs of a multi-turn conversation in LangSmith's thread view — turn identity lives in metadata, not in the function signatures.
+This is what makes the experiment model observable: an EXP-4 rerank arm and the baseline produce identically-shaped traces differing only in metadata values, so per-slice metrics can be filtered and compared by `RunConfig` fields without any extra bookkeeping. `main.run_pipeline` additionally attaches a `thread_id` uuid, and `ui.py`'s `respond` does the same with a per-browser-session uuid (regenerated on chat clear), which groups the runs of a multi-turn conversation in LangSmith's thread view — turn identity lives in metadata, not in the function signatures.
 
 ## Configuration surface
 
@@ -79,7 +83,7 @@ Everything traces into one project; the README warns to use a project "you do no
 The evaluators are written against LangSmith's calling convention:
 
 - **Per-example evaluators** (retrieval metrics, `format_validator`) take plain inputs and reference dicts.
-- **Summary evaluators** (`abstention_summary`, `f1_summary_evaluator`) receive parallel `outputs`/`reference_outputs` lists plus `examples`, and must return exactly `{"results": [{"key", "score", "comment"?}]}` — `EvaluationResult` is `extra="forbid"`, so extra keys fail the evaluator and silently drop its metrics (a bug that already happened once, roadmap P4).
+- **Summary evaluators** (`abstention_summary`, `token_f1_summary`) receive parallel `outputs`/`reference_outputs` lists plus `examples` (both read `metadata.slice` from it for per-slice breakdowns), and must return exactly `{"results": [{"key", "score", "comment"?}]}` — `EvaluationResult` is `extra="forbid"`, so extra keys fail the evaluator and silently drop its metrics (a bug that already happened once, roadmap P4). `token_f1_summary` emits `token_f1_summary` and `word_recall_summary` keys (formerly `f1_summary_evaluator`, whose `f1_summary` key no longer exists).
 
 Planned CKPT-8 work adds online evaluators as rules on production traffic and a feedback endpoint — none of that exists yet.
 

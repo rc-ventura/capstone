@@ -3,7 +3,7 @@
 **Status**: Accepted
 **Date**: 2026-10-11
 **Related**: [Roadmap §7 P9 and decisions D-12, D-13](../roadmap/ckpt-0.6.1b-metrics-roadmap.md) · Reading notes: [Adlakha 2024](../research/fichamentos/adlakha-2024-correctness-faithfulness-iqa.md) · [Badshah 2025](../research/fichamentos/badshah-2025-reference-guided-verdict.md) · [SemScore 2024](../research/fichamentos/aynetdinov-2024-semscore.md) · [Cao 2025](../research/fichamentos/cao-2025-negation-blindness-embeddings.md) · [Ho + Wang (QA judge vs F1)](../research/fichamentos/qa-eval-judge-vs-f1.md) · [RAGChecker](../research/fichamentos/ru-2024-ragchecker.md) · [ADR-007](./0007-abstention-detection-and-reporting.md) (abstention, the sibling decision) · [ADR-010](./0010-text-normalization-for-lexical-correctness-signals.md) (the text-normalization rule that §2 left open)
-**Code**: `evaluators.py` (`f1_summary_evaluator`, to be adjusted by slice P9a). **Not implemented yet**: this record fixes the design and the pass marks before any real answer exists.
+**Code**: `evaluators.py` (`token_f1_summary`, `token_f1`, `word_recall`, `normalize_text`; slice P9a, implemented 2026-10-12). **Still not implemented**: the embedding-cosine evaluator, the canaries and the calibration. This record fixes the design and the pass marks before any real answer exists.
 
 ---
 

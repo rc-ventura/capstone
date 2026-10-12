@@ -3,9 +3,6 @@ type: indexing subsystem
 title: Indexing & Retrieval
 description: How the corpus becomes a queryable index in utils.py — the whole-abstract vs 500-char retrieval units, deterministic chunk_id identity, per-config parquet caches backed by SKLearnVectorStore, and the retriever consumed by the pipeline.
 tags: [indexing, retrieval, vectorstore, embeddings, chunking, cache]
-verified:
-  - by: openwiki/0.6.0
-    at: 2026-10-11T10:08:11.054Z
 sources:
   - id: openwiki-source-0bfdf81f1534614019fe4429
     resource: repo://build_golden_dataset.py
@@ -16,6 +13,9 @@ sources:
   - id: openwiki-source-53688c65a9b4548093faff14
     resource: repo://utils.py
 generated: { by: "claude-code", at: "2026-10-11T10:08:11.054Z" }
+verified:
+  - by: openwiki/0.6.0
+    at: 2026-10-12T14:34:48.400Z
 ---
 
 # Indexing & Retrieval

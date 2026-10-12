@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:a28c5434c18f08308552bc486be8e781d842f1753b2b73d5258a8511fd974f6d",
+  "pageVersion": "sha256:e13a3a37d55f17b447373ce299595271b6c3a5b936d6ce41d73efd2c15daad27",
   "claims": [
     {
       "id": "claim_d1ed4f9341ea45318cc2e8c0981466fa",
@@ -36,7 +36,7 @@
         },
         {
           "resource": "repo://evaluators.py#L481-L559",
-          "version": "repo-lines-v1:sha256:6c9bd4979ceaccd8c5072d73a7387e2bc67d83116af1cf9d50279c6e7b8f2c13:eyJzZWxlY3RlZExpbmVDb3VudCI6NzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1ZjA1MGNhMzNkZDEyZjIwMzRiNWFjMzJjNTc1MGUyNGFhNTA1ZjEwYWFmZGNjZDFkYjI5YTNhMDU1NmM2MGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMDQ5OWUxYjJmN2U5YjgxM2Q5MjMzODc4YjFkYTdkNjk4MWQxYTQxMWQ5OWY4MzdmMmI1ZDZjZTE1ZWZkMTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQxM2E1NGViMTYxZjk2MWM3YjAyODkzYWRmZTgxYjc0NzhiYWRjYWYwOTc4ODNjNzAwMWJiMWE0YmMxOTZkODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk2MzM3NzI2MDEwMWZkNDI0MWJhMmY4YTYxNjg1ZmE0MWNjYWVjMzc0Mjk0N2Y1NmZjNjJiYzZhZjIzZTIwNWQifQ"
+          "version": "repo-lines-v1:sha256:15dbe9ab40e3ef087e37d6cf4e6eac6363f1ccf571703083f6cf0ffa00b7a9b5:eyJzZWxlY3RlZExpbmVDb3VudCI6ODAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1ZjA1MGNhMzNkZDEyZjIwMzRiNWFjMzJjNTc1MGUyNGFhNTA1ZjEwYWFmZGNjZDFkYjI5YTNhMDU1NmM2MGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMDQ5OWUxYjJmN2U5YjgxM2Q5MjMzODc4YjFkYTdkNjk4MWQxYTQxMWQ5OWY4MzdmMmI1ZDZjZTE1ZWZkMTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQxM2E1NGViMTYxZjk2MWM3YjAyODkzYWRmZTgxYjc0NzhiYWRjYWYwOTc4ODNjNzAwMWJiMWE0YmMxOTZkODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk2MzM3NzI2MDEwMWZkNDI0MWJhMmY4YTYxNjg1ZmE0MWNjYWVjMzc0Mjk0N2Y1NmZjNjJiYzZhZjIzZTIwNWQifQ"
         }
       ]
     },
@@ -52,15 +52,15 @@
     },
     {
       "id": "claim_1ced157d7e814608a40bc6c50676e47e",
-      "statement": "Both summary evaluators follow the LangSmith contract of returning exactly {'results': [{key, score, comment?}]}, since extra top-level keys fail the evaluator and drop every metric; f1_summary_evaluator averages token-F1 against gold answers while abstention_summary uses the examples argument for per-slice breakdowns and skips unlabeled examples.",
+      "statement": "Both summary evaluators follow the LangSmith contract of returning exactly {'results': [{key, score, comment?}]}; token_f1_summary (renamed from f1_summary_evaluator, whose f1_summary key no longer exists) emits mean token-F1 and mean word-Recall, and like abstention_summary uses the examples argument for per-slice breakdowns.",
       "evidence": [
         {
-          "resource": "repo://evaluators.py#L521-L542",
-          "version": "repo-lines-v1:sha256:ff376953e107eda1d63764022d9d2100fb78b0347a0bf8d59c4e395cbdcd6e7c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3YmYyOGE5OTVmZWMxMjQ4ZmZjZTU4YjIyZWM1NTg2ZTA5ZjFiMDgxZDA3ZWFiNGU1MGNjYzA5MWYwYTVjMDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2YTcxNTI1NzJlZTg0ZjEwOTA2Yzc0YjlmMmE5MjQzNGRkYWIwZTNjNDI4MTNiMDRlNTk3ZWZjZWM5NTFiMjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBiNDY4YWQwYWJkNWRmODYyMGJiOTRiZGZmZTg1ZjQyMTEwZWNkYThhZjc2NGE0ZDVjM2JhMDZiYWE1Zjc3M2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFkMmVkYmFiZjFlZmM1ODRkYzc3NzlmMzBmMzIyMzdiYTdkMGZlMjUxMjQ3NWUzMDQyYTFlNDEzNjlkNTA2OWYifQ"
+          "resource": "repo://docs/decisions.md#L7-L7",
+          "version": "repo-lines-v1:sha256:9776eceb491ccf572b1d7244d3bd4a212009cd104f4ec4721395f27408438d7b:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTc3NmVjZWI0OTFjY2Y1NzJiMWQ3MjQ0ZDNiZDRhMjEyMDA5Y2QxMDRmNGVjNDcyMTM5NWYyNzQwODQzOGQ3YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTc3NmVjZWI0OTFjY2Y1NzJiMWQ3MjQ0ZDNiZDRhMjEyMDA5Y2QxMDRmNGVjNDcyMTM5NWYyNzQwODQzOGQ3YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGI0NTIyZDlhZGM0NGY3NTgwZjNjMDk4MjBkNmE1NGJhMzA5YmNlZDMzOWU2YTBmZWY3MmQ3NzkxODA0NGQ5YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjVhMzU1MzE1ZTM0YjZkN2Q2YWE4ZjA3YmQwMTI0OGE2ZWI1YzM0MWQ4OWM1YTVkMTA0OGU5MGY3OGI3NThhZSJ9"
         },
         {
-          "resource": "repo://evaluators.py#L566-L603",
-          "version": "repo-lines-v1:sha256:886a6d0bae3e855c89be204e862f481d37f875d585daaf60ce059621868f29ea:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzMzYyZTllYTFlZDkwYWQ5Yjk5OWM3NWM4MjY3NGJkNGFkMjQ2MTYxY2MxOTc5NGZjOTk4MDhjMzlmZDc2MTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkYjlkMjMyNmI1ZTZiNzViNDkwY2E4MTc4MDUzZDQ5NTEyZjdlNDcyZTU4MzI3YTZmYmY1Zjk0ZDkxMDI3MTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNkZTgwYjc4ZTI0ZTY3ZTlkMWVmYWYyMWE3OTNjMzFmYmNkZjZjYThhYTc4MzM0YTNhMDJhZmQ5ZTlkYWI4MjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://evaluators.py#L620-L662",
+          "version": "repo-lines-v1:sha256:a64bff2a722db03f86f0121a922b35ae427581ee75333377befd70a58b30b7fc:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMDQ5OWUxYjJmN2U5YjgxM2Q5MjMzODc4YjFkYTdkNjk4MWQxYTQxMWQ5OWY4MzdmMmI1ZDZjZTE1ZWZkMTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY1MTQyMDFiZjg4ZWRiMDA4M2ZlZDc4MDg2NGU4YTU4Y2UzMmIyYWJkNjBmNWQyYmVjZjIxYjBmMjc3ZjI1MDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     },
@@ -70,17 +70,59 @@
       "evidence": [
         {
           "resource": "repo://docs/adrs/0008-answer-correctness-signals-and-calibration.md#L1-L20",
-          "version": "repo-lines-v1:sha256:fed796530cb352eb94cc84f789020be87b5a1cf862863fdf99ebe3d2ce12900f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhOTljNGY3ZDUwNTVkNWY1NjlhMjI2MmYxYjYwOTBmMTc4ZGI4YjcxMzAwNjJjNDE1ZGE1NTExNTA4YjVmYWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJhNDAxNDRkZWQ0MzJlYzIyMDA5NzMzODZkMjIzNmY1MjdkMDY3ZjhiMmI5YzkxOGQzMzM4YjQzNzZkNWI1MzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVjYTAxZGNjYzBhNTA4MTIzN2I2ZWE0MDRhMTQ1ZmM5NjI5MTMzNzA0ZGI4YmE1OGZiYWRjYWI2ZTNjM2UyOTMifQ"
+          "version": "repo-lines-v1:sha256:7f23200d4c1eb46574461119059679e5d3867469eeccb68e4cbea3786d505b18:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhOTljNGY3ZDUwNTVkNWY1NjlhMjI2MmYxYjYwOTBmMTc4ZGI4YjcxMzAwNjJjNDE1ZGE1NTExNTA4YjVmYWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJhNDAxNDRkZWQ0MzJlYzIyMDA5NzMzODZkMjIzNmY1MjdkMDY3ZjhiMmI5YzkxOGQzMzM4YjQzNzZkNWI1MzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVjYTAxZGNjYzBhNTA4MTIzN2I2ZWE0MDRhMTQ1ZmM5NjI5MTMzNzA0ZGI4YmE1OGZiYWRjYWI2ZTNjM2UyOTMifQ"
         },
         {
           "resource": "repo://evaluators.py#L580-L603",
-          "version": "repo-lines-v1:sha256:a5e0a97d0c714ae3ffe4a9d6ac9e18a645bf62824913f546abad5ac2d29b2bc8:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMjI1ZDY0MTRiNDA2ZmJhNmM2NDNlZTdjODBlMjZhNGYxNmQ3MThhNGIwNGM5ODc5NmI4Zjk4MTY2MmNlMzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkYjlkMjMyNmI1ZTZiNzViNDkwY2E4MTc4MDUzZDQ5NTEyZjdlNDcyZTU4MzI3YTZmYmY1Zjk0ZDkxMDI3MTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwMTA0MmE3NjMxYjgwOGI1NzJiODI0YjUzZTQ4ZTJhZmM1NTcxM2ExYWQzYzkxMWNhNTliNmQ5ZWUwOTFjOGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "version": "repo-lines-v1:sha256:14819cfbc620efe331284b65f1d23588b8ff8b9c2aabf8bc02fffe374f4c70b1:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdjZmZlMjQwYzQ1ZGM5NWEwN2QwNTRjZjkwZjBhNDI5Njg0OGU1ZmFiMjE0NDNjM2Q3YWVhOTQ4OGQxMDRiOTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMDQ5OWUxYjJmN2U5YjgxM2Q5MjMzODc4YjFkYTdkNjk4MWQxYTQxMWQ5OWY4MzdmMmI1ZDZjZTE1ZWZkMTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwMTA0MmE3NjMxYjgwOGI1NzJiODI0YjUzZTQ4ZTJhZmM1NTcxM2ExYWQzYzkxMWNhNTliNmQ5ZWUwOTFjOGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_fa6d9a24989a497d9b99853a5bccd9cd",
+      "statement": "token_f1_summary scopes to CORRECTNESS_SLICES (answerable, persona, multi-doc) with a non-empty gold answer — unanswerable/stale are measured by abstention_summary and format by format_validator; the slice comes from examples[i].metadata and an example without one is skipped, returning {'results': []} when nothing is in scope.",
+      "evidence": [
+        {
+          "resource": "repo://evaluators.py#L564-L580",
+          "version": "repo-lines-v1:sha256:27159a2f649fa23a164ed3ac51c4da518c8879593df70b854f88f1f9bbe92b09:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM4MDg1YjNlNmFhNmNmZTY1MWQwNzE5YmY5ZTVlZGZjZTUyMTdlMzk3NjIxMjRiNWVlNTIyM2EwYzFkOGRhMzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiMWMwMjI1M2Q1NGQzZGFhODk5NDc5ZTkxM2I3OTQyMzZkMGRkNjMzNDNiOGRiOWNmZDVjYTQyMTJiNzQ0NDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk2MzM3NzI2MDEwMWZkNDI0MWJhMmY4YTYxNjg1ZmE0MWNjYWVjMzc0Mjk0N2Y1NmZjNjJiYzZhZjIzZTIwNWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIzOTBkN2RjOTEzY2RmODgxZjJiYjc0MTc0NGMxZDczN2U2MTIyMmEwNmQyNDFlMzk1ZmMyNTcxZWU3MjdhN2UifQ"
+        },
+        {
+          "resource": "repo://evaluators.py#L635-L662",
+          "version": "repo-lines-v1:sha256:e64d657b382fa7ec12d34629b61eb2121bdedd2dbaf4baef1c8c21cf632e3282:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg2YzVkMGJlYTI0Mzk5NWJhNzg4ZTc0YzY0NGJjM2MyODMxNGQ5YTFkNTcyM2M2YjU2ZmViNWI1OGM1NmI3ODUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMDQ5OWUxYjJmN2U5YjgxM2Q5MjMzODc4YjFkYTdkNjk4MWQxYTQxMWQ5OWY4MzdmMmI1ZDZjZTE1ZWZkMTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwNmQ4NDVlYWVhMTU2NGVhNDAyMTc2MWFlYjVmZDU1ODliYTRlMjU5ZjkxNGI5MzdhYzc5M2JiZjYxZDY2NzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0f98099ba659490cbb8f0baca6fe9454",
+      "statement": "normalize_text implements the ADR-010 cleaning rule — strip arXiv ids anywhere (case-insensitive, optional version), lowercase, non-word characters become spaces (hyphens split, em dashes vanish), drop a/an/the, split — deliberately with no stopword list (it would erase 'not') and no stemming; overlaps are multiset intersections.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adrs/0010-text-normalization-for-lexical-correctness-signals.md#L40-L55",
+          "version": "repo-lines-v1:sha256:182ad25970ca0e8e11e39c1122f39a65fa2d0318318a1910309815f5c5671348:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjODRjNDljYzU5MGQ2M2NiNjI0MjBjZmZlMzU0Zjk0ZjhhYTk3ZTM2NjhjNDg4MGY0NzA4NmI2ZTBlMWVhYTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBhNDc3YmExNzZlYmFmNjE4ZDc2ZTNlN2ZlMWE0NjYyYTEzZTc4OTExMWMzNjRkOTcxZDMzM2U1NzZjNTJhZjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgwZDVhZjMyZTYzMWVlNjU4ZDhiNjM3MzYyZmRkMGFiYmQ3Y2ZjNjJkOTA5YTBhNGViMGRhMGMyOTc4ZTRlYjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImExMjFmOTRmZGE3MzZhYmRjMzUwNDU1M2U2Y2UwOTdkMWU3ZTk1ZjYxY2U4MzJjN2E5ZDljOGE3ZDNmMTJhYmIifQ"
+        },
+        {
+          "resource": "repo://evaluators.py#L569-L596",
+          "version": "repo-lines-v1:sha256:48f9f3f45d926073a69da588bec01d93e05da4420aa91fd1c5ed4e6bbd972cbc:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdiYjA3ODUzOTk0NTk5OTY2ZGJjNjlkZWFlNTFiMzJiMzBlNmM4ZDA0NWYxYTNkMmU1MmQ0NDM3ZDg0YjMxY2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdmNzZhMzNhZjk1NTBmZTJkOGUzMTgzMmFmZTIxNzNlOGQ3NjQzYTc4MWFjY2Y4YTZiMWJhMGRlMTE2ZGRkNTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM1NGI4M2FhZmIyM2U1YTA0N2Q4MmI3MmRkMjgxOGI3ZWE0NmYwZDkwMTRhOThiOGVkOWVlY2FiMTQyNzA0YWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg4OGUwZTQ5MWQ4ZWE0YTVjMjdhYmM1ZDVjZWRkMTUzYTc5NDA5NGZkODBiNzg2NzA3N2I4OTcwNGQ4NGIwMDUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_28b03fb987c342738cd888847dd99a75",
+      "statement": "word_recall measures the share of reference words an answer covers without penalizing longer answers (Adlakha 2024's better human-agreeing signal); a known accepted floor of ~0.22 on the multi-doc golds comes from function words retained by the no-stopword rule — a level, not a quality — and both signals are diagnostics until EXP-0 calibration.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adrs/0010-text-normalization-for-lexical-correctness-signals.md#L60-L80",
+          "version": "repo-lines-v1:sha256:f16623ce2e84765dd4998452758975b4246504571879e89674c6e86dcc2beca2:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUxN2MyYjRlYzZkYjk1MGY1YzExYzIxMjNjYzM1MGVmZGI5ZGU1ZjFlODY3M2IyMWVlMGYwZjQ3MWE1YTYwNjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFlYTQ5MGNjYTJiMzZlMDE0MmViMjQwNTVlN2QwMDZmOWRlZjZhZjAzMTJiMDk0ZDA5ZTQ4MGYzNTA1MDU2ZDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFhOWRkZTZlNjczYjUxYWEwMmJhMWRiNTU4MjVlY2JkNjA4ZTkyYzg5YzU5MjkxYjkxYTU5YTliM2ZjN2I2ZjcifQ"
+        },
+        {
+          "resource": "repo://evaluators.py#L589-L615",
+          "version": "repo-lines-v1:sha256:500eaaaef713923acf1814a343257d64b82ceff1800255d273f2e92cc9b6aec1:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmMTAxYWMxMDVjZmZmNGJjMmU1ZjQyMTkzZjMwNjIxOThhY2FjMTVkNTM3MGEyOGI0ZTlhMDkzM2U3ZTk2YjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM4ZTFjYmIzZGU5NjY3YmE1YjM2MGI0NWI2Mjk4YzdhYWU1MzY2MGZlNTRmYzhkMzdiZjY2Mjk5MTQxNjhhOTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhkOGE3ZTMwZDg5NjUxZjY0Zjk2YTY4ZmFlYTc2MzAxOGZlMDEwOTIyYTYwNTU0OTVkYTRkNjg3Njc1Njc2ZGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYyZjFhNWFiY2RhYjg0MmJiNzNjNWFjYjlmM2E2NjViNzZmMzExOTQzMGViZTVhNjcxMmQ1ZmU3NTMxMDEwYjUifQ"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.6.0",
-    "at": "2026-10-11T10:08:11.054Z"
+    "at": "2026-10-12T14:24:36.766Z"
   }
 }

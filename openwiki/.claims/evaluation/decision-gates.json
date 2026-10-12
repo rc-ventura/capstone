@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:2946f2495e589b1aa1857b0ffb2309a92de897f2f1726d70e7fa091c0f11f2bf",
+  "pageVersion": "sha256:73ae6a39019fa6b0c395214cef3e888126a54452ae7f9c03e5af5e9df4189f79",
   "claims": [
     {
       "id": "claim_323b03934348402eb675ade454d86d8b",
@@ -24,11 +24,11 @@
     },
     {
       "id": "claim_e48ec0d2a7af4d1d90d366fb2c47cafa",
-      "statement": "docs/decisions.md is the experiment ledger with one row per gate (date, config change, metric before→after, regressions, PROMOTE/REJECT verdict) plus an Observations section for non-gate findings that changed the system, including the manifest rebuild mechanism and the abstention-metrics redesign.",
+      "statement": "docs/decisions.md is the experiment ledger with one row per gate (date, config change, metric before→after, regressions, PROMOTE/REJECT verdict) plus an Observations section for non-gate findings that changed the system, including the manifest rebuild mechanism, the abstention-metrics redesign, and the lexical correctness signals landing.",
       "evidence": [
         {
           "resource": "repo://docs/decisions.md",
-          "version": "repo-file-v1:sha256:fe1a45917cf44ef522fae83622c4b08c031a960687fc9ba9fa4443793747f4cb"
+          "version": "repo-file-v1:sha256:28e6d0e9d7b95d4c528419cf5ea2167a0744fbb7291f24317684a3571bbeb7d2"
         }
       ]
     },
@@ -69,10 +69,24 @@
           "version": "repo-lines-v1:sha256:7be5888f9e420b29266bfddf95b0f8e08bd6285743d1d399c2a92331e7a275a4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlMjQ1OWY3MmY2NWExZmVhODBiMzM3Y2UxNmYxZmIzZDI2ZDVkMTU1MDQ0NzUyZTAyZWRiOGZiYmU0Yjk3OWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3YzA2YzU2MWQ1YzMyNzM0MzY4NTI2OGE0NmIzMzkxZjM5OThlZWU4OTBkMmJlNTFmMGQyMWNjNGE1M2FlNmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg5MjBhYWRiMjE4YWM2ZWNhNTMyNzRlMDg1MGJmZDQ2ODZhZjE0YjJiODU5MDE3ZmMyNzdmYjEzZDU3ZTdlM2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAwMWYyZWMxNzU5M2MxMDU0ZWI0NjM2N2Q4NDUzZWYyNGExNzNjZTk2YjcxMTdkOTFmOWE2OGQ0NGZlZjhiMDEifQ"
         }
       ]
+    },
+    {
+      "id": "claim_42ee3223532940f5973392b7e79b447f",
+      "statement": "Ten ADRs are accepted; the newest two are ADR-009 (judge retrieval gold holes via a CKPT-0.8 mini-pooling pilot of ~80 judgments with a pre-registered stop rule, keeping 'unjudged' from ever counting as irrelevant) and ADR-010 (the frozen normalize_text cleaning rule for lexical correctness signals).",
+      "evidence": [
+        {
+          "resource": "repo://CLAUDE.md",
+          "version": "repo-file-v1:sha256:953b2425dd90fa53bd5737581c826f8ad74446bc3e061955416d9d0d927e72be"
+        },
+        {
+          "resource": "repo://docs/adrs/0009-incomplete-gold-and-pool-bias-mini-pooling.md#L60-L75",
+          "version": "repo-lines-v1:sha256:8daeaca9c27af7360c529e5ff99d7a6d9e84da4d1f9b28d57f3a05395c51e76a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzMTQ4YTkwZmRmMzAwNWU2ZDczMmM4MDM0Y2ZiOTMyNzE5MWNiMmQ4N2RkNWQ5ZjQ1NjdiN2I0ZmNiNTc0NzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzODc0NzU1ZjBjODdiOGY0MzM5MmQ0MWNjNmM0OTc1NzY0Y2Q1NTM3YTc5ZGJiNGNlNTEyNDNmMDkxYzM4ZDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ0ODc1MWVkZmFiYWRhOGU3MGZlNTNiZGZjNmM0YTM5MDQyM2M3YWQ3ZTdmMTU3Njk4M2JkZmE0MTI4NDcyODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM1YzFlYWNmNDQ0ZGQxYTU4MGFlZTk1Y2E5MzFmOTNmODc4MmUxYmQ2MmMxNDJlM2Q3NDdlNDI0MTRlMTQ3ZGUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.6.0",
-    "at": "2026-10-11T10:08:11.054Z"
+    "at": "2026-10-12T14:24:36.766Z"
   }
 }
