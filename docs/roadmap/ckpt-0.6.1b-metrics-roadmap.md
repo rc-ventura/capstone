@@ -1,9 +1,9 @@
 # Living Roadmap — CKPT-0.6.1b: fixing and hardening the metrics
 
-> **Iterative document (version 5, 2026-10-11).** Rewritten at every discussion round; the current version is always this one.
+> **Iterative document (version 6, 2026-10-11).** Rewritten at every discussion round; the current version is always this one.
 > Writing rules: every metric cited comes with what it measures in parentheses when that is not obvious; every "design
 > error" is explained in plain language, with a numeric example, **alternatives researched before the recommendation**
-> and the decision recorded in the §5 log. P6 was decided on 2026-10-04, P7/P8 on 2026-10-06 (§6); P9 on 2026-10-11 (D-12/D-13, [ADR-008](../adrs/0008-answer-correctness-signals-and-calibration.md)); P10 and later are **proposals for discussion**.
+> and the decision recorded in the §5 log. P6 was decided on 2026-10-04, P7/P8 on 2026-10-06 (§6); P9 on 2026-10-11 (D-12/D-13, [ADR-008](../adrs/0008-answer-correctness-signals-and-calibration.md); D-14/D-15, [ADR-010](../adrs/0010-text-normalization-for-lexical-correctness-signals.md)); P10 and later are **proposals for discussion**.
 
 ## 1. Current state
 
@@ -19,10 +19,10 @@
 | **D-7 baseline = one record per abstract** | ✅ **implemented** (2026-10-04, ADR-005) | `config.BASELINE`/`CHUNKED_500_0`, `utils.chunk_documents(…, 0, 0)`, new cache; golden builder pinned to the 500/0 arm |
 | P7 abstention detection via `startswith` | ✅ **decided 2026-10-06 (D-5); implemented 2026-10-06** | `abstained()` — normalization + two marker families (16 paraphrase tests, 10 "know"-containing non-refusals); judge at 0.6.3; divergence in EXP-0; marker `REFUSE_*` stays a CKPT-6 experiment |
 | P8 abstention as accuracy | ✅ **decided 2026-10-06 (D-6); implemented 2026-10-06** | `abstention_summary`: `abstention_recall` (gate) + `over_refusal_rate` (guardrail) + `abstention_f1` (diagnostic), per slice, raw counts + Wilson 95% CI; `abstention_accuracy` removed from `f1_summary_evaluator`; over-refusal tolerance fixed at EXP-0 vs the baseline CI |
-| P9 token-F1 as quality metric | ✅ **decided 2026-10-11 (D-12/D-13, ADR-008); not implemented** | slice P9a (offline: citation removal, Recall, scope, rename) and the embedding-cosine evaluator; `correctness_judge` conditional on the EXP-0 calibration |
+| P9 token-F1 as quality metric | ✅ **decided 2026-10-11 (D-12/D-13, ADR-008; normalization rule D-14/D-15, ADR-010); not implemented** | slice P9a (offline: id/citation removal per ADR-010, Recall, scope, rename) and the embedding-cosine evaluator; `correctness_judge` conditional on the EXP-0 calibration |
 | P10–P11 | 🟠 draft, **updated with the reading notes (fichamentos)** (§7) | next to discuss |
 | P12–P17 (new, arising from the reading notes) | 🆕 listed in §7 | triage pending |
-| Reading notes | ✅ **19 written** (15 + 4 added on 2026-10-10 for P9) | §4 |
+| Reading notes | ✅ **21 written** (15 + 4 added on 2026-10-10 for P9 + 2 on 2026-10-11 for the P9 normalization) | §4 |
 
 Verification of the batch already done: `uv run pytest` → 35 green tests; MRR (Mean Reciprocal Rank: 1 ÷ position of the first
 relevant document) from 0.167 → 1.0 and precision@k (fraction of the top-k that is relevant) from 0.0 → 0.2 in the cases that
@@ -85,7 +85,7 @@ relevant documents** — the other 2–4 chunks of the same paper may also answe
   abstract** instead of from chunks.
 - Left out: unjudged relevant documents in **other** papers (only the EXP-0 mini-pooling reveals them).
 
-## 4. Reading notes (full reading of the papers) — 19 written (4 added on 2026-10-10 for P9)
+## 4. Reading notes (full reading of the papers) — 21 written (4 added on 2026-10-10 for P9, 2 on 2026-10-11 for the P9 normalization)
 
 > **Related lessons:** [Retrieval Unit and Gold Granularity for RAG over Abstracts: Chunk vs. Paper vs. Whole Abstract](../learning-lessons/retrieval_unit_and_gold_granularity.md) (D-1, D-7, EXP-3) · [Golden Dataset Construction for RAG: Synthetic vs. Adjudication vs. Calibration](../learning-lessons/golden_dataset_construction_and_human_calibration.md) (L1/L2/L3).
 
@@ -113,6 +113,8 @@ section/table · limitations · **reflections anchored in our plan** · confiden
 | [`badshah-2025-reference-guided-verdict.md`](../research/fichamentos/badshah-2025-reference-guided-verdict.md) | full (v3); small study (n=100 per dataset) | P9b, P11, P14 |
 | [`aynetdinov-2024-semscore.md`](../research/fichamentos/aynetdinov-2024-semscore.md) | full (v2); system-level correlation over 12 models | P9 (embedding rung) |
 | [`cao-2025-negation-blindness-embeddings.md`](../research/fichamentos/cao-2025-negation-blindness-embeddings.md) | full (v2); open-source embeddings only, no OpenAI models | P9 (contradiction criterion) |
+| [`owczarzak-2012-rouge-accuracy-tac.md`](../research/fichamentos/owczarzak-2012-rouge-accuracy-tac.md) | full; **Tab. 3 reconstructed by me from a garbled extraction**; also records Lin 2004 (read in full, no own note) as the contrasting source | P9 normalization (D-14) |
+| [`loukina-2014-rouge-spoken-summaries.md`](../research/fichamentos/loukina-2014-rouge-spoken-summaries.md) | full; spoken non-native responses scored for proficiency (different task) | P9 normalization (D-14); tokens-vs-types candidate |
 
 ## 5. Decision log
 
@@ -135,6 +137,8 @@ section/table · limitations · **reflections anchored in our plan** · confiden
 | D-11 | 2026-10-04 | Pilot decision rule, fixed **before** looking at the data. *x* = judged-relevant ÷ judged candidates in the 10-random sample: *x* ≤ 10% → keep the single gold; *x* ≥ 25% → judge the remaining 40 examples (pilot judgments are reused); 10–25% → review the cases and decide. | Engineering judgment, **no source gives these numbers**. Reference: *x* = 25% means one extra answering paper per question on average (true precision@5 ceiling 0.40 instead of 0.20) | ✅ **Decided** |
 | D-12 | 2026-10-11 | **P9 — answer correctness:** token-F1 (citations removed), word Recall and embedding cosine (`text-embedding-3-small`, pinned) run every round as **diagnostics**; the LLM `correctness_judge` is built only if the one-time calibration demands it (it confirms every gate decision, and runs every round if no cheap signal passes). Main number = the simplest signal that passes C1 and C2. Scope: `answerable`, `persona`, `multi-doc`. | Adlakha 2024 (F1 rejects 39% of correct answers, accepts 3.8% of wrong ones; Recall agrees better), Ho 2025 / Wang 2023 / Badshah 2025 (judges: strong on short answers, weaker on long, need local calibration), SemScore 2024 (cosine ranks systems), Cao 2025 (negation blindness); local tests of 2026-10-10 (multi-doc references average 53 words; cosine 0.94/0.92/0.87 on negations) | ✅ **Decided** ([ADR-008](../adrs/0008-answer-correctness-signals-and-calibration.md)); implementation pending |
 | D-13 | 2026-10-11 | **Pass marks fixed before seeing the calibration data.** C1: Spearman ≥ 0.60 between the signal and the author's correct/incorrect labels. C2: ≥ 80% of 10–20 canaries (correct answers turned into their opposite) fall below the cut line. Calibration: 100–150 real answers labeled by the author (+ flag "contradicts the reference"), only where the gold paper was retrieved. | C1: reference level only — Adlakha 2024 Tab. 3 (Recall 60.0, F1 47.3, GPT-3.5 judge 61.4, GPT-4 judge 67.5); the paper sets no cut, so **0.60 is our choice**. C2: **author-approved choice, no source**. Caveat (own simulation, not a paper): Spearman against yes/no labels has a ceiling below 1 that falls as the share of correct answers rises (80% → 0.69, 90% → 0.52) | ✅ **Decided**; revisit if the labeled set has so many correct answers that C1 is unreachable (ADR-008) |
+| D-14 | 2026-10-11 | **P9 — text normalization of the lexical signals (token-F1, Recall):** ids removed (D-15) → lowercase → every non-word/non-space character becomes a **space** → drop `a/an/the` → split. **No stopword list, no stemming.** Called *N1-b*: the SQuAD / Adlakha normalization with punctuation as a space instead of deleted (*N1-a*, the literal version). | Literature (read in full): Owczarzak 2012 (stopword removal lowered agreement in 13 of 24 cells, raised 4, range −3 to +1), Loukina 2014 (answer-level Spearman: +0.012 / −0.006), Lin 2004 (in favour, but 6–18 systems and flagged unstable; unrelated to our `multi-doc` slice); Adlakha released code uses the SQuAD normalization with no list. Own synthetic tests ([ADR-010](../adrs/0010-text-normalization-for-lexical-correctness-signals.md), script stored): N1-a loses up to 6.5 points of Recall when hyphens/dashes are respelled (17 on one answer) with no order benefit; N1-b loses none. The empty-answer floor stays ≈ 0.22 (range 0.11–0.29) — a level, not a ranking problem. **N1-b over N1-a is an engineering judgment: no study tests the difference.** | ✅ **Decided** (user approved 2026-10-11); implementation pending (P9a) |
+| D-15 | 2026-10-11 | **P9 — arXiv ids:** remove every id (`\b\d{4}\.\d{4,5}(?:v\d+)?\b`, case-insensitive) anywhere in the text, on both answer and reference (option O1). For the embedding cosine only this step is applied. Which paper is cited is judged by `citation_accuracy` (P12), not here. | 12 of the 15 `multi-doc` gold answers contain ids outside brackets (1.5 per answer) while the model cites inside brackets; `PROMPT_V1` shows an id without version, the context prints it with one. Synthetic Test 2 (ADR-010): O1 gives 1.00 for the same content in every id spelling and 0.00 for an ids-only answer; O2 (brackets only) caps a perfect answer at 0.945; O3 (keep ids) punishes omitting a citation (−13) more than citing the wrong paper (−6) and gives an ids-only answer 0.13 Recall / 0.22 F1. Synthetic, 15 references: it shows what each rule can do, not how often it happens. | ✅ **Decided** (user approved 2026-10-11); implementation pending (P9a) |
 
 **L-3 note (empirical test done in a throwaway environment, without touching the project):**
 

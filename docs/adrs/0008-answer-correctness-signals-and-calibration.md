@@ -2,7 +2,7 @@
 
 **Status**: Accepted
 **Date**: 2026-10-11
-**Related**: [Roadmap §7 P9 and decisions D-12, D-13](../roadmap/ckpt-0.6.1b-metrics-roadmap.md) · Reading notes: [Adlakha 2024](../research/fichamentos/adlakha-2024-correctness-faithfulness-iqa.md) · [Badshah 2025](../research/fichamentos/badshah-2025-reference-guided-verdict.md) · [SemScore 2024](../research/fichamentos/aynetdinov-2024-semscore.md) · [Cao 2025](../research/fichamentos/cao-2025-negation-blindness-embeddings.md) · [Ho + Wang (QA judge vs F1)](../research/fichamentos/qa-eval-judge-vs-f1.md) · [RAGChecker](../research/fichamentos/ru-2024-ragchecker.md) · [ADR-007](./0007-abstention-detection-and-reporting.md) (abstention, the sibling decision)
+**Related**: [Roadmap §7 P9 and decisions D-12, D-13](../roadmap/ckpt-0.6.1b-metrics-roadmap.md) · Reading notes: [Adlakha 2024](../research/fichamentos/adlakha-2024-correctness-faithfulness-iqa.md) · [Badshah 2025](../research/fichamentos/badshah-2025-reference-guided-verdict.md) · [SemScore 2024](../research/fichamentos/aynetdinov-2024-semscore.md) · [Cao 2025](../research/fichamentos/cao-2025-negation-blindness-embeddings.md) · [Ho + Wang (QA judge vs F1)](../research/fichamentos/qa-eval-judge-vs-f1.md) · [RAGChecker](../research/fichamentos/ru-2024-ragchecker.md) · [ADR-007](./0007-abstention-detection-and-reporting.md) (abstention, the sibling decision) · [ADR-010](./0010-text-normalization-for-lexical-correctness-signals.md) (the text-normalization rule that §2 left open)
 **Code**: `evaluators.py` (`f1_summary_evaluator`, to be adjusted by slice P9a). **Not implemented yet**: this record fixes the design and the pass marks before any real answer exists.
 
 ---
@@ -75,9 +75,9 @@ Correctness is computed only for `answerable`, `persona` and `multi-doc`. Refusa
 
 | Signal | What it is | Cost |
 |---|---|---|
-| `token_f1_summary` | token-F1 after removing citations and normalizing the text (renamed from `f1_summary`) | free, offline |
-| word Recall | share of the reference's words present in the answer (same normalization) | free, offline |
-| embedding cosine | cosine between the answer and the reference (citations removed) with `text-embedding-3-small` **pinned** (the model of the retrieval index); reference embeddings cached | cents |
+| `token_f1_summary` | token-F1 after removing citations and normalizing the text — **the exact rule is fixed in [ADR-010](./0010-text-normalization-for-lexical-correctness-signals.md)** (renamed from `f1_summary`) | free, offline |
+| word Recall | share of the reference's words present in the answer (same normalization, ADR-010) | free, offline |
+| embedding cosine | cosine between the answer and the reference (arXiv ids removed, nothing else — ADR-010) with `text-embedding-3-small` **pinned** (the model of the retrieval index); reference embeddings cached | cents |
 
 Until the calibration below has run, these are reported as **diagnostics, never as "the quality of the answers"**. Changing the embedding model invalidates its pass marks and forces a new calibration (its scale is model-specific — Cao 2025).
 
