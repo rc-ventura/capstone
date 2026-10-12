@@ -147,7 +147,7 @@ The course (`intro-to-langsmith`) teaches 7 evaluators, none RAG-specific. The e
 | `abstention_quality` | LLM-as-judge | P2 (LLM-judge + reference) | **Novel** — extends course P2 to abstention | abstains when it should, answers when it can | FP1 | Reference (gold answer: abstain or not) |
 | `specificity_judge` | LLM-as-judge | P2 (LLM-judge + reference) | **Novel** — extends course P2 to audience calibration | matches requested audience | FP6 | Reference (gold answer per audience) |
 | `answer_relevance` | LLM-as-judge | P3 (LLM-judge, ref-free) | RAGAS / literature — **not in course** | on-question, useful | — | **Reference-free** |
-| `f1_summary_evaluator` | code, summary | P5 (code summary + reference) | Adapted from course `f1_score_summary_evaluator` (toxicity → RAG quality) | aggregate substantive-vs-hallucinated F1 | cross-cutting | Reference (gold labels) |
+| `token_f1_summary` | code, summary | P5 (code summary + reference) | Adapted from course `f1_score_summary_evaluator` (toxicity → RAG quality); renamed from `f1_summary_evaluator`, scope and cleaning rule per ADR-008/ADR-010 | mean token-F1 **and** word Recall vs the gold answer (`answerable`/`persona`/`multi-doc`, total and per slice); diagnostics until the EXP-0 calibration | cross-cutting | Reference (gold answers) |
 
 ### What the course teaches vs. what we extend
 
@@ -157,7 +157,7 @@ The course (`intro-to-langsmith`) teaches 7 evaluators, none RAG-specific. The e
 | `compare_semantic_similarity` (LLM vs. reference) | P2 | → `specificity_judge`, `abstention_quality` (same pattern: LLM judges output vs. gold answer, different criteria) |
 | `summary_score_evaluator` (LLM, ref-free) | P3 | → `faithfulness_judge`, `answer_relevance` (same pattern: LLM judges output against context/query, no gold answer) |
 | `ranked_preference` (pairwise, ref-free) | P4 | → CKPT-7 pairwise A/B (unchanged pattern) |
-| `f1_score_summary_evaluator` (code summary, ref) | P5 | → `f1_summary_evaluator` (same pattern, different domain) |
+| `f1_score_summary_evaluator` (code summary, ref) | P5 | → `token_f1_summary` (same pattern, different domain; formerly `f1_summary_evaluator`) |
 | `is_concise_enough` (code, ref) | P1 | → `retrieval_recall_at_k` etc. (same pattern: code checks output against reference) |
 
 **What's genuinely new** (not derivable from course patterns):

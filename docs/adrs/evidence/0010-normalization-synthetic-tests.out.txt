@@ -1,0 +1,86 @@
+
+==============================================================================
+PART A - what each rule does to the 15 multi-doc reference answers
+==============================================================================
+NLTK English stopword list: 198 entries; contains 'not','no','nor': True
+  A  current code (\w+, lowercase)     mean tokens/reference =  54.3   removed vs current =  0.0%
+  B  N1-a SQuAD literal                mean tokens/reference =  48.6   removed vs current = 10.3%
+  B2 N1-b punctuation->space           mean tokens/reference =  52.2   removed vs current =  3.8%
+  C  N1-a + NLTK list (=N2)            mean tokens/reference =  37.9   removed vs current = 30.1%
+  share of tokens that are a/an/the alone (current tokens): 3.8%
+  hyphens/en-dashes/em-dashes per reference (raw text), mean: 3.2
+  -> the 10% drop of rule B is NOT articles: most of it is hyphenated words and ids being merged by the punctuation deletion.
+
+Worked example, reference 0 (first 160 chars):
+   2609.20804v1 fixes the execution loop and varies three components — planning, action space, and context management — across four models to enable component-leve
+  A  current code (\w+, lowercase)      58 tokens: ['2609', '20804v1', 'fixes', 'the', 'execution', 'loop', 'and', 'varies', 'three'] ...
+  B  N1-a SQuAD literal                 53 tokens: ['260920804v1', 'fixes', 'execution', 'loop', 'and', 'varies', 'three', 'components', '—'] ...
+  B2 N1-b punctuation->space            57 tokens: ['2609', '20804v1', 'fixes', 'execution', 'loop', 'and', 'varies', 'three', 'components'] ...
+  C  N1-a + NLTK list (=N2)             45 tokens: ['260920804v1', 'fixes', 'execution', 'loop', 'varies', 'three', 'components', '—', 'planning'] ...
+
+Floor of Recall for an answer with NO content = only the reference's own function words
+(probe = reference tokens that are in the NLTK list or a/an/the, in order):
+  ref0: probe = 'the and and to are as by with and'  Recall N1-a = 0.151 (8/53 tokens)   Recall with NLTK list = 0.000
+  ref1: probe = 'are as the of the was not at all a with a in most both which'  Recall N1-a = 0.286 (14/49 tokens)   Recall with NLTK list = 0.000
+  ref2: probe = 'from its is for and from into because are and than'  Recall N1-a = 0.262 (11/42 tokens)   Recall with NLTK list = 0.000
+  mean over the 15 references: Recall N1-a = 0.221 (min 0.11, max 0.29); with NLTK list = 0.000
+  same probe under the ADOPTED rule (N1-b, ids removed): mean 0.222 (min 0.11, max 0.29)
+
+Negation under each rule:
+  N1-a : ['method', 'does', 'not', 'improve', 'accuracy'] vs ['method', 'improves', 'accuracy']
+  +NLTK: ['method', 'improve', 'accuracy'] vs ['method', 'improves', 'accuracy']
+
+==============================================================================
+TEST 1 - N1-a (SQuAD literal) vs N1-b (punctuation -> space)
+==============================================================================
+Method: answer = the reference reformatted in ONE way; correct score = 1.0 (same content).
+Ids are removed everywhere on both sides (option O1) so only punctuation is being tested.
+
+case                                      Recall a  Recall b    F1 a    F1 b
+T0 identical copy                            1.000     1.000   1.000   1.000
+T1 hyphen -> space (component level)         0.946     1.000   0.922   1.000
+T2 em dash -> comma                          0.989     1.000   0.994   1.000
+T3 UPPERCASE + loose punctuation             1.000     1.000   1.000   1.000
+T4 T1 + T2 together                          0.935     1.000   0.916   1.000
+
+worst single reference in T4: N1-a 0.833   N1-b 1.000
+
+T5 - does the ORDER of answers change? Method: for each reference and each keep fraction
+f in {0.2,0.4,0.6,0.8,1.0}, draw 40 answers by keeping each whitespace-separated word with
+probability f (seed 0): 15 refs x 5 x 40 = 3000 answers. 'respell' = also turn hyphens
+into spaces and dashes into commas. Score = Recall. Spearman between Recall and f.
+
+  respell = False
+    keep fraction : 0.2  0.4  0.6  0.8  1.0
+    mean Recall a : 0.20  0.41  0.60  0.80  1.00
+    mean Recall b : 0.20  0.41  0.60  0.80  1.00
+    Spearman(Recall, keep fraction): N1-a 0.978 | N1-b 0.978
+
+  respell = True
+    keep fraction : 0.2  0.4  0.6  0.8  1.0
+    mean Recall a : 0.19  0.37  0.57  0.75  0.94
+    mean Recall b : 0.20  0.40  0.60  0.80  1.00
+    Spearman(Recall, keep fraction): N1-a 0.971 | N1-b 0.977
+
+==============================================================================
+TEST 2 - what to do with arXiv ids (rule N1-b underneath)
+==============================================================================
+references with >=1 id: 15 of 15; with >=1 id OUTSIDE [ ]: 12 of 15; mean bare ids per reference: 1.5
+Options: O1 = remove ids anywhere, both sides | O2 = remove only [id], both sides | O3 = keep ids
+Method: answer = the reference with ONE change in how ids are written; Recall | F1 averaged over the 15 references.
+
+case                                                                O1            O2            O3   (Recall | F1)
+U1 same content, bare id written as [id] (model style)     1.00 | 1.00   0.94 | 0.97   1.00 | 1.00
+U2 same content, citation without version [2609.20804]     1.00 | 1.00   0.94 | 0.97   0.94 | 0.94
+U3 same content, cites the WRONG paper                     1.00 | 1.00   0.94 | 0.97   0.94 | 0.94
+U4 same content, no citation at all                        1.00 | 1.00   0.94 | 0.97   0.87 | 0.93
+U5 ONLY the ids, no content                                0.00 | 0.00   0.00 | 0.00   0.13 | 0.22
+
+O2 ceiling for a perfect model-style answer (U1): mean 0.945, min 0.909, max 1.000
+
+Same table with N1-a underneath (Recall only):
+U1 same content, bare id written as [id] (model style)            1.00          0.97          1.00
+U2 same content, citation without version [2609.20804]            1.00          0.97          0.93
+U3 same content, cites the WRONG paper                            1.00          0.97          0.93
+U4 same content, no citation at all                               1.00          0.97          0.93
+U5 ONLY the ids, no content                                       0.00          0.00          0.07
