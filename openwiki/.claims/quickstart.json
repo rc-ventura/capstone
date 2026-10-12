@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:4c871e184f223f4ea3ade427068cfcb4a7e958e34b081ec575bd99c651be7a80",
+  "pageVersion": "sha256:75798e7ac6336256679bc4438fb87f976c189cbe16428c4b896b1cdd8d356089",
   "claims": [
     {
       "id": "claim_cb22880687fd46b9815aa0260c63dc6f",
-      "statement": "Setup requires Python 3.12-3.13, uv, and OpenAI and LangSmith API keys copied from example.env into .env; uv sync installs dependencies and uv run pytest runs an offline suite where the keys only need to be set because config reads them at import.",
+      "statement": "Setup requires Python 3.12-3.13, uv, and OpenAI and LangSmith API keys copied from example.env into .env; uv sync installs dependencies (including gradio>=5 for the UI) and uv run pytest runs an offline suite where the keys only need to be set because config reads them at import.",
       "evidence": [
         {
           "resource": "repo://README.md#L74-L93",
@@ -15,8 +15,8 @@
           "version": "repo-file-v1:sha256:c35e84664dfeda5119b5fc61dc4f12a954a1c8c196caa72d51e2a5b90d9afe23"
         },
         {
-          "resource": "repo://pyproject.toml#L1-L19",
-          "version": "repo-lines-v1:sha256:7156c72378ccaa0c59d744fb7c32ee47636afc88db3fbe3221d0f00dbfe3f237:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwMmE4MWMzODM2ZWRlZjJkMGJhMTFkMjM1M2ZiNmRhYmM3NzcxNTBhN2NhODNlYTBkOWU5YTcwMzEzZmVhYmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5NDE2ZTA5Zjc4YmEzMTZjMDMyNTY4MjEzYjg1NWVlNzU2ZTQxNTY1ZDkxOGYwOTUxOWM4MWZkNjIwZjQwNjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI4NGI4NmI2MjEyOGI2YmJkNGE1MmQ0ZDM4NjYzYTZmNzk3NWMwMDNmN2FmZTU3NzEwMDQ3NTlmNTllYWJmZDQifQ"
+          "resource": "repo://pyproject.toml#L1-L26",
+          "version": "repo-lines-v1:sha256:9ec3af06721577ab7141e8065e4111443905675ac8295d1df67f80972a9dd3f2:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwMmE4MWMzODM2ZWRlZjJkMGJhMTFkMjM1M2ZiNmRhYmM3NzcxNTBhN2NhODNlYTBkOWU5YTcwMzEzZmVhYmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5NDE2ZTA5Zjc4YmEzMTZjMDMyNTY4MjEzYjg1NWVlNzU2ZTQxNTY1ZDkxOGYwOTUxOWM4MWZkNjIwZjQwNjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQxZjc5ODFmNmFjNDQ2MTBhNWUzNWQxYzIwM2JhMTc1NDgzOWMxYjgxZDczMGQyMDdkODM5NzA0MTI0ZDgxNTUifQ"
         }
       ]
     },
@@ -47,10 +47,24 @@
           "version": "repo-lines-v1:sha256:86cec1aeebf8d3cfd45e280e02f495db2fa0ebc14fecb4741ddced2268a5fb6a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyNDYyMzliYTdjYzhmYzUwNjU5ZjlmMDFlODRkNTE4NTEzOTgwM2EzNmJkZTRmNTA1ZGZkN2JmMTk4YWIzNjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3YzA2YzU2MWQ1YzMyNzM0MzY4NTI2OGE0NmIzMzkxZjM5OThlZWU4OTBkMmJlNTFmMGQyMWNjNGE1M2FlNmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlZmE1MDNmOWMwMWIwNGFjNmFmZWZhZDRlNzYwMDFkNDllYjFjYzA3MGZlZjUwOWRhN2U2YmU2MWVmYzZlODEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBmOGQ3ZTZmYzkwYTBjYjQ4NmMxYmQyZTcyZmVhOTY4NzgwNDI1NzYzMjlmYzlkNDM0YThiMTM1ZWQwYTQ5MjAifQ"
         }
       ]
+    },
+    {
+      "id": "claim_cd84bce4eb3f4a85a0ffea94466769ca",
+      "statement": "A scheduled GitHub Actions workflow (daily cron plus workflow_dispatch) refreshes the openwiki/ directory by running openwiki code --update with a full-history checkout and opens an openwiki/update pull request with the regenerated pages; AGENTS.md instructs contributors not to hand-edit generated pages.",
+      "evidence": [
+        {
+          "resource": "repo://.github/workflows/openwiki-update.yml",
+          "version": "repo-file-v1:sha256:4b6f630b8f2c143a41cfaac33515fd0047fd2453da9d8e84784057a5c118319b"
+        },
+        {
+          "resource": "repo://AGENTS.md#L14-L14",
+          "version": "repo-lines-v1:sha256:ab53953bfb72c1262bbae2eaca72cabf1af49927a0bba1157b2d5bdb285c4bd2:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWI1Mzk1M2JmYjcyYzEyNjJiYmFlMmVhY2E3MmNhYmYxYWY0OTkyN2EwYmJhMTE1N2IyZDViZGIyODVjNGJkMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYWI1Mzk1M2JmYjcyYzEyNjJiYmFlMmVhY2E3MmNhYmYxYWY0OTkyN2EwYmJhMTE1N2IyZDViZGIyODVjNGJkMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjZjYjMwYThmOTQ4MTMxNDkwODJmM2RjYjkxOWRiMTJmMjIwYjMxYTI5NWZiZWU5NTM1MWNmOGYxNGJhZGEyZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjIsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzA4OWRmOTNmOGJhNTdhNGRkYmZkOGYwMTM5NjJjMzk3OGNlNGRiNjgxOTljNGRhNjY2NjQ5YjA5OTZjZWRhOSJ9"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.6.0",
-    "at": "2026-10-11T10:08:11.054Z"
+    "at": "2026-10-12T14:31:19.877Z"
   }
 }

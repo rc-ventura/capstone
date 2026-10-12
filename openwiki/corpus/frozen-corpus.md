@@ -3,9 +3,6 @@ type: data provenance system
 title: Frozen Corpus & Manifest
 description: How the 250-paper arXiv cs.AI corpus is frozen at a snapshot date and reproduced exactly — the versioned corpus_manifest.json with per-abstract sha1 digests, verified rebuild-by-id, cache and date-scan fallbacks, and the failure behavior of each tier.
 tags: [corpus, arxiv, manifest, reproducibility, snapshot, provenance]
-verified:
-  - by: openwiki/0.6.0
-    at: 2026-10-11T10:08:11.054Z
 sources:
   - id: openwiki-source-bbbb757758dc109f3a4477fc
     resource: repo://config.py
@@ -18,6 +15,9 @@ sources:
   - id: openwiki-source-53688c65a9b4548093faff14
     resource: repo://utils.py
 generated: { by: "claude-code", at: "2026-10-11T10:08:11.054Z" }
+verified:
+  - by: openwiki/0.6.0
+    at: 2026-10-12T14:34:48.400Z
 ---
 
 # Frozen Corpus & Manifest

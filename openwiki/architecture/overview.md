@@ -5,7 +5,7 @@ description: What the arXiv Research Copilot is — a cited RAG Q&A assistant ov
 tags: [overview, architecture, rag, evaluation, failure-taxonomy, langsmith]
 verified:
   - by: openwiki/0.6.0
-    at: 2026-10-11T10:08:11.054Z
+    at: 2026-10-12T14:31:19.877Z
 sources:
   - id: openwiki-source-17dded95897e01ee430228e3
     resource: repo://app.py
@@ -17,11 +17,15 @@ sources:
     resource: repo://docs/decisions.md
   - id: openwiki-source-0efdc1e16f1045bb19dad3ef
     resource: repo://docs/plan.md
+  - id: openwiki-source-a3f0492a6d8aa87271162233
+    resource: repo://docs/ui/ui-plan.md
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
+  - id: openwiki-source-4b14f496b381980b39391eea
+    resource: repo://ui.py
   - id: openwiki-source-53688c65a9b4548093faff14
     resource: repo://utils.py
-generated: { by: "claude-code", at: "2026-10-11T10:08:11.054Z" }
+generated: { by: "claude-code", at: "2026-10-12T14:31:19.877Z" }
 ---
 
 # System Overview
@@ -34,13 +38,14 @@ The organizing taxonomy is **Barnett et al. (2024), "Seven Failure Points When E
 
 | Module | Responsibility |
 |---|---|
-| `app.py` | The traced RAG pipeline: `rewrite_query` → `retrieve_documents` → `rerank` → `generate_response`, all under `arxiv_copilot`. |
+| `app.py` | The traced RAG pipeline: `rewrite_query` → `retrieve_documents` → `rerank` → `generate_response`, orchestrated by the untraced `_run_pipeline` behind two entrypoints — `arxiv_copilot` (answer string) and `arxiv_copilot_with_sources` (answer + ranked docs, same trace name). |
+| `ui.py` | Minimalist Gradio chat UI (local demo/debug only): calls `arxiv_copilot_with_sources`, shows a sources accordion, one `thread_id` per session. |
 | `config.py` | Environment variables, corpus/golden-set constants, and `RunConfig` — the frozen dataclass modeling one experiment arm. |
 | `utils.py` | Corpus acquisition and the index: arXiv fetch, frozen-corpus manifest verification, chunking, parquet vector-store caches, retriever. |
 | `evaluators.py` | All evaluator code: retrieval metrics, `format_validator`, abstention detection/reporting, summary evaluators. Intentionally free of `config`/`utils` imports so tests run without API keys. |
 | `build_golden_dataset.py` | Builds and idempotently syncs the golden dataset's slices into LangSmith. |
 | `main.py` | End-to-end entry point: build the index, run one traced question, sync the golden dataset. |
-| `tests/` | Offline suite (no network): evaluator semantics, an `ir-measures` oracle cross-check, manifest verification, chunking invariants. |
+| `tests/` | Offline suite (no network): evaluator semantics, an `ir-measures` oracle cross-check, manifest verification, chunking invariants, UI helpers. |
 | `docs/` | The governance layer: master plan, ADRs, decision log, checkpoint roadmaps, learning lessons, research notes. |
 
 ## End-to-end flow
@@ -52,8 +57,8 @@ question ──► rewrite_query ──► retrieve_documents ──► rerank �
 
 1. **Corpus** — `utils.load_frozen_corpus()` rebuilds the same 250 papers from the git-versioned `resources/corpus_manifest.json` (arXiv ids + per-abstract sha1 digests), pinned at snapshot date 2026-09-17. Verified rebuilds fail loudly if an abstract was revised upstream.
 2. **Index** — `utils.get_vector_store(run_config)` chunks per the arm's `chunk_strategy` (baseline: one record per whole abstract), embeds with `text-embedding-3-small`, and caches to a per-config parquet file under `resources/`.
-3. **Pipeline** — `app.arxiv_copilot` runs the four stages, each producing a LangSmith run; the two disabled stages are reserved extension seams (rerank CKPT-4, rewrite CKPT-5) that raise `NotImplementedError` if toggled.
-4. **Evaluation** — the golden dataset `arxiv-copilot-golden` (~100 core examples across six slices) lives in LangSmith; `evaluators.py` scores retrieval (Surface 1: hit/recall/MRR/precision at paper level) and generation (Surface 2: format, abstention, token-F1, with LLM judges planned).
+3. **Pipeline** — `_run_pipeline` runs the four stages behind `arxiv_copilot` / `arxiv_copilot_with_sources`, each producing a LangSmith run; the two disabled stages are reserved extension seams (rerank CKPT-4, rewrite CKPT-5) that raise `NotImplementedError` if toggled.
+4. **Evaluation** — the golden dataset `arxiv-copilot-golden` (~100 core examples across six slices) lives in LangSmith; `evaluators.py` scores retrieval (Surface 1: hit/recall/MRR/precision at paper level) and generation (Surface 2: format, abstention, lexical correctness signals — token-F1 + word Recall, with LLM judges planned).
 5. **Governance** — each experiment (EXP-0 → EXP-7) changes one config axis, runs against the golden set, and ends in a PROMOTE/REJECT gate logged in `docs/decisions.md`; all gates also require no regression on non-target slices.
 
 ## Two measured failure surfaces
@@ -69,4 +74,4 @@ Following the plan (§3), retrieval and generation are instrumented and measured
 
 ## Status
 
-Development proceeds checkpoint by checkpoint (`docs/plan.md` §5), each with a written plan before code. Done: foundation, golden set (100 human-reviewed examples), retrieval metrics + format/summary evaluators, and metrics hardening P1–P8. Next: LLM judges, the experiment runner (CKPT-0.7), and the EXP-0 baseline run. A Gradio UI is planned but not implemented.
+Development proceeds checkpoint by checkpoint (`docs/plan.md` §5), each with a written plan before code. Done: foundation, golden set (100 human-reviewed examples), retrieval metrics + format/summary evaluators, and metrics hardening P1–P8 plus P9a (the lexical correctness signals — `token_f1_summary` + `word_recall`, implemented 2026-10-12). Next: LLM judges, the experiment runner (CKPT-0.7), and the EXP-0 baseline run. A minimalist Gradio UI (`ui.py`) exists as a local demo/debug tool; the CKPT-8 FastAPI server remains planned.

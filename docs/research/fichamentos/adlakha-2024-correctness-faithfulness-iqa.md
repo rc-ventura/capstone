@@ -44,7 +44,7 @@
   2. **Old models, 7B–11B and GPT-3.5.** Nothing is said about GPT-4-class generators such as `gpt-4o-mini`.
   3. **Pooled correlation.** The 1,200 responses are pooled across models and tasks; no per-model or per-task correlation, no confidence intervals, and the ρ values are ordinal association with a binary label, not agreement (no κ for the metrics).
   4. **Binarization.** The 39% / 3.8% error rates depend on the 0.5 threshold on F1.
-  5. **Tokenization and normalization of Recall/K-Precision are not specified** in the text (stopwords, articles, punctuation), and these choices matter on longer references.
+  5. **Tokenization and normalization of Recall/K-Precision are not specified** in the text (stopwords, articles, punctuation), and these choices matter on longer references. **Addendum 2026-10-11 (from the released code, not from the paper):** the authors' repository (`McGill-NLP/instruct-qa`, branch `main`, `instruct_qa/evaluation/__init__.py`, read 2026-10-11) tokenizes with the SQuAD-style normalization for F1 and Recall alike: lowercase, strip all punctuation, remove the articles `a/an/the`, collapse whitespace. **No stopword list.** Recall = `|Counter(ref) ∩ Counter(pred)| / |ref|` against each reference, max over references. I did not run the code or check that the published numbers were produced by this exact commit.
   6. **Retrieval is controlled out of the human study** (only gold-retrieved cases), so the numbers describe generation quality, not end-to-end quality.
 
 ## 6. Reflections anchored in OUR project

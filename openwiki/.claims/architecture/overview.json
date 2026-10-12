@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:3830712e4702e3b6e7ec2cc64d8bbe1679540ebe5e99c4d201b95cf3ca01d8af",
+  "pageVersion": "sha256:998c3788a6ef4202b1a3fa3712ca65398447a29027d60756934fc668addae1d8",
   "claims": [
     {
       "id": "claim_779986194bf84a1c805492c586c4e3f1",
@@ -18,11 +18,11 @@
     },
     {
       "id": "claim_334574aeadc640b5a5c5114557e08fed",
-      "statement": "The runtime pipeline is a four-stage chain (rewrite_query, retrieve_documents, rerank, generate_response) orchestrated by arxiv_copilot; rewrite and rerank are disabled pass-throughs that raise NotImplementedError when their RunConfig toggles are enabled, reserving them as CKPT-5 and CKPT-4 extension seams.",
+      "statement": "The runtime pipeline is a four-stage chain (rewrite_query, retrieve_documents, rerank, generate_response) orchestrated by the untraced _run_pipeline and exposed through two traced root entrypoints — arxiv_copilot returns the answer string while arxiv_copilot_with_sources returns (answer, documents) under the same arxiv_copilot trace name; rewrite and rerank are disabled pass-throughs that raise NotImplementedError when their RunConfig toggles are enabled, reserving them as CKPT-5 and CKPT-4 extension seams.",
       "evidence": [
         {
-          "resource": "repo://app.py#L52-L112",
-          "version": "repo-lines-v1:sha256:acca15aa92658689516e5a0a30c5a2099674865ce02a67fa87c8a312b9a26007:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwYWFhMmZhYWE5YmVjNzVlNTM4NjhkMmY1ZjZkMTQ1MzBlNzI5NTNjZGRhNzJhNTM0ZDI1NTEyNzUwODExYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5OTI1YjEyMDNhYjhlZmYzMTc0MzVkNzJmODMwM2EzYzExYjIwODRkNzgyOTdkNjQzNjVkMmVjMDY5M2M1YmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmYmQwMDkzMTRiYzI3MDg0MTY3MzRhMDJhZTVmZjM5YTFlNDhhMDUwYmU5MWY0M2IyZmFhOTIwMDJjNjJiZmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://app.py#L52-L132",
+          "version": "repo-lines-v1:sha256:9772dc53441d70388f427d92b7ca4d788bb0a3624aa2fa1f0d9e2d2fb4fee229:eyJzZWxlY3RlZExpbmVDb3VudCI6ODEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwYWFhMmZhYWE5YmVjNzVlNTM4NjhkMmY1ZjZkMTQ1MzBlNzI5NTNjZGRhNzJhNTM0ZDI1NTEyNzUwODExYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2MWJhODk0NWQ2NDgyNGY1ODg4NzNiZTI2YjdkNmExNDk0NzkzYTgyNWUzM2NmNzI0OGFmZjkxMjc1ZTNmOTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmYmQwMDkzMTRiYzI3MDg0MTY3MzRhMDJhZTVmZjM5YTFlNDhhMDUwYmU5MWY0M2IyZmFhOTIwMDJjNjJiZmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     },
@@ -59,8 +59,12 @@
       "statement": "Experiments follow a checkpoint contract ending in a PROMOTE/REJECT decision gate that also requires no regression on non-target slices; each gate outcome is logged in docs/decisions.md, and core-set gates require at least a 15% delta to be credible.",
       "evidence": [
         {
-          "resource": "repo://docs/decisions.md#L1-L10",
-          "version": "repo-lines-v1:sha256:29ac8e68e1c447e311a3f9d99ae129c24e245a6c601e564eab3bbc2a21c6489e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNmZDM1MGJkMTcyOTRkM2ZlYTI3YmJjMzYxZjQxOTczNzc2OGRkYmY2NWVkYjgzOWE1MzQ5YzRhMzkzOGZmZjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlZDU2ZWM2MGIyY2ZiZDIyMjE0NDAwZWNiZDY4ODQxY2RhN2I2YjIzZWNmZjM4ODI2MDU4YWUzNTM5ZTNjMjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImIzMGJkMzQyMzczODBmNWVmNzIyNzRmNzFlYzM5NzBiNzE2MDRiMDA5MjlkZTU3MDZhMjQ1MmZjYmZkNWQxNmQifQ"
+          "resource": "repo://docs/decisions.md#L1-L3",
+          "version": "repo-lines-v1:sha256:2065687760872c11183715d9ab5282862644cbeaa99b00bd03730ceb05a98f02:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2ZkMzUwYmQxNzI5NGQzZmVhMjdiYmMzNjFmNDE5NzM3NzY4ZGRiZjY1ZWRiODM5YTUzNDljNGEzOTM4ZmZmMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2FmOGY3MDAzOTdlY2RhMzZjZWQ2MjdkNWI1NTNkZTMyZWJkYTZhZTgyOWM1ZWMyN2MwM2NmOGY5NDIxNjU2MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGI0NTIyZDlhZGM0NGY3NTgwZjNjMDk4MjBkNmE1NGJhMzA5YmNlZDMzOWU2YTBmZWY3MmQ3NzkxODA0NGQ5YiJ9"
+        },
+        {
+          "resource": "repo://docs/decisions.md#L40-L49",
+          "version": "repo-lines-v1:sha256:3fd0a4296556abde328df8304e711850c4bb0ea7563ea7eb51480ad52dc85101:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3MjBiZGQ1YzI5NmUxZWY2ZTljODEyYWI2YmEwOGI0NTlmY2ZmZWRhNmFmMDc5NGYxNzY1Y2Q4MzY0NWJlNTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYTQxY2RlYjQ1NTI3ZDYxM2E5MzQ4NjI2NDk1Y2Q3MjIxYzQwNmJkYWE2MmJhYWY5YWQ3ZTE1NzdiN2MzYjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU5NzM3MGM3MjM2YmE2MTY5ZTQ2YWJlNDg5MDkzNDJjMjQ4ZGY2YzlkZTRmMTE0OGExYzVkNTVjYTkyYzBiNjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY4ZmY3Yzc0NjcyMzFjNjdhYmQ5YjE3NDMzODUzMzE0ZGQ1NTZlNDVlMTlkZTk0MGY0MzA0ZGQ0MDNiZmI1MjkifQ"
         },
         {
           "resource": "repo://docs/plan.md#L174-L184",
@@ -81,10 +85,28 @@
           "version": "repo-lines-v1:sha256:90248ab2c25c5bdbcc2af434663127f624336e5a2779af92f3ae3df52300dd3f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1MTcwMGE4ZjQzMTc2YTQzZDlkZGNkZjBlZGU4M2Q4MGMzY2FhZjNjYTQ5MDM2NzgxODlkMTMwZDE5NTg2ZTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAwMWYyZWMxNzU5M2MxMDU0ZWI0NjM2N2Q4NDUzZWYyNGExNzNjZTk2YjcxMTdkOTFmOWE2OGQ0NGZlZjhiMDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdjZmI5MWM0Mjg3NDVmMDRkYjBiZDQxNzVjOTRiMjA3YjdmNGI5OGQxMzdkYWFmM2Y1M2QzODQwYjBkOWU3OGIifQ"
         }
       ]
+    },
+    {
+      "id": "claim_8254d19bdec8446fb9d34bac8e91f58e",
+      "statement": "ui.py is a local demo/debug Gradio chat against the fixed config.BASELINE pipeline: respond() calls app.arxiv_copilot_with_sources, renders the answer plus a sources accordion (deduped by arxiv_id in rank order), and attaches a per-session uuid thread_id to the run metadata for LangSmith thread grouping.",
+      "evidence": [
+        {
+          "resource": "repo://docs/ui/ui-plan.md#L1-L13",
+          "version": "repo-lines-v1:sha256:5d2737a99730b5de290ef49fb20015cef06302ae407418008388742a49dca334:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFiZDRmZDVkNTFkODI2NDA2YjQ3OWQ3OGQ4OWZmOTkyMDAwMGUzN2M3YWQzMDk5MjJhZTczZTgxNWJkZDdkOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjExNDFiMjZjYzQzMWUxZWIxYjg3MWQ5YzM0NjE4OTJhOTg1MmVkNDk0ZTFmNGZlNDdkZTNjMDNlNGQ4Y2EzMzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBmZGU0ZDAxZjViMWY4ZWM0NzgyZTc1NDdmNWYwNTEzYTJkNTJmMDZmNDcyYjRmZmRkZjY1MGJkOGFiMGQ3MDkifQ"
+        },
+        {
+          "resource": "repo://ui.py#L1-L6",
+          "version": "repo-lines-v1:sha256:0eaa96248d861709dfae2320a5c311408da9b7ec27950112b9294bd2d6535d3f:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2RiOTVhZjBiYTIxMWVmMzBjNmNmZGVlZGQyOWQ0YzNhOWJhNDFjNjQ2OWNhZjgzOGFkY2NhNGE0MTY3YmU0OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTMwM2VjZGQ0YTRkMTBmMTljNzNmZDQyZmQxMjQzN2ZkMzM1NGE4MjY4MTYwNWRhNTI1NWE5N2EzOTA2OGRiYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTViNmU4NzA2YjQzMDQ3ZjJhNmRiNjdmMTMyNjM4NTk1NjA0ZTY3ZjM2OTY2ODc2Y2UwMTU4ZjAwNTNlNmJkMSJ9"
+        },
+        {
+          "resource": "repo://ui.py#L66-L82",
+          "version": "repo-lines-v1:sha256:f287226e3f6a5c6e1f08f58ea08b0b22a7a3c982bcb60d89756935ee186ad27e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRlZjdjMjQxOTdhYjVkMmRjNjk3NWJiMDg2NjA0MTBlZmQxMWMyZjRmMzI1Njg5MTkxZDBkMDUyZjQ2YjkyMjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkZDI0NDU4MmI2ZmIwM2QyM2I4NDE1YWJlY2QzNDZiMGM5ZjQ2NmI2Zjc1MmIwNjgxODljZTdlOWEyZGMzNTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE5OTI2ZWJkMGY3YmExNDY3MmFiMDNmZTQwMDMxMjg3MGY2ZjUyMWFjZWJkNGJkYWVmMWU2Yjc3MjZjZWFkNzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNlYjAzMzkxNjdhMWIxNzEwYmEzMDI3ZTQxMDQ5NDY3ZWJjNTZiMWMzODZiYzZmMmM5ZDEzYmYzZTJkNmI1YTAifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.6.0",
-    "at": "2026-10-11T10:08:11.054Z"
+    "at": "2026-10-12T14:31:19.877Z"
   }
 }

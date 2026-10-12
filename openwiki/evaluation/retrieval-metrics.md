@@ -3,19 +3,21 @@ type: evaluator subsystem
 title: Retrieval Metrics
 description: The retrieval metrics in evaluators.py — paper-level vs chunk-level comparison, hit/recall/MRR/precision semantics, the gold-completeness gate on precision, the per-example reporting policy, and the anti-pooling-bias design verified against the ir-measures oracle.
 tags: [retrieval, metrics, evaluation, recall, mrr, precision, ir-measures]
-verified:
-  - by: openwiki/0.6.0
-    at: 2026-10-11T10:08:11.054Z
 sources:
   - id: openwiki-source-9a2dbdf1e918930fa0a85df7
     resource: repo://docs/adrs/0006-retrieval-gold-granularity-and-metrics.md
+  - id: openwiki-source-8f04a5996c3b2c8616f1e345
+    resource: repo://docs/adrs/0009-incomplete-gold-and-pool-bias-mini-pooling.md
   - id: openwiki-source-a2b903fa68b9b04e7d5df273
     resource: repo://evaluators.py
   - id: openwiki-source-243e2ba3461465d15f5c241d
     resource: repo://tests/test_evaluators_oracle.py
   - id: openwiki-source-864eac58c65e882a533713e7
     resource: repo://tests/test_evaluators.py
-generated: { by: "claude-code", at: "2026-10-11T10:08:11.054Z" }
+generated: { by: "claude-code", at: "2026-10-12T14:24:36.766Z" }
+verified:
+  - by: openwiki/0.6.0
+    at: 2026-10-12T14:24:36.766Z
 ---
 
 # Retrieval Metrics
@@ -53,6 +55,12 @@ Everything else → precision returns `None`. The motivating case: a 1-paper gol
 ## Which examples are scored
 
 `is_retrieval_evaluable` skips examples with no judged retrieval gold: zero-gold slices by design (`unanswerable`, `stale`, `format`) and open-topic `multi-doc` still `pending-adjudication`.
+
+### Completing the gold — the mini-pooling pilot (ADR-009)
+
+`precision_at_k`'s gating exists because **unjudged is never irrelevant**: papers outside the gold may answer the question, and treating them as errors punishes a better retriever (the classic incomplete-judgments problem). The fix is a **pilot mini-pooling at CKPT-0.8** — ~80 human judgments, not all ~225: the 5 open-topic questions (all top-5 candidates), 10 stratified random single-gold examples, plus up to 4 where the gold wasn't rank 1. Papers judged relevant go into `gold_arxiv_ids` and the example becomes `adjudicated` — which is exactly what flips `is_gold_complete` on and starts reporting precision.
+
+A pre-registered stop rule decides what happens next: judged-relevant share ≤10% → keep the single gold; ≥25% → judge the remaining 40 examples; in between → review and decide. `Hole@k` (share of a retriever's top-k nobody judged) is to be built alongside — required before the first retriever comparison at CKPT-1 — but it needs judged-*irrelevant* storage that doesn't exist yet. Pool bias is bounded, not removed: candidates come only from the baseline retriever until a second retriever type (e.g. BM25, open item D-3) joins the pool.
 
 `primary_retrieval_metrics(reference_outputs)` is the **reporting policy** (D-2) — which metrics an example should report:
 

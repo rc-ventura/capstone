@@ -102,11 +102,13 @@ What it is: deterministic validation by type — markdown table (right columns),
 Measures: adherence to the format instruction (no judge — pure code).
 Why (FP5): Features B/D promise structured outputs (comparison tables).
 
-**`f1_summary_evaluator`** (code, summary, ref-based) — *substantive vs. hallucinated aggregate.*
-What it is: a summary evaluator (P5 of the course): computes an aggregate F1 between the set of
-substantive answers vs. hallucinated answers/abstentions over the gold labels collected from the
-whole experiment.
-Measures: global balance between usefulness and safety in an experiment.
+**`token_f1_summary`** (code, summary, ref-based) — *lexical overlap with the gold answer.*
+(Renamed from `f1_summary_evaluator`; the original description below was replaced in P9a, 2026-10-12.)
+What it is: a summary evaluator (P5 of the course): mean token-F1 and mean word Recall between each
+answer and its gold answer, total and per slice, only for `answerable`/`persona`/`multi-doc`. Cleaning
+rule: ADR-010. Both numbers are diagnostics until the EXP-0 calibration (ADR-008).
+Measures: shared words with the reference — not safety (abstention has its own evaluator) and not, by
+itself, correctness.
 Why: a single reading of "substantive quality vs. risk" per experiment
 configuration — used in the EXP-0-baseline report.
 
@@ -145,7 +147,7 @@ EXP-0 mini-pooling.
 | Batch | Content | Test |
 |---|---|---|
 | **0.6.1** | 4 code-based retrieval evaluators | pure offline tests (no LLM calls at all): slices of synthetic examples with controlled golds, covering edge cases (empty gold, open-topic skip, dedup, partial top-k) |
-| **0.6.2** | `format_validator` + `f1_summary_evaluator` | offline tests; dogfood against the 10 golds of the `format` slice (must pass 10/10) |
+| **0.6.2** | `format_validator` + `token_f1_summary` (formerly `f1_summary_evaluator`) | offline tests; dogfood against the 10 golds of the `format` slice (must pass 10/10) |
 | **0.6.3** | 6 LLM judges | tests with canary pass/fail cases on both sides (e.g. faithful answer × hallucinated answer) — ~12 LLM calls in total |
 
 ## 6. Out of scope

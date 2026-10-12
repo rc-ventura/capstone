@@ -533,7 +533,8 @@ def abstention_summary(
     - abstention_f1: diagnostic only.
     Reported total and per metadata.slice (`__<slice>` suffix), each with raw
     counts + Wilson 95% CI in the comment. Uses abstained() from P7. The
-    abstention_accuracy key was removed from f1_summary_evaluator (this replaced it).
+    abstention_accuracy key was removed from f1_summary_evaluator (this replaced it;
+    that evaluator is now token_f1_summary, P9a).
 
     LangSmith contract (P4, extra="forbid"): supported args are runs/examples/
     inputs/outputs/reference_outputs; langsmith maps outputs <- run.outputs,
@@ -560,44 +561,102 @@ def abstention_summary(
 
 
 # =====================================================================
-# f1_summary_evaluator (P5 course pattern, adapted: token F1 vs gold)
+# Lexical correctness signals: token-F1 and word Recall (roadmap P9a; ADR-008, ADR-010)
 # =====================================================================
 
-def _tokens(text: str) -> list[str]:
-    return re.findall(r"\w+", text.lower())
+# Slices where "is the answer right?" is asked of the answer text (ADR-008 §1). Refusal
+# (`unanswerable`, `stale`) has its own evaluator (abstention_summary) and `format` has
+# format_validator.
+CORRECTNESS_SLICES = ("answerable", "persona", "multi-doc")
+
+# arXiv id with an optional version, anywhere in the text, any case ("V1" too). The prompt's
+# example is `[2609.12345]` (no version) while the context prints `[2609.20822v1]`, and the
+# gold answers also name papers by a bare id outside brackets (ADR-010 / D-15).
+ARXIV_ID = re.compile(r"\b\d{4}\.\d{4,5}(?:v\d+)?\b", re.IGNORECASE)
+_ARTICLES = re.compile(r"\b(a|an|the)\b")
 
 
-def _token_f1(pred: str, ref: str) -> float:
-    p, r = Counter(_tokens(pred)), Counter(_tokens(ref))
-    overlap = sum((p & r).values())
-    if not overlap:
+def normalize_text(text: str) -> list[str]:
+    """Words of `text` after the cleaning rule fixed in ADR-010 (D-14/D-15).
+
+    Order: remove arXiv ids -> lowercase -> every character that is not a letter, digit,
+    underscore or whitespace becomes a SPACE (so "component-level" -> "component level" and
+    the em dash vanishes; the literal SQuAD rule deletes punctuation and merges those words)
+    -> drop the articles a/an/the -> split on whitespace. No stopword list (it would also
+    delete "not"), no stemming.
+    """
+    text = ARXIV_ID.sub(" ", text or "").lower()
+    text = re.sub(r"[^\w\s]", " ", text)
+    return _ARTICLES.sub(" ", text).split()
+
+
+def _overlap(pred: str, ref: str) -> tuple[int, int, int]:
+    """(shared words, words in the answer, words in the reference); shared words are a
+    multiset intersection, so repeating a word in the answer never counts past its count
+    in the reference."""
+    p, r = Counter(normalize_text(pred)), Counter(normalize_text(ref))
+    return sum((p & r).values()), sum(p.values()), sum(r.values())
+
+
+def word_recall(pred: str, ref: str) -> float:
+    """Share of the reference's words that appear in the answer (0.0 if the reference is empty).
+
+    Does not penalize a longer answer (Adlakha 2024). Blind to negation, and an answer made
+    only of the reference's function words still scores ~0.22 on the `multi-doc` golds
+    (ADR-010 trade-off) — a level, not a quality. A diagnostic until calibrated (ADR-008).
+    """
+    shared, _, n_ref = _overlap(pred, ref)
+    return shared / n_ref if n_ref else 0.0
+
+
+def token_f1(pred: str, ref: str) -> float:
+    """Harmonic mean of the answer's word precision and word Recall (0.0 if either is empty)."""
+    shared, n_pred, n_ref = _overlap(pred, ref)
+    if not shared:
         return 0.0
-    precision = overlap / max(sum(p.values()), 1)
-    recall = overlap / max(sum(r.values()), 1)
+    precision, recall = shared / n_pred, shared / n_ref
     return 2 * precision * recall / (precision + recall)
 
 
-def f1_summary_evaluator(
-    outputs: list[dict[str, Any]], reference_outputs: list[dict[str, Any]]
+def _lexical_results(scores: list[tuple[float, float]], suffix: str = "") -> list[dict[str, Any]]:
+    n = len(scores)
+    note = f"mean over n={n} in-scope examples; diagnostic until calibrated (ADR-008)"
+    return [
+        {"key": f"token_f1_summary{suffix}", "score": sum(f for f, _ in scores) / n, "comment": note},
+        {"key": f"word_recall_summary{suffix}", "score": sum(r for _, r in scores) / n, "comment": note},
+    ]
+
+
+def token_f1_summary(
+    outputs: list[dict[str, Any]],
+    reference_outputs: list[dict[str, Any]],
+    examples: list[Any] | None = None,
 ) -> dict[str, Any]:
-    """Summary evaluator: aggregated token-F1 of produced answers vs gold answers
-    across the whole run (substantive-coverage proxy; P9 reassesses this metric).
+    """Summary evaluator: mean token-F1 and mean word Recall of the answers against the gold
+    answers, total and per slice (`__<slice>` suffix) — roadmap P9a, ADR-008 §2, ADR-010.
 
-    Abstention moved to abstention_summary (roadmap P8 / D-6, 2026-10-06): the old
-    `abstention_accuracy` key mixed under-refusal (answering when it should abstain)
-    with over-refusal (refusing when it should answer) into one number that a
-    system refusing everything could pass.
+    Renamed from `f1_summary_evaluator`. Scope: only `CORRECTNESS_SLICES` with a non-empty gold
+    answer; the slice comes from `examples[i].metadata` (an example without one is skipped, never
+    guessed). Both keys are DIAGNOSTICS, not "the quality of the answers", until the EXP-0
+    calibration shows which signal passes the pass marks (ADR-008 §5). Cleaning rule: ADR-010.
 
-    Signature follows langsmith's summary-evaluator contract (course
-    module_2/summary_evaluators.ipynb): parallel lists `outputs` (target outputs,
-    expected to carry "answer") and `reference_outputs` (golden-set outputs).
-    Returns {"results": [{"key", "score"}, ...]}: langsmith builds each entry as an
-    EvaluationResult (extra="forbid"), so any extra top-level key makes the whole
-    evaluator fail (the exception is logged and every metric is dropped).
+    LangSmith contract (P4): `examples` is a supported arg name; returns {"results": [...]}
+    (EvaluationResult is extra="forbid"). No in-scope example -> {"results": []}.
     """
-    f1s = []
-    for run_out, ref in zip(outputs, reference_outputs):
-        gold = ref.get("answer", "")
-        if gold:
-            f1s.append(_token_f1(run_out.get("answer", ""), gold))
-    return {"results": [{"key": "f1_summary", "score": sum(f1s) / len(f1s) if f1s else 0.0}]}
+    scores: list[tuple[float, float]] = []
+    by_slice: dict[str, list[tuple[float, float]]] = {}
+    for i, (run_out, ref) in enumerate(zip(outputs, reference_outputs)):
+        gold = ref.get("answer")
+        sl = _slice_of(examples[i]) if examples is not None and i < len(examples) else "unknown"
+        if not gold or sl not in CORRECTNESS_SLICES:
+            continue
+        answer = run_out.get("answer", "")
+        row = (token_f1(answer, gold), word_recall(answer, gold))
+        scores.append(row)
+        by_slice.setdefault(sl, []).append(row)
+    if not scores:
+        return {"results": []}
+    results = _lexical_results(scores)
+    for sl in sorted(by_slice):
+        results.extend(_lexical_results(by_slice[sl], suffix=f"__{sl}"))
+    return {"results": results}

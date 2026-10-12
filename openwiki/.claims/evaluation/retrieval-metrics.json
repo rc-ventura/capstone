@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:86e42daa33c9798f83b32832eccbc6215ec59bd1a071c1f0a60ca3e79657e1e7",
+  "pageVersion": "sha256:e813eeea56b4a36e0fad2e3e29416464a400c7a05e8f9705fdc31ca3176340aa",
   "claims": [
     {
       "id": "claim_b6008ca52a334680a8902cab381d77fa",
@@ -77,10 +77,20 @@
           "version": "repo-lines-v1:sha256:01fa2e4af7ec2de8faea4e83d6d84dfdd3cdf339d591ed61d0361faf58e6fe7c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjMmNiNmJlNDlmZTQwZDZkNGM0ZTk0OGQ3ZTg5YzY2MjI0ZTI2YWQ1NTgxZGIzNTAwN2Q3MjU1ZGFlYmY5MDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA0MjQ5ZTQyZjhkN2E5NTRhZmZjNDljN2RmOWQ1YmZiM2IzMWY3ZTY5MjYyNjczYWJjMjM4NzY1ZjAxNDdkYmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlZTc1NzA3OWZlNjc2YzNjZTQwNWM0MGIzM2ZiNDkzNjIwNzU3ZTg4YjJkYWRkYWI1MmM1ODAyMDNhZTQwNzEifQ"
         }
       ]
+    },
+    {
+      "id": "claim_403e070c770c4f74a6f0854b07e51ad6",
+      "statement": "Per ADR-009 the EXP-0/CKPT-0.8 adjudication is a pilot mini-pooling of ~80 judgments (the 5 open-topic questions, 10 stratified random single-gold examples, plus up to 4 cases where the gold was not rank 1); judged-relevant papers enter gold_arxiv_ids making the example adjudicated, a pre-registered stop rule (<=10% keep, >=25% judge all 40 remaining) decides whether to expand, and Hole@k plus judged-irrelevant storage remain to be built before CKPT-1.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adrs/0009-incomplete-gold-and-pool-bias-mini-pooling.md#L55-L75",
+          "version": "repo-lines-v1:sha256:7095aca4029e3d5a0d22ba86447d3569e4cdc27af3720d349eddae906d7f3a8f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhMTFiZDAxZGY1NjVkMjgyMTVjYmEwYWNmNjQwZWRmOGNiNzkwOWI3ZmYwOGJlZDc0NTEwNjU0MjMwMjhhZWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzODc0NzU1ZjBjODdiOGY0MzM5MmQ0MWNjNmM0OTc1NzY0Y2Q1NTM3YTc5ZGJiNGNlNTEyNDNmMDkxYzM4ZDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIwZjUwMTEyODM1MzllNTczMTlkZmVhNTJkOGIwMDAyZjYzODZiYWFkN2RmMmZlMjIzYmUwYjk4YjViMzQ4M2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM1YzFlYWNmNDQ0ZGQxYTU4MGFlZTk1Y2E5MzFmOTNmODc4MmUxYmQ2MmMxNDJlM2Q3NDdlNDI0MTRlMTQ3ZGUifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.6.0",
-    "at": "2026-10-11T10:08:11.054Z"
+    "at": "2026-10-12T14:24:36.766Z"
   }
 }

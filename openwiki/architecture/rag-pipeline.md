@@ -3,20 +3,27 @@ type: runtime pipeline
 title: RAG Pipeline
 description: The traced question-answering pipeline in app.py — rewrite, retrieve, rerank, generate — its prompt v1 contract for citations and abstention, multi-turn conversation support, and which stages are live versus reserved extension seams.
 tags: [pipeline, rag, retrieval, generation, prompt, langsmith]
-verified:
-  - by: openwiki/0.6.0
-    at: 2026-10-11T10:08:11.054Z
 sources:
   - id: openwiki-source-17dded95897e01ee430228e3
     resource: repo://app.py
+  - id: openwiki-source-a3f0492a6d8aa87271162233
+    resource: repo://docs/ui/ui-plan.md
   - id: openwiki-source-833e692518af9eeaf8564cc6
     resource: repo://main.py
-generated: { by: "claude-code", at: "2026-10-11T10:08:11.054Z" }
+  - id: openwiki-source-4b14f496b381980b39391eea
+    resource: repo://ui.py
+generated: { by: "claude-code", at: "2026-10-12T14:31:19.877Z" }
+verified:
+  - by: openwiki/0.6.0
+    at: 2026-10-12T14:31:19.877Z
 ---
 
 # RAG Pipeline
 
-`app.py` implements the product's runtime: a single question in, a cited answer out. The entrypoint is `arxiv_copilot(question, run_config=config.BASELINE, conversation=None)`, which runs four stages in order and returns the answer string.
+`app.py` implements the product's runtime: a single question in, a cited answer out. Orchestration lives in the untraced helper `_run_pipeline(question, run_config, conversation)`, which runs four stages in order and returns `(answer, ranked_documents)`. Two traced entrypoints share it:
+
+- `arxiv_copilot(...)` — discards the documents and returns the answer string; this is the contract `main.py` and evaluators use.
+- `arxiv_copilot_with_sources(...)` — returns the `(answer, documents)` tuple to the caller (added for the Gradio UI, `docs/ui/ui-plan.md`). It traces under the **same** run name `arxiv_copilot`, and `process_outputs` reduces the tuple to `{"output": answer}`, so both entrypoints produce indistinguishable traces in LangSmith.
 
 ## Stage chain
 
@@ -70,7 +77,7 @@ Because the baseline retrieval unit is the whole abstract (one index record per 
 
 ## Multi-turn support
 
-`arxiv_copilot` accepts an optional `conversation: list[dict[str, str]]` which is rendered into the prompt's `Conversation:` slot (an empty list when absent). Turn identity is a *metadata* concern, not a prompt one: `main.run_pipeline` attaches a fresh `thread_id` uuid to the run metadata, which is what groups a conversation's runs in LangSmith.
+Both entrypoints accept an optional `conversation: list[dict[str, str]]` which is rendered into the prompt's `Conversation:` slot (an empty list when absent). Turn identity is a *metadata* concern, not a prompt one: `main.run_pipeline` attaches a fresh `thread_id` uuid to the run metadata, and `ui.py` does the same per browser session — that is what groups a conversation's runs in LangSmith.
 
 ## Failure behavior
 

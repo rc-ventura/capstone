@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:2ce1f8f4be541d2f8b9e7657554eadbc30f44cb8c532afa5fc8b35649ea07922",
+  "pageVersion": "sha256:df76a30c1da09271ccf4af5aff18477120b4830b8aeab14fdd54789cdd5369c6",
   "claims": [
     {
       "id": "claim_ad242440626e4ccfb90cca4bd5124b18",
@@ -91,10 +91,24 @@
           "version": "repo-lines-v1:sha256:d5e9d3115090b937aebb9f164924669b7ac92d2fb6283c5bbc32760f4619465b:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4OWQ5ZWY2NDIzNzZkNDlhZDNkNjUyY2FjMWU2ZmI1Mjg5NDk0ZGMzY2JmMzQ1OTdhZDcwZTM3YzllM2Y2NjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImExNGE2YmQwNWE0MGQyMmFlYzQ2YzdjYWU0YmJmMjBmN2Y0NzEyZDdmOTFiNDZhYWVhNDcyMzA4NTliYWM0ZDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3MDY1NTJmZDc3NzhjZDk2ZjhlMGI2Mjk4M2RmYjNlMmRmODA2MGYwYTcwNzgwMmMzODU3ZWU5NGQ4ZDhmMWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZkNjYyY2RhOTc3YTQzMWI5NmQzNDA2YTMwYmI5N2ViYzE1NDU3MDM0ZWJiYjAyM2RhOTRmOThiZTdiMTJmNjAifQ"
         }
       ]
+    },
+    {
+      "id": "claim_8ce9c666391b4b5cbafe6587ea01f0f1",
+      "statement": "Per ADR-009 the pending-adjudication open-topic gold is resolved by a pilot mini-pooling at CKPT-0.8 (~80 judgments: the 5 open-topic questions plus 10 stratified random single-gold examples plus up to 4 low-rank cases); papers judged relevant go into gold_arxiv_ids and review.state becomes adjudicated, while judged-irrelevant storage is an open data-model question.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adrs/0009-incomplete-gold-and-pool-bias-mini-pooling.md#L55-L75",
+          "version": "repo-lines-v1:sha256:7095aca4029e3d5a0d22ba86447d3569e4cdc27af3720d349eddae906d7f3a8f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhMTFiZDAxZGY1NjVkMjgyMTVjYmEwYWNmNjQwZWRmOGNiNzkwOWI3ZmYwOGJlZDc0NTEwNjU0MjMwMjhhZWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzODc0NzU1ZjBjODdiOGY0MzM5MmQ0MWNjNmM0OTc1NzY0Y2Q1NTM3YTc5ZGJiNGNlNTEyNDNmMDkxYzM4ZDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIwZjUwMTEyODM1MzllNTczMTlkZmVhNTJkOGIwMDAyZjYzODZiYWFkN2RmMmZlMjIzYmUwYjk4YjViMzQ4M2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM1YzFlYWNmNDQ0ZGQxYTU4MGFlZTk1Y2E5MzFmOTNmODc4MmUxYmQ2MmMxNDJlM2Q3NDdlNDI0MTRlMTQ3ZGUifQ"
+        },
+        {
+          "resource": "repo://evaluators.py#L21-L29",
+          "version": "repo-lines-v1:sha256:56bbced395645c4ee296abe6c052fb0a1590e890f1786e9b09d5ba1e345bd1db:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzdiN2QxZDg2M2I2ZDgxMzA1MzVlN2RiMmMzMzIzYTc2MDc4ZDc0NTZjYmM0OWVkZDE3ZWE1MTVkYWVmZmY0MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDZjNWJmYzFiZDc0ZTVhZTQxZjZiNTEwMGViYWI2NWJlMzU0NzA2NTE3ZTc2MzdmYjkwNTA2YjRkYWZkMmNmMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjVlMWZlNzM3Y2JjYzNhZmM1MTQ4ZTdiOTE1MGZiMGFhNmYyOTJmYTU0OWJiNjAxYTUxMTVkMTU5MWYwNTQwMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjIyODJkZjhiMTRmNmMwZjdmNDc0YjNmZDRjYzU1MGM5NDkxYTkwNzI1MDRiNzlhZWQyNTY1MTI4MGU5NzU4OCJ9"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.6.0",
-    "at": "2026-10-11T10:08:11.054Z"
+    "at": "2026-10-12T14:24:36.766Z"
   }
 }

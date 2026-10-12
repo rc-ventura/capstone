@@ -6,6 +6,9 @@ docs/roadmap/ckpt-0.6-plan.md §3 (anti-pooling-bias semantics).
 
 import json
 import math
+import re
+
+import pytest
 
 import evaluators as ev
 
@@ -174,39 +177,186 @@ def test_format_unknown_instruction():
     assert r["score"] == 0 and "no known" in r["reason"]
 
 
-# --- f1_summary_evaluator (0.6.2; abstention moved out, P8/D-6) ------------
+# --- lexical correctness signals (P9a; ADR-008 §2, ADR-010 / D-14, D-15) -------
 
 def _scores(out):
     return {r["key"]: r["score"] for r in out["results"]}
 
 
-def test_f1_summary_basic():
-    outputs = [{"answer": "the sky is blue"}, {"answer": "I don't know."}]
-    refs = [
-        {"answer": "the sky is blue", "should_abstain": False},
-        {"answer": "I don't know.", "should_abstain": True},
-    ]
-    scores = _scores(ev.f1_summary_evaluator(outputs, refs))
-    assert scores["f1_summary"] == 1.0
-    # P8/D-6: abstention_accuracy no longer lives here (abstention_summary reports it)
-    assert set(scores) == {"f1_summary"}
+MULTIDOC_GOLDS = [a for _, _, a in gds._MULTIDOC_EXAMPLES]  # the 15 real references of the slice
 
 
-def test_f1_summary_contract_with_langsmith():
-    """Regression for P4: langsmith builds EvaluationResult(extra="forbid") per entry and
-    only accepts summary evaluators whose args are runs/examples/inputs/outputs/
-    reference_outputs. The old shape (extra top-level key, single `results` arg) failed both."""
+@pytest.mark.parametrize("text, expected", [
+    ("The Sky, is BLUE!", ["sky", "is", "blue"]),                       # lowercase, punctuation, article
+    ("component-level", ["component", "level"]),                        # hyphen is a space (N1-b), not deleted
+    ("planning — action", ["planning", "action"]),                 # em dash disappears
+    ("a data analysis of the an", ["data", "analysis", "of"]),          # articles only as whole words
+    ("does not improve", ["does", "not", "improve"]),                   # NO stopword list: negation survives
+    ("", []),
+    (None, []),
+])
+def test_normalize_text_rule(text, expected):
+    assert ev.normalize_text(text) == expected
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("[2609.20804v1] x", ["x"]),
+    ("[2609.12345] x", ["x"]),                      # the PROMPT_V1 example has no version
+    ("2609.20804v1 x", ["x"]),                      # bare id as the sentence subject (gold answers)
+    ("[2609.20804V1] x", ["x"]),                    # case-insensitive
+    ("[2609.20804v1, 2609.20474v1] x", ["x"]),      # several ids in one bracket
+    ("(2609.20804) x", ["x"]),                      # any position, not only brackets
+    ("arXiv:2609.20804v1 x", ["arxiv", "x"]),       # only the id goes; the word stays
+    ("in 2026 we ran 12345 trials, v3.14", ["in", "2026", "we", "ran", "12345", "trials", "v3", "14"]),
+])
+def test_arxiv_ids_removed_in_every_spelling(text, expected):
+    assert ev.normalize_text(text) == expected
+
+
+def test_token_f1_and_recall_basics():
+    assert ev.token_f1("the sky is blue", "the sky is blue") == 1.0
+    assert ev.word_recall("the sky is blue", "the sky is blue") == 1.0
+    assert ev.token_f1("grass green", "sky blue") == 0.0
+    # a verbose answer that contains the reference: Recall 1.0 (Adlakha), F1 punished by length
+    verbose = "sky blue and also many other unrelated things"
+    assert ev.word_recall(verbose, "sky blue") == 1.0
+    assert 0.0 < ev.token_f1(verbose, "sky blue") < 1.0
+    # multiset: repeating a word never counts past its count in the reference
+    assert ev.word_recall("cat cat cat", "cat dog") == 0.5
+    assert math.isclose(ev.token_f1("cat cat cat", "cat dog"), 2 * (1 / 3) * 0.5 / (1 / 3 + 0.5))
+    # empty inputs
+    assert ev.token_f1("", "sky") == 0.0 and ev.word_recall("", "sky") == 0.0
+    assert ev.token_f1("sky", "") == 0.0 and ev.word_recall("sky", "") == 0.0
+
+
+# T0-T4 of the ADR-010 evidence: the answer is the reference reformatted in ONE way; the same
+# content must score 1.0 (the literal SQuAD rule loses up to 17 points on T1/T4).
+def _respell_hyphen(t):
+    return re.sub(r"(?<=\w)-(?=\w)", " ", t)
+
+
+def _dash_to_comma(t):
+    return re.sub(r"\s*[—–]\s*", ", ", t)
+
+
+def _shout(t):  # only sentence-ending periods are spaced: splitting the dot of an id is not a rule test
+    return re.sub(r"\.(\s|$)", r" .\1", t.upper().replace(",", " ,"))
+
+
+REFORMATS = {
+    "T0 identical": lambda t: t,
+    "T1 hyphen->space": _respell_hyphen,
+    "T2 em dash->comma": _dash_to_comma,
+    "T3 UPPERCASE + loose punctuation": _shout,
+    "T4 T1+T2": lambda t: _dash_to_comma(_respell_hyphen(t)),
+}
+
+
+@pytest.mark.parametrize("name", list(REFORMATS))
+def test_reformatting_the_reference_keeps_the_score_at_one(name):
+    for gold in MULTIDOC_GOLDS:
+        answer = REFORMATS[name](gold)
+        assert math.isclose(ev.word_recall(answer, gold), 1.0), (name, gold[:50])
+        assert math.isclose(ev.token_f1(answer, gold), 1.0), (name, gold[:50])
+
+
+# U1-U5 of the ADR-010 evidence: option O1 (ids removed everywhere) is the only one that gives
+# 1.0 to the same content however the id is written and 0.0 to an answer made only of ids.
+ID_SPELLINGS = {
+    "U1 bare id written [id] (model style)": lambda t: re.sub(r"(?<!\[)\b(\d{4}\.\d{4,5}v\d+)\b", r"[\1]", t),
+    "U2 citation without version": lambda t: re.sub(r"\b(\d{4}\.\d{4,5})v\d+\b", r"\1", t),
+    "U3 cites the wrong paper": lambda t: ev.ARXIV_ID.sub("2609.99999v1", t),
+    "U4 no citation at all": lambda t: ev.ARXIV_ID.sub(" ", t),
+}
+
+
+@pytest.mark.parametrize("name", list(ID_SPELLINGS))
+def test_id_spelling_does_not_change_the_score(name):
+    for gold in MULTIDOC_GOLDS:
+        answer = ID_SPELLINGS[name](gold)
+        assert math.isclose(ev.word_recall(answer, gold), 1.0), (name, gold[:50])
+        assert math.isclose(ev.token_f1(answer, gold), 1.0), (name, gold[:50])
+
+
+def test_an_answer_made_only_of_ids_scores_zero():
+    for gold in MULTIDOC_GOLDS:
+        ids_only = " ".join(f"[{i}]" for i in ev.ARXIV_ID.findall(gold))
+        assert ev.word_recall(ids_only, gold) == 0.0 and ev.token_f1(ids_only, gold) == 0.0
+
+
+def test_empty_answer_floor_is_the_known_and_accepted_tradeoff():
+    """ADR-010 trade-off: stopwords stay, so an answer made only of the reference's own function
+    words scores above 0 (0.222 on average with the 198-word NLTK list; this smaller inline set
+    gives a similar level). The test pins the *existence* of the floor so nobody mistakes the
+    Recall level for quality — and so a stopword list is added deliberately, not by accident."""
+    function_words = {
+        "the", "and", "to", "are", "as", "by", "with", "of", "a", "an", "in", "is", "for", "from",
+        "into", "than", "not", "at", "all", "most", "both", "which", "was", "its", "because", "or",
+    }
+    floors = []
+    for gold in MULTIDOC_GOLDS:
+        probe = " ".join(w for w in ev.normalize_text(gold) if w in function_words)
+        floors.append(ev.word_recall(probe, gold))
+    mean_floor = sum(floors) / len(floors)
+    assert 0.05 < mean_floor < 0.35, mean_floor
+
+
+# --- token_f1_summary (renamed from f1_summary_evaluator; P8/D-6 moved abstention out) -------
+
+def _ex(slice_name):
+    from types import SimpleNamespace
+
+    return SimpleNamespace(inputs={}, outputs={}, metadata={"slice": slice_name})
+
+
+def test_token_f1_summary_scope_and_per_slice_keys():
+    outputs = [{"answer": "the sky is blue"}, {"answer": "sky blue"}, {"answer": "grass is green"},
+               {"answer": "I don't know."}, {"answer": "ignored"}]
+    refs = [{"answer": "the sky is blue"}, {"answer": "sky"}, {"answer": "grass is green"},
+            {"answer": "I don't know."}, {"answer": ""}]
+    examples = [_ex("answerable"), _ex("persona"), _ex("multi-doc"), _ex("unanswerable"), _ex("answerable")]
+    scores = _scores(ev.token_f1_summary(outputs, refs, examples))
+    # `unanswerable` is out of scope even though it has a gold answer; the empty gold is skipped
+    assert scores["token_f1_summary"] == pytest.approx((1.0 + 2 / 3 + 1.0) / 3)
+    assert scores["word_recall_summary"] == 1.0
+    assert scores["token_f1_summary__answerable"] == 1.0
+    assert scores["token_f1_summary__persona"] == pytest.approx(2 / 3)
+    assert not any(k.endswith("__unanswerable") for k in scores)
+    assert set(scores) == {
+        f"{m}{suffix}" for m in ("token_f1_summary", "word_recall_summary")
+        for suffix in ("", "__answerable", "__persona", "__multi-doc")
+    }
+    assert "f1_summary" not in scores  # the old key is gone
+
+
+def test_token_f1_summary_never_guesses_the_slice():
+    out = ev.token_f1_summary([{"answer": "x"}], [{"answer": "x"}])  # no `examples`
+    assert out["results"] == []
+    out = ev.token_f1_summary([{"answer": "x"}], [{"answer": "x"}], [_ex("format")])
+    assert out["results"] == []
+
+
+def test_f1_summary_evaluator_was_renamed():
+    assert not hasattr(ev, "f1_summary_evaluator") and not hasattr(ev, "_token_f1")
+
+
+def test_token_f1_summary_contract_with_langsmith():
+    """Regression for P4: langsmith builds EvaluationResult(extra="forbid") per entry and only
+    accepts summary evaluators whose args are runs/examples/inputs/outputs/reference_outputs."""
     from types import SimpleNamespace
 
     from langsmith.evaluation.evaluator import EvaluationResult, _normalize_summary_evaluator
 
-    wrapped = _normalize_summary_evaluator(ev.f1_summary_evaluator)  # raises on bad signature
-    runs = [SimpleNamespace(outputs={"answer": "I don't know."})]
-    examples = [SimpleNamespace(inputs={}, outputs={"answer": "I don't know.", "should_abstain": True})]
+    wrapped = _normalize_summary_evaluator(ev.token_f1_summary)  # raises on bad signature
+    runs = [SimpleNamespace(outputs={"answer": "[2609.20804v1] fixes the loop"})]
+    examples = [SimpleNamespace(inputs={}, outputs={"answer": "2609.20804v1 fixes the loop"},
+                                metadata={"slice": "multi-doc"})]
     out = wrapped(runs, examples)
     results = out["results"] if isinstance(out, dict) else out.results
     parsed = [EvaluationResult(**r) for r in results]  # raises on any extra key
-    assert {p.key for p in parsed} == {"f1_summary"}
+    by_key = {p.key: p for p in parsed}
+    assert {"token_f1_summary", "word_recall_summary", "token_f1_summary__multi-doc"} <= set(by_key)
+    assert by_key["token_f1_summary"].score == 1.0 and "n=1" in by_key["token_f1_summary"].comment
 
 
 # --- abstained() (P7/D-5: detection by paraphrase, not two exact phrases) ----

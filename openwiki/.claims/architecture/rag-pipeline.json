@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:163c96248bfec5e1f6e952e21c09893e59a956c940e8f99dfb908d66ce12deb0",
+  "pageVersion": "sha256:e5f8918ae8564c920624f8086dfcb1221d1aa48b312cab9c5020f84fec8cd7f9",
   "claims": [
     {
       "id": "claim_d77d3548dfee413b9785d9262a58e390",
-      "statement": "arxiv_copilot chains rewrite_query, retrieve_documents, rerank, and generate_response in order, passing the rewritten query to retrieval and rerank but the original question to generation.",
+      "statement": "_run_pipeline chains rewrite_query, retrieve_documents, rerank, and generate_response in order, passing the rewritten query to retrieval and rerank but the original question to generation; it is shared by both traced entrypoints, arxiv_copilot and arxiv_copilot_with_sources.",
       "evidence": [
         {
-          "resource": "repo://app.py#L102-L112",
-          "version": "repo-lines-v1:sha256:3784354b826d4384bce4ef9d1ced2fc9251b8ff72ea1c6460e8b167672dc03c3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwYWFhMmZhYWE5YmVjNzVlNTM4NjhkMmY1ZjZkMTQ1MzBlNzI5NTNjZGRhNzJhNTM0ZDI1NTEyNzUwODExYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5OTI1YjEyMDNhYjhlZmYzMTc0MzVkNzJmODMwM2EzYzExYjIwODRkNzgyOTdkNjQzNjVkMmVjMDY5M2M1YmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVkNmQzMTE3NmFjZDg3MDA3MTY2MThiOWZmZDA2MDhjNDdlNTVkYzI2NDNkYWIyZGIyYjU4NjE5OGIyMjBjZWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://app.py#L102-L121",
+          "version": "repo-lines-v1:sha256:fb26d9a12e4eaf523a23c2e3641ed89c9da49a5c8bd71316bb9017a4b5ee41f9:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM4MmY5ZTAwMGMxM2JiMzI4Zjc4YjFjMjYyMmVhOTI4NzNlNzY0YTU1NzAzMDY0MWRhMWRlZjMyNmNhZThiYzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNmZWVlY2ZhMjEwYTE2MzYyYjk5YWE5YmZjM2M5MjkwOGFjZjhmNmQwZTgyYTVlNDFkZjFkYmQ2YmM5NDdiOTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVkNmQzMTE3NmFjZDg3MDA3MTY2MThiOWZmZDA2MDhjNDdlNTVkYzI2NDNkYWIyZGIyYjU4NjE5OGIyMjBjZWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjllNjU4MjRlOTU3NzMyM2E5YjQ3OTEwNzUyNGYzZjFhMjA2NjI0M2I3Zjg3YTg0MTBhN2ZkZTM4YWI1ODI4YTkifQ"
         }
       ]
     },
@@ -42,15 +42,23 @@
     },
     {
       "id": "claim_7efad416069446718a6bc9a705066edd",
-      "statement": "Multi-turn support is provided by an optional conversation list rendered into the prompt's Conversation slot, while a thread_id uuid attached to run metadata groups a conversation's runs in LangSmith.",
+      "statement": "Multi-turn support is provided by an optional conversation list rendered into the prompt's Conversation slot, while a thread_id uuid attached to run metadata groups a conversation's runs in LangSmith — attached by main.run_pipeline and per browser session by ui.py.",
       "evidence": [
         {
-          "resource": "repo://app.py#L102-L112",
-          "version": "repo-lines-v1:sha256:3784354b826d4384bce4ef9d1ced2fc9251b8ff72ea1c6460e8b167672dc03c3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwYWFhMmZhYWE5YmVjNzVlNTM4NjhkMmY1ZjZkMTQ1MzBlNzI5NTNjZGRhNzJhNTM0ZDI1NTEyNzUwODExYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5OTI1YjEyMDNhYjhlZmYzMTc0MzVkNzJmODMwM2EzYzExYjIwODRkNzgyOTdkNjQzNjVkMmVjMDY5M2M1YmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVkNmQzMTE3NmFjZDg3MDA3MTY2MThiOWZmZDA2MDhjNDdlNTVkYzI2NDNkYWIyZGIyYjU4NjE5OGIyMjBjZWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://app.py#L103-L105",
+          "version": "repo-lines-v1:sha256:06df7c18328cb741334d288b54e26288125a4a13cb78654893a19b75ce0b1d0c:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODljNDVmMGZmMDg0MTljNzNhMzU2NmYzMzIwOTllOTA1YzY5ZDcwZGY2YTU4YzhlODAwNWNjMmZmZDVmZTQxYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiODdlNGVjNTdiYWFmMjg4ZDMzNTJjOWQxZjZiOGM1NzNkYmNlNTE3ZDIyOTc2MjBhMzBkNmZiYTM1ODQ4OTM3ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZmY2ZDVhODE1ZDA4YzgyMDI0ZDI0MjdiM2ZmMzg2MmY4NzkzZGExNjdkMWU2ZTk2MGIyYzA1MTBiZDZkMzBiOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzZmMWM4MWRiODQyYzVjNjU5ZjJlZTkyOTg2NmNkNzRlMmIxYmU4OTc4MzkxODVmOTY4ZWMyMzU2NWU3NjEwMiJ9"
+        },
+        {
+          "resource": "repo://app.py#L76-L84",
+          "version": "repo-lines-v1:sha256:4ccd31aa7e6b93183758855e622895f8fbff76799985c39f160c3a0512f3911d:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODdlNGVjNTdiYWFmMjg4ZDMzNTJjOWQxZjZiOGM1NzNkYmNlNTE3ZDIyOTc2MjBhMzBkNmZiYTM1ODQ4OTM3ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzAzNmQ4MTNlNTNlNWM2Yzc5NGNlZmVkYzgwZWQyMjExNmM2ZWYwMDJlNjc1MjQ4MTQwYWFkNjNmZjMxMTg5ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWZlMjI3ODI4ZTAwYzJiN2NjZGI3NGUxNTI1Nzc1MjliZWVlOGVlY2JkNzYwODk4ZGI5N2QyNTFjYjY1M2RkMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2I5MmZmM2JkNzg2ZGQ4OTM3ZTYwYWY3YzUzMDk0NGE3MTdmZjcwYWNlZTE5NjIxZDA4NGU0ZThhODcxZDcwYyJ9"
         },
         {
           "resource": "repo://main.py#L23-L28",
           "version": "repo-lines-v1:sha256:5bd700310dfc101e83d226099c0e4cf447f6e18f924f206ea6582be6b91fd42b:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjRiYzVjM2FlNmZmZjUyMTE3YjNiNGQ4NGE1ODA5NmUwMTc4MTdlZjkzNzA5Y2I3MjQyYzBhYjdjMTcxNzQ5MSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjJhZTAyYWMwMTAyMGVhNDQ1YzU0MjU5OThhZGE3Zjk3MTg4MjVhYmIxNWZmOTAyMmNlZGU5N2RiNTYwMDRkYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWFlNmI5MmRmZTQ0MGU0NWU4Y2Q5NTY3YTY1OGU1NjIwNDcwMGIyZDk2NWQ4ZGIyMTVjMDQxYTE5ZjQ3MGJlZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjg3OGViNDI5NzgwMWNlMWVjYjQ4YmY2YjFjOTdhNmY0NDllMjgzZjk4NDFhNTFlMmUyM2MyZDQ2MTI4Njk2MSJ9"
+        },
+        {
+          "resource": "repo://ui.py#L66-L73",
+          "version": "repo-lines-v1:sha256:8b70f351b4571f21ac06c29f9c5650fcc05127c30f9bcaa911c0185d1ba5a21a:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGVmN2MyNDE5N2FiNWQyZGM2OTc1YmIwODY2MDQxMGVmZDExYzJmNGYzMjU2ODkxOTFkMGQwNTJmNDZiOTIyMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzBjMWYxODhmMTQyZWQ3YTgyNDY4MGIyMDcxNzJjNTUxOWJjNjE0YTQ4ZmRhN2NmMTY3ZWRiOGRkZjc5OTU2YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTk5MjZlYmQwZjdiYTE0NjcyYWIwM2ZlNDAwMzEyODcwZjZmNTIxYWNlYmQ0YmRhZWYxZTZiNzcyNmNlYWQ3NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDQ2ZDcxZTQzYzI0N2Q2YmZiYjIyNjFiYmRkZTNhNWZjNWM2YTNlZWE2OTE0MmRjMTlmNzA3NjE0YjI4MDNiYyJ9"
         }
       ]
     },
@@ -67,10 +75,24 @@
           "version": "repo-lines-v1:sha256:2f398c6d065b48e566c32dfbb35996bad79c56d282498125bc3da8f9bd9e16c8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkYTg3ZGU1MmI3Y2NhNmMxMWFlMjBkMzQwOGExYTQwODE1MWQ0MDlmZjQ0Y2IyMjM2YTk2OTkxNGFhYTg4YjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE4NjllYWE4NWY1YWMyYTdhZjg5ZjhkOWFiMjcwN2U0YjQxOWE2ODdjMzM5MDMwNzQzNTQ3YTg5YTBiNTM2M2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY3MmI2ZTA4ODlmNzk2ZDM5MTBjMjdjMGQyMmU5NjU2NmFjM2RkMjU0Y2NhNGJhZjhkOTU1MjFmZGY5MGExOTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVkNmQzMTE3NmFjZDg3MDA3MTY2MThiOWZmZDA2MDhjNDdlNTVkYzI2NDNkYWIyZGIyYjU4NjE5OGIyMjBjZWEifQ"
         }
       ]
+    },
+    {
+      "id": "claim_512feddaa90947b4bb5d59a05e55d825",
+      "statement": "arxiv_copilot_with_sources is a second traced root entrypoint added for the Gradio UI: it shares _run_pipeline, traces under the same arxiv_copilot run name, and process_outputs reduces the (answer, documents) tuple to the answer string so the LangSmith trace is identical to arxiv_copilot's while the caller receives the ranked documents.",
+      "evidence": [
+        {
+          "resource": "repo://app.py#L124-L132",
+          "version": "repo-lines-v1:sha256:18e8d16a09e893750824639415d8321890dec335ade95fe77375c2e6a472f6c8:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODI0ZmQ1M2U3YTM4YjhiOWYxZGQ1MDc0Mzc4Nzc4ODI2Mzk5ZDQyOGVmNTFlNDlmNDYyNDZiODI3Y2RjYjlhYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjYxYmE4OTQ1ZDY0ODI0ZjU4ODg3M2JlMjZiN2Q2YTE0OTQ3OTNhODI1ZTMzY2Y3MjQ4YWZmOTEyNzVlM2Y5MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWQ2ZDMxMTc2YWNkODcwMDcxNjYxOGI5ZmZkMDYwOGM0N2U1NWRjMjY0M2RhYjJkYjJiNTg2MTk4YjIyMGNlYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        },
+        {
+          "resource": "repo://docs/ui/ui-plan.md#L27-L36",
+          "version": "repo-lines-v1:sha256:e08dd167605b83dadca3613c1db81f662628ac7e3d3e0fbfe1df7cfa20ecd0d4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQwNzQ4YmIwODI1NzBmYjgwZjgyMmRhYmUzMzI5YTNjZDEyNGZlYTEyOGY5MDdjNzc3ZDFkN2YzNDViNWU3NDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzODQyMDZjOGEzZDI3ZWRjYWZjOGZjYjBmZTlkYmI2NDVkMTNjNWM0OGJkMTQzM2I0YTc5YzhmNWRlNWRiYjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhiYjQzN2Q1MTY1ZTM1Njk0YTBmMjc3Y2MyNzAzODk0MGYzZTEwMGNlZjIwMDEzOGJiYjMzYjgwMzYzNjVlNjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBjZGU4Zjg0OWU5NjRlZjczYmNkYjMyNzJiMjAyZDdmYTE4NTY5OWU5MjY0ZTI1YWQyZTZjNTE5ZTU3ODkzOGIifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.6.0",
-    "at": "2026-10-11T10:08:11.054Z"
+    "at": "2026-10-12T14:31:19.877Z"
   }
 }
