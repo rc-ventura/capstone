@@ -66,7 +66,19 @@ print("Q:", e.inputs["question"])
 print("G:", e.outputs["answer"])
 ```
 
-## 6. Where to look in LangSmith (UI)
+## 6. Web interface (Gradio)
+
+```bash
+uv run python ui.py   # → http://127.0.0.1:7860 (localhost only)
+```
+
+A single-page chat against the baseline pipeline (docs/ui/ui-plan.md): the answer comes
+with a "Fontes (N)" accordion (arXiv id, title, date, link), and the conversation is
+multi-turn. Each browser session gets its own `thread_id` — in LangSmith, project
+`capstone-arxiv-copilot`, look at the Threads tab: the session's runs are grouped there,
+each root run named `arxiv_copilot` with the usual metadata plus `thread_id`.
+
+## 7. Where to look in LangSmith (UI)
 
 - Project `capstone-arxiv-copilot` → `arxiv_copilot` traces with run_type
   `chain`/`retriever` and metadata (embedding_model, k, chunk_strategy, prompt_version…).

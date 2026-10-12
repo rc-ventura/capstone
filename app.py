@@ -99,14 +99,34 @@ def generate_response(
     return answer
 
 
+def _run_pipeline(
+    question: str,
+    run_config: config.RunConfig,
+    conversation: list[dict[str, str]] | None = None,
+) -> tuple[str, list[Document]]:
+    metadata = _run_metadata(run_config)
+    rewritten = rewrite_query(question, run_config, langsmith_extra={"metadata": metadata})
+    documents = retrieve_documents(rewritten, run_config, langsmith_extra={"metadata": metadata})
+    ranked = rerank(documents, rewritten, run_config, langsmith_extra={"metadata": metadata})
+    return generate_response(question, ranked, run_config, conversation), ranked
+
+
 @traceable(run_type="chain")
 def arxiv_copilot(
     question: str,
     run_config: config.RunConfig = config.BASELINE,
     conversation: list[dict[str, str]] | None = None,
 ) -> str:
-    metadata = _run_metadata(run_config)
-    rewritten = rewrite_query(question, run_config, langsmith_extra={"metadata": metadata})
-    documents = retrieve_documents(rewritten, run_config, langsmith_extra={"metadata": metadata})
-    ranked = rerank(documents, rewritten, run_config, langsmith_extra={"metadata": metadata})
-    return generate_response(question, ranked, run_config, conversation)
+    answer, _ = _run_pipeline(question, run_config, conversation)
+    return answer
+
+
+# In LangSmith the root run is identical to arxiv_copilot (same name, string
+# output); the caller additionally receives the ranked documents (docs/ui/ui-plan.md).
+@traceable(run_type="chain", name="arxiv_copilot", process_outputs=lambda o: {"output": o[0]})
+def arxiv_copilot_with_sources(
+    question: str,
+    run_config: config.RunConfig = config.BASELINE,
+    conversation: list[dict[str, str]] | None = None,
+) -> tuple[str, list[Document]]:
+    return _run_pipeline(question, run_config, conversation)
