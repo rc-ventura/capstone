@@ -1,12 +1,17 @@
 from __future__ import annotations
 
+import base64
 import csv
+import hashlib
 import io
 import json
 import math
 import re
 import statistics
+import struct
 from collections import Counter
+from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 
@@ -618,6 +623,22 @@ def token_f1(pred: str, ref: str) -> float:
     return 2 * precision * recall / (precision + recall)
 
 
+def _correctness_rows(
+    outputs: list[dict[str, Any]],
+    reference_outputs: list[dict[str, Any]],
+    examples: list[Any] | None,
+) -> list[tuple[str, str, str]]:
+    """(slice, answer, gold answer) of the examples the correctness signals apply to: a slice in
+    `CORRECTNESS_SLICES` (read from `examples[i].metadata`, never guessed) and a non-empty gold answer."""
+    rows: list[tuple[str, str, str]] = []
+    for i, (run_out, ref) in enumerate(zip(outputs, reference_outputs, strict=True)):
+        gold = ref.get("answer")
+        sl = _slice_of(examples[i]) if examples is not None and i < len(examples) else "unknown"
+        if gold and sl in CORRECTNESS_SLICES:
+            rows.append((sl, run_out.get("answer", "") or "", gold))
+    return rows
+
+
 def _lexical_results(scores: list[tuple[float, float]], suffix: str = "") -> list[dict[str, Any]]:
     n = len(scores)
     note = f"mean over n={n} in-scope examples; diagnostic until calibrated (ADR-008)"
@@ -645,12 +666,7 @@ def token_f1_summary(
     """
     scores: list[tuple[float, float]] = []
     by_slice: dict[str, list[tuple[float, float]]] = {}
-    for i, (run_out, ref) in enumerate(zip(outputs, reference_outputs)):
-        gold = ref.get("answer")
-        sl = _slice_of(examples[i]) if examples is not None and i < len(examples) else "unknown"
-        if not gold or sl not in CORRECTNESS_SLICES:
-            continue
-        answer = run_out.get("answer", "")
+    for sl, answer, gold in _correctness_rows(outputs, reference_outputs, examples):
         row = (token_f1(answer, gold), word_recall(answer, gold))
         scores.append(row)
         by_slice.setdefault(sl, []).append(row)
@@ -660,3 +676,169 @@ def token_f1_summary(
     for sl in sorted(by_slice):
         results.extend(_lexical_results(by_slice[sl], suffix=f"__{sl}"))
     return {"results": results}
+
+
+# =====================================================================
+# Embedding cosine (roadmap P9; ADR-008 §2, ADR-010 D-15): the "middle rung" of the ladder
+# =====================================================================
+
+# Pinned on purpose and NOT read from RunConfig: the retrieval index may change embedding model
+# at CKPT-2, but the cosine's scale is specific to its model (Cao 2025), so a change here
+# invalidates its pass marks and forces a recalibration (ADR-008, ADR-010).
+CORRECTNESS_EMBEDDING_MODEL = "text-embedding-3-small"
+_EMBED_BATCH = 256  # inputs per API request (the endpoint accepts up to 2048)
+
+Embedder = Callable[[list[str]], list[list[float]]]
+
+
+_EMPTY_HOLDER = re.compile(r"\[[\s,;]*\]|\([\s,;]*\)")
+
+
+def strip_arxiv_ids(text: str | None) -> str:
+    """The cleaning applied before embedding (ADR-010 D-15 as clarified on 2026-10-12): the arXiv ids are
+    removed, and so are the brackets or parentheses that held ONLY ids (what is left empty, or with just
+    separators, after the removal: `[2609.20804v1]` -> nothing, `[a, b]` -> nothing). Runs of spaces are
+    collapsed. Case, punctuation, line breaks and wording are left alone because an embedding reads natural
+    text. Without the holder removal a same-content answer scored a cosine of 0.976 on average (0.931 at
+    worst) against its gold instead of 1.0, depending on how the id was written (ADR-010 live check)."""
+    text = ARXIV_ID.sub(" ", text or "")
+    text = _EMPTY_HOLDER.sub(" ", text)
+    return re.sub(r"[ \t]{2,}", " ", text).strip()
+
+
+def cosine_similarity(u: list[float], v: list[float]) -> float:
+    """Cosine of the angle between two vectors; 0.0 if either has zero length."""
+    nu, nv = math.sqrt(sum(x * x for x in u)), math.sqrt(sum(x * x for x in v))
+    if not nu or not nv:
+        return 0.0
+    return sum(a * b for a, b in zip(u, v, strict=True)) / (nu * nv)
+
+
+def openai_embed(texts: list[str], model: str = CORRECTNESS_EMBEDDING_MODEL) -> list[list[float]]:
+    """Embed `texts` with the OpenAI API in batches, in input order. The client is created here,
+    lazily, so importing this module needs neither the network nor an API key (offline tests)."""
+    from openai import OpenAI
+
+    client = OpenAI()
+    vectors: list[list[float]] = []
+    for start in range(0, len(texts), _EMBED_BATCH):
+        response = client.embeddings.create(model=model, input=texts[start:start + _EMBED_BATCH])
+        vectors.extend(d.embedding for d in sorted(response.data, key=lambda d: d.index))
+    return vectors
+
+
+# Where the default embedder keeps its vectors between runs (git-ignored, see .gitignore).
+DEFAULT_EMBEDDING_CACHE = Path(__file__).resolve().parent / "resources" / "answer_embeddings.jsonl"
+
+
+def _to_float32(vector: list[float]) -> list[float]:
+    """Round-trip through float32 (the precision the API works in) so that a vector read back from disk is
+    bit-identical to the one that was kept in memory the first time."""
+    return list(struct.unpack(f"{len(vector)}f", struct.pack(f"{len(vector)}f", *vector)))
+
+
+def _cache_key(model: str, text: str) -> str:
+    return hashlib.sha256(f"{model}\x00{text}".encode()).hexdigest()
+
+
+class CachedEmbedder:
+    """Wraps a batch embedding function with a cache keyed by (model, text).
+
+    Each distinct text is embedded once. With `cache_path` the cache also lives on disk, so the reference
+    answers (the same 65 in every experiment) and the vectors used in a calibration survive the process and
+    can be re-scored offline. The file is an append-only JSON-lines file, one `{"key", "dim", "vec"}` per
+    text: `key` = sha256(model + text) so a different model never reuses a vector, `vec` = base64 of the
+    float32 bytes (about 8 KB per text). Loaded lazily on the first call; a malformed or truncated line is
+    skipped. Delete the file to invalidate it (for instance if the provider ever changes the model behind the
+    pinned name). Only a hash of the text is stored, never the text."""
+
+    def __init__(self, embed: Embedder, model: str = CORRECTNESS_EMBEDDING_MODEL, cache_path: Path | str | None = None):
+        self._embed = embed
+        self.model = model
+        self.cache_path = Path(cache_path) if cache_path else None
+        self._cache: dict[str, list[float]] = {}
+        self._loaded = False
+
+    def _load(self) -> None:
+        self._loaded = True
+        if not self.cache_path or not self.cache_path.exists():
+            return
+        for line in self.cache_path.read_text().splitlines():
+            try:
+                row = json.loads(line)
+                raw = base64.b64decode(row["vec"])
+                if len(raw) != 4 * int(row["dim"]):
+                    continue
+                self._cache[row["key"]] = list(struct.unpack(f"{row['dim']}f", raw))
+            except (ValueError, KeyError, TypeError):
+                continue  # a bad or half-written line is ignored, the text is simply embedded again
+
+    def __call__(self, texts: list[str]) -> list[list[float]]:
+        if not self._loaded:
+            self._load()
+        keys = [_cache_key(self.model, t) for t in texts]
+        missing = list(dict.fromkeys(t for t, k in zip(texts, keys, strict=True) if k not in self._cache))
+        if missing:
+            fresh = {}
+            for text, vector in zip(missing, self._embed(missing), strict=True):
+                fresh[_cache_key(self.model, text)] = _to_float32(vector)
+            self._cache.update(fresh)
+            if self.cache_path:
+                self.cache_path.parent.mkdir(parents=True, exist_ok=True)
+                with self.cache_path.open("a") as fh:
+                    for key, vector in fresh.items():
+                        raw = struct.pack(f"{len(vector)}f", *vector)
+                        fh.write(json.dumps({"key": key, "dim": len(vector), "vec": base64.b64encode(raw).decode()}) + "\n")
+        return [self._cache[k] for k in keys]
+
+
+def make_embedding_cosine_summary(embed: Embedder) -> Callable[..., dict[str, Any]]:
+    """Build the summary evaluator around an embedding function (a fake one in the offline tests).
+
+    A factory because langsmith only accepts summary evaluators whose arguments are
+    runs/examples/inputs/outputs/reference_outputs, so the embedder cannot be an extra argument."""
+
+    def embedding_cosine_summary(
+        outputs: list[dict[str, Any]],
+        reference_outputs: list[dict[str, Any]],
+        examples: list[Any] | None = None,
+    ) -> dict[str, Any]:
+        """Summary evaluator: mean cosine between the embedding of each answer and of its gold
+        answer, total and per slice (`__<slice>` suffix) — roadmap P9, ADR-008 §2, ADR-010 D-15.
+
+        Same scope as `token_f1_summary` (CORRECTNESS_SLICES, non-empty gold answer). Only the
+        arXiv ids are removed before embedding. An answer with no text left (empty, or only ids)
+        scores 0.0 and is not sent to the API (the endpoint rejects empty input). A DIAGNOSTIC
+        until calibrated: the cosine scale is specific to the embedding model, and it is expected
+        to miss contradictions (Cao 2025; ADR-008 §6)."""
+        rows = [(sl, strip_arxiv_ids(a), strip_arxiv_ids(g)) for sl, a, g in
+                _correctness_rows(outputs, reference_outputs, examples)]
+        if not rows:
+            return {"results": []}
+        vectors = embed([t for _, a, g in rows for t in (a, g) if t])
+        lookup = dict(zip([t for _, a, g in rows for t in (a, g) if t], vectors, strict=True))
+        by_slice: dict[str, list[float]] = {}
+        scores: list[float] = []
+        for sl, answer, gold in rows:
+            score = cosine_similarity(lookup[answer], lookup[gold]) if answer and gold else 0.0
+            scores.append(score)
+            by_slice.setdefault(sl, []).append(score)
+
+        def entry(values: list[float], suffix: str = "") -> dict[str, Any]:
+            return {
+                "key": f"embedding_cosine_summary{suffix}",
+                "score": sum(values) / len(values),
+                "comment": (f"mean over n={len(values)} in-scope examples; model "
+                            f"{CORRECTNESS_EMBEDDING_MODEL} (pinned); diagnostic until calibrated (ADR-008)"),
+            }
+
+        results = [entry(scores)]
+        results.extend(entry(by_slice[sl], f"__{sl}") for sl in sorted(by_slice))
+        return {"results": results}
+
+    return embedding_cosine_summary
+
+
+# Default instance used by the runner: real embeddings, cached in memory and in DEFAULT_EMBEDDING_CACHE.
+embedding_cosine_summary = make_embedding_cosine_summary(
+    CachedEmbedder(openai_embed, cache_path=DEFAULT_EMBEDDING_CACHE))

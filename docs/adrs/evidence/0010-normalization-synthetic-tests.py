@@ -252,7 +252,7 @@ def model_style(t):  # the model always cites inside brackets
 
 
 def no_version(t):  # [2609.20804] instead of [2609.20804v1] (the PROMPT_V1 example has no version)
-    return re.sub(rf"\b(\d{{4}}\.\d{{4,5}})v\d+\b", r"\1", model_style(t), flags=re.I)
+    return re.sub(r"\b(\d{4}\.\d{4,5})v\d+\b", r"\1", model_style(t), flags=re.I)
 
 
 def wrong_paper(t):

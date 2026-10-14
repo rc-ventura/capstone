@@ -1,0 +1,48 @@
+
+==============================================================================
+PART A - the Spearman depends on the share of wrong answers, not only on the ruler (own simulation)
+==============================================================================
+
+A1. mean Spearman of the SAME ruler, by share of wrong answers (n = 118)
+
+ wrong |  AUC 0.70  AUC 0.80  AUC 0.85  AUC 0.90  AUC 0.95  AUC 0.99
+  0.10 |      0.21      0.31      0.37      0.42      0.47      0.51
+  0.20 |      0.28      0.42      0.49      0.56      0.63      0.68
+  0.30 |      0.32      0.48      0.56      0.63      0.71      0.78
+
+A2. chance of passing the cut 0.50 / the cut 0.60 (share of 3000 repetitions)
+
+ wrong |        AUC 0.80        AUC 0.85        AUC 0.90        AUC 0.95
+  0.10 |     0.00 / 0.00     0.00 / 0.00     0.02 / 0.00     0.19 / 0.00
+  0.20 |     0.13 / 0.00     0.45 / 0.02     0.89 / 0.20     1.00 / 0.81
+  0.30 |     0.38 / 0.03     0.82 / 0.24     0.99 / 0.77     1.00 / 1.00
+
+==============================================================================
+PART B - can token-F1 / word Recall detect a canary? (offline pre-check on the 15 multi-doc golds)
+==============================================================================
+canary = gold answer with ONE edit; scored as the answer against the original gold (perfect = 1.0)
+
+type                       n  mean Recall   mean F1   share Recall>=0.9   share F1>=0.9
+negation                   7        0.980     0.961                1.00            1.00
+number swap                3        0.979     0.979                1.00            1.00
+direction reversed         6        0.979     0.979                1.00            1.00
+paper swap (ids only)     15        1.000     1.000                1.00            1.00
+
+after the ADR-010 cleaning, the paper-swap canary is IDENTICAL to its original in 15 of 15 cases
+for comparison, a CORRECT paraphrase scored F1 0.21 / Recall 0.25 in the 2026-10-10 local test (roadmap section 7)
+
+example negation canary:
+  original: 2609.20804v1 fixes the execution loop and varies three components — planning, action space, and context manage 
+  canary  : 2609.20804v1 does not fix the execution loop and varies three components — planning, action space, and context
+
+==============================================================================
+PART C - how imprecise is 'the judge catches 90% of the wrong answers', by number of wrong answers
+==============================================================================
+Wilson 95% interval (evaluators.wilson_ci) for a judge that catches 90% of the wrong answers it sees
+
+ wrong answers   caught     95% interval
+            12    11/12   [  65%,   99%]
+            20    18/20   [  70%,   97%]
+            30    27/30   [  74%,   97%]
+            40    36/40   [  77%,   96%]
+            50    45/50   [  79%,   96%]

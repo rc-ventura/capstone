@@ -2,8 +2,8 @@
 
 **Status**: Accepted
 **Date**: 2026-10-11
-**Related**: [Roadmap §7 P9 and decisions D-12, D-13](../roadmap/ckpt-0.6.1b-metrics-roadmap.md) · Reading notes: [Adlakha 2024](../research/fichamentos/adlakha-2024-correctness-faithfulness-iqa.md) · [Badshah 2025](../research/fichamentos/badshah-2025-reference-guided-verdict.md) · [SemScore 2024](../research/fichamentos/aynetdinov-2024-semscore.md) · [Cao 2025](../research/fichamentos/cao-2025-negation-blindness-embeddings.md) · [Ho + Wang (QA judge vs F1)](../research/fichamentos/qa-eval-judge-vs-f1.md) · [RAGChecker](../research/fichamentos/ru-2024-ragchecker.md) · [ADR-007](./0007-abstention-detection-and-reporting.md) (abstention, the sibling decision) · [ADR-010](./0010-text-normalization-for-lexical-correctness-signals.md) (the text-normalization rule that §2 left open)
-**Code**: `evaluators.py` (`token_f1_summary`, `token_f1`, `word_recall`, `normalize_text`; slice P9a, implemented 2026-10-12). **Still not implemented**: the embedding-cosine evaluator, the canaries and the calibration. This record fixes the design and the pass marks before any real answer exists.
+**Related**: [Roadmap §7 P9 and decisions D-12, D-13](../roadmap/ckpt-0.6.1b-metrics-roadmap.md) · Reading notes: [Adlakha 2024](../research/fichamentos/adlakha-2024-correctness-faithfulness-iqa.md) · [Badshah 2025](../research/fichamentos/badshah-2025-reference-guided-verdict.md) · [SemScore 2024](../research/fichamentos/aynetdinov-2024-semscore.md) · [Cao 2025](../research/fichamentos/cao-2025-negation-blindness-embeddings.md) · [Ho + Wang (QA judge vs F1)](../research/fichamentos/qa-eval-judge-vs-f1.md) · [RAGChecker](../research/fichamentos/ru-2024-ragchecker.md) · [ADR-007](./0007-abstention-detection-and-reporting.md) (abstention, the sibling decision) · [ADR-010](./0010-text-normalization-for-lexical-correctness-signals.md) (the text-normalization rule that §2 left open) · [ADR-011](./0011-calibration-design-labels-canaries-and-cut-line.md) (the calibration design that §4–§5 left open: labeling rule, supply of wrong answers, canaries, cut line)
+**Code**: `evaluators.py` (`token_f1_summary`, `token_f1`, `word_recall`, `normalize_text`; slice P9a, implemented 2026-10-12). The embedding-cosine evaluator (`embedding_cosine_summary`, ADR-010 D-15) was added on 2026-10-12. **Still not implemented**: the canaries and the calibration (they need real answers, after EXP-0). This record fixes the design and the pass marks before any real answer exists.
 
 ---
 
@@ -89,6 +89,8 @@ A `correctness_judge` (an LLM that reads question + reference + answer and retur
 - If no cheap signal passes, the judge runs **every round**, on all examples, and is calibrated with the same labels (no extra labeling).
 
 ### 4. Calibration — once, after the EXP-0 run produces real answers
+
+> The practical design of this step (what "correct" means, where enough wrong answers come from, how the canaries are built, how the cut line is chosen) is fixed in [ADR-011](./0011-calibration-design-labels-canaries-and-cut-line.md).
 
 1. The author labels **100–150 real answers** as correct or incorrect, adding a flag **"contradicts the reference"** when applicable. Only answers where the gold paper was retrieved (hit@k = 1) are labeled, so a failure is the generator's and not the retriever's (design of Adlakha 2024).
 2. **10–20 canaries** are built: real correct answers turned into their opposite (negation, swapped number). We know they are wrong; they test whether a signal *can* detect contradiction. The flag in step 1 measures how *often* contradictions occur.

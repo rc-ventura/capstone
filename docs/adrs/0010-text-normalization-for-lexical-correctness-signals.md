@@ -3,7 +3,7 @@
 **Status**: Accepted
 **Date**: 2026-10-11
 **Related**: [Roadmap §5 decisions D-14, D-15](../roadmap/ckpt-0.6.1b-metrics-roadmap.md) · [ADR-008](./0008-answer-correctness-signals-and-calibration.md) (the three correctness signals; this record fixes the part ADR-008 left open: what "normalized" means) · Reading notes: [Owczarzak 2012](../research/fichamentos/owczarzak-2012-rouge-accuracy-tac.md) · [Loukina 2014](../research/fichamentos/loukina-2014-rouge-spoken-summaries.md) · [Adlakha 2024](../research/fichamentos/adlakha-2024-correctness-faithfulness-iqa.md) (addendum on the released code)
-**Code**: `evaluators.py` (`normalize_text`, `token_f1`, `word_recall`, `token_f1_summary`; slice P9a, implemented 2026-10-12, uncommitted); tests in `tests/test_evaluators.py` (the cases T0–T4 and U1–U5 below are unit tests there). The embedding-cosine evaluator that must apply D-15 is **not built yet**. **Evidence (reproducible)**: [`evidence/0010-normalization-synthetic-tests.py`](./evidence/0010-normalization-synthetic-tests.py) and its recorded output [`evidence/0010-normalization-synthetic-tests.out.txt`](./evidence/0010-normalization-synthetic-tests.out.txt).
+**Code**: `evaluators.py` (`normalize_text`, `token_f1`, `word_recall`, `token_f1_summary`; slice P9a, implemented 2026-10-12, uncommitted); tests in `tests/test_evaluators.py` (the cases T0–T4 and U1–U5 below are unit tests there). The embedding-cosine evaluator that applies D-15 (`strip_arxiv_ids`, `make_embedding_cosine_summary`, `embedding_cosine_summary`) was built on 2026-10-12 and checked against the real API ([`evidence/0010-embedding-cosine-live-check.py`](./evidence/0010-embedding-cosine-live-check.py), [`.out.txt`](./evidence/0010-embedding-cosine-live-check.out.txt)). **Evidence (reproducible)**: [`evidence/0010-normalization-synthetic-tests.py`](./evidence/0010-normalization-synthetic-tests.py) and its recorded output [`evidence/0010-normalization-synthetic-tests.out.txt`](./evidence/0010-normalization-synthetic-tests.out.txt).
 
 ---
 
@@ -39,7 +39,7 @@ Today the code (`evaluators._tokens`) lowercases and splits with `\w+`; it does 
 
 This is the SQuAD / Adlakha normalization (lowercase, punctuation, `a/an/the`) with **one deliberate difference**: punctuation becomes a space instead of being deleted (called *N1-b* below; the literal version is *N1-a*).
 
-**D-15 — arXiv ids.** Remove every id matching `\b\d{4}\.\d{4,5}(?:v\d+)?\b`, **case-insensitive, anywhere in the text, on both sides**, before any other step. The brackets left behind are punctuation and vanish in step 3. For the embedding cosine (ADR-008 §2), apply **only this step**: embeddings read natural text, so no other cleaning is applied.
+**D-15 — arXiv ids.** Remove every id matching `\b\d{4}\.\d{4,5}(?:v\d+)?\b`, **case-insensitive, anywhere in the text, on both sides**, before any other step. The brackets left behind are punctuation and vanish in step 3. For the embedding cosine (ADR-008 §2), apply **only this step**: embeddings read natural text, so no other cleaning is applied. *(Clarified on 2026-10-12 by D-24: the brackets or parentheses left empty by the removal are dropped too.)*
 
 ```python
 ARXIV_ID = re.compile(r"\b\d{4}\.\d{4,5}(?:v\d+)?\b", re.I)
@@ -179,6 +179,8 @@ Loukina 2014 found +0.049 (ASR) / +0.028 (manual) Spearman from counting types i
 - **Blind to the cited paper** by design; P12 covers it. For a "compare paper A and B" question, an answer naming only one paper differs in content, not in ids, and is scored on content.
 - **The id pattern is `YYMM.NNNN[N]` with an optional version** (the corpus is all `2609.*`). Old-style ids (`hep-th/9901001`) would not match. Ids written as `arXiv:2609.20822` or `(2609.20822)` are removed (the pattern is position-independent); the `arXiv:` word itself stays as an ordinary token.
 - **English only**, like the rest of the evaluators.
+- **For the cosine, a residual of about 0.004 remains** when an answer carries no citation at all and was written naturally (the space that used to precede the citation is gone: cosine 0.996 on average, worst 0.994, against its gold). It is negligible next to the spread of correct paraphrases (0.59–0.84 in the 2026-10-10 local test) and no further cleaning is applied for it (see D-24).
+- **The embedding cache on disk is trusted as long as the model behind the pinned name does not change.** The key contains the model name, not a model version; if the provider ever changed the vectors behind `text-embedding-3-small`, the cache file must be deleted and the calibration redone (D-25).
 - Word metrics stay negation-blind whatever the normalization (Adlakha); that is ADR-008's C2.
 
 ### Conditions that invalidate this decision
@@ -196,6 +198,14 @@ This decision should be **revisited** if:
 1. **Add a declared candidate** (types instead of tokens; a stopword-filtered sibling) *before* the labeling session, with its pass marks fixed beforehand.
 2. **Tighten the id rule** (more id shapes) — pure regex change, no data change.
 3. **Recalibrate** after any change of rule (the cut line of C2 depends on the score scale).
+
+## Amendment (2026-10-12): two decisions on the embedding cosine
+
+Approved by the author after the live check of the cosine evaluator. They concern only the embedding signal; the cleaning rule of the word metrics (D-14) and D-15 for the word metrics are unchanged.
+
+**D-24 — Cleaning before embedding (clarifies D-15).** Besides the arXiv ids, the cosine drops the brackets or parentheses that held **only** ids (left empty, or with only commas/semicolons, after the removal) and collapses runs of spaces. Case, punctuation, hyphens and line breaks are left alone. Reason: with ids-only removal the brackets that held an id stayed (`[ ]`), and the real model scored a **same-content** answer at a cosine of **0.976 on average (worst 0.931)** against its gold when one text wrote the id `[id]` and the other bare, and 0.990 when the answer had no citation, instead of 1.0, so the cosine depended on how an id was written, which D-15 exists to avoid. With the clarification both cases give **1.0000** ([live check](./evidence/0010-embedding-cosine-live-check.py), parts 2–3; unit tests pin it). Cost: one more cleaning step than "ids only".
+
+**D-25 — The embedding cache is also kept on disk.** `CachedEmbedder(…, cache_path=…)` persists every vector in `resources/answer_embeddings.jsonl` (git-ignored), an append-only JSON-lines file: key = sha256(model + text) so a different model never reuses a vector; the vector as base64 of its float32 bytes (about 8 KB per text; about 2.4 MB for the 300 texts of a calibration); **only the hash of the text is stored, never the text**; loaded lazily; a corrupt or truncated line is skipped; delete the file to invalidate it. The in-memory layer stays. Reason: the calibration is run once and then frozen; with the vectors on disk the ≈ 200 answers and 20 canaries can be re-scored offline while the cut lines are set, and the exact vectors used can be reproduced without calling the API again. Caching an embedding is standard practice because it is a deterministic function of (model, text); the corpus vectors of the retrieval index already live in `resources/*.parquet`. This is **not** a semantic cache (reusing an old answer for a similar question), which is not proposed. Checked live: a new process reading the file made **0** API requests and returned an identical score. Cost: an extra file to manage and the invalidation rule above.
 
 ## References
 

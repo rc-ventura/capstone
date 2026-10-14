@@ -1,0 +1,36 @@
+
+==============================================================================
+1. end to end: answer == gold through embedding_cosine_summary
+==============================================================================
+  embedding_cosine_summary             1.0000   mean over n=15 in-scope examples; model text-embedding-3-small (pinned); diagnostic until calibrated (ADR-008)
+  embedding_cosine_summary__multi-doc  1.0000   mean over n=15 in-scope examples; model text-embedding-3-small (pinned); diagnostic until calibrated (ADR-008)
+  vector length: 1536 (text-embedding-3-small = 1536); model pinned: text-embedding-3-small
+
+==============================================================================
+2+3. same content, different id spelling -> cosine with the gold (literal ids-only vs as implemented)
+==============================================================================
+  case                                                          literal: mean / min   as implemented: mean / min
+  bare id written [id] (model style)                               0.9762 / 0.9311           1.0000 / 1.0000
+  citation without version                                         1.0000 / 1.0000           1.0000 / 1.0000
+  no citation: id AND its brackets gone                            0.9898 / 0.9853           1.0000 / 1.0000
+  no citation, written naturally (no space left before '.')        0.9912 / 0.9871           0.9964 / 0.9943
+
+==============================================================================
+4. canaries: cosine between a canary and the gold it came from (a perfect answer = 1.0), as implemented
+==============================================================================
+  negation             n= 7  mean 0.9784  min 0.9447  max 0.9981
+  number swap          n= 3  mean 0.9972  min 0.9950  max 0.9990
+  direction reversed   n= 6  mean 0.9968  min 0.9920  max 0.9997
+  scale: cosine between two UNRELATED golds (105 pairs): mean 0.3889, min 0.1927, max 0.7399
+  (the 2026-10-10 local test gave 0.59-0.84 for correct paraphrases and 0.94 for a negated answer)
+
+==============================================================================
+5. in-memory cache: scoring the same texts again must not call the API
+==============================================================================
+  API requests so far: 62, texts embedded: 88; new requests during the repeat run: 0
+
+==============================================================================
+6. on-disk cache: a NEW embedder (a new process) reading the same file must not call the API
+==============================================================================
+  first run : 1 API request(s), score 1.000000; cache file 121 KB (15 vectors)
+  new process: 0 API request(s), score 1.000000; identical score: True

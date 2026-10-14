@@ -148,6 +148,7 @@ The course (`intro-to-langsmith`) teaches 7 evaluators, none RAG-specific. The e
 | `specificity_judge` | LLM-as-judge | P2 (LLM-judge + reference) | **Novel** — extends course P2 to audience calibration | matches requested audience | FP6 | Reference (gold answer per audience) |
 | `answer_relevance` | LLM-as-judge | P3 (LLM-judge, ref-free) | RAGAS / literature — **not in course** | on-question, useful | — | **Reference-free** |
 | `token_f1_summary` | code, summary | P5 (code summary + reference) | Adapted from course `f1_score_summary_evaluator` (toxicity → RAG quality); renamed from `f1_summary_evaluator`, scope and cleaning rule per ADR-008/ADR-010 | mean token-F1 **and** word Recall vs the gold answer (`answerable`/`persona`/`multi-doc`, total and per slice); diagnostics until the EXP-0 calibration | cross-cutting | Reference (gold answers) |
+| `embedding_cosine_summary` | code + embeddings, summary | P5 (code summary + reference), middle rung of the ADR-008 ladder | Own; cosine of answer vs gold-answer embeddings (SemScore-style, Aynetdinov 2024) with `text-embedding-3-small` pinned; ids removed (ADR-010 D-15) | mean cosine total and per slice (`answerable`/`persona`/`multi-doc`); diagnostic until calibrated; expected to miss contradictions | cross-cutting | Reference (gold answers) |
 
 ### What the course teaches vs. what we extend
 

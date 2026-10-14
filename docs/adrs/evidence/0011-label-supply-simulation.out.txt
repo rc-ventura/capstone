@@ -1,0 +1,71 @@
+
+==============================================================================
+PART 1 - how many answers can be labeled (counts from the roadmap, not recomputed here)
+==============================================================================
+eligible questions = 40 answerable + 10 persona + 9 multi-doc (of 10 known-item where the gold paper was retrieved) = 59
+(the 5 open-topic multi-doc have no gold paper until the mini-pooling adjudicates them)
+EXP-0 runs twice (docs/plan.md CKPT-0): answers = 59 x 2 = 118; each question appears twice, so the answers are NOT independent
+
+==============================================================================
+PART 2 - the maximum Spearman a PERFECT signal can reach, by share of wrong answers
+==============================================================================
+Derivation: with a perfectly separating score the ranks are uniform and the label is 1[rank > 1-p];
+Cov(rank, label) = p(1-p)/2 and Var(rank) = 1/12, Var(label) = p(1-p), so rho = sqrt(3 p (1-p)).
+Check by simulation (correct answers score in (1,2), wrong in (0,1), n = 1000):
+
+ p wrong  formula  simulated
+    0.05    0.377      0.377
+    0.10    0.520      0.520
+    0.20    0.693      0.693
+    0.30    0.794      0.794
+    0.40    0.849      0.849
+    0.50    0.866      0.866
+
+==============================================================================
+PART 3 - chance that Spearman >= 0.60, by share of wrong answers (p), labeled set size (n) and signal quality
+==============================================================================
+cell = P(rho >= 0.60) over 4000 repetitions
+
+   n  p wrong  #wrong |  AUC 0.80  AUC 0.90  AUC 0.95
+ 118     0.10      12 |      0.00      0.00      0.00
+ 118     0.20      24 |      0.00      0.19      0.82
+ 118     0.25      30 |      0.01      0.55      0.98
+ 118     0.30      35 |      0.03      0.78      1.00
+ 118     0.35      41 |      0.06      0.89      1.00
+ 118     0.40      47 |      0.09      0.94      1.00
+
+ 150     0.10      15 |      0.00      0.00      0.00
+ 150     0.20      30 |      0.00      0.14      0.81
+ 150     0.25      38 |      0.00      0.56      0.99
+ 150     0.30      45 |      0.02      0.80      1.00
+ 150     0.35      52 |      0.04      0.92      1.00
+ 150     0.40      60 |      0.06      0.96      1.00
+
+ 200     0.10      20 |      0.00      0.00      0.00
+ 200     0.20      40 |      0.00      0.10      0.83
+ 200     0.25      50 |      0.00      0.51      0.99
+ 200     0.30      60 |      0.01      0.83      1.00
+ 200     0.35      70 |      0.02      0.94      1.00
+ 200     0.40      80 |      0.04      0.98      1.00
+
+ 250     0.10      25 |      0.00      0.00      0.00
+ 250     0.20      50 |      0.00      0.07      0.86
+ 250     0.25      62 |      0.00      0.50      1.00
+ 250     0.30      75 |      0.00      0.85      1.00
+ 250     0.35      88 |      0.01      0.96      1.00
+ 250     0.40     100 |      0.02      0.99      1.00
+
+
+==============================================================================
+PART 4 - how many EXTRA answers from a worse system version are needed to reach the target share
+==============================================================================
+Real answers: 118. If k of them are wrong and the worse version is wrong a share e of the time,
+adding m answers gives (k + e*m) / (118 + m) = 0.3  =>  m = (0.3*118 - k) / (e - 0.3).
+
+real wrong k |   e=0.4: m (total)   e=0.5: m (total)   e=0.7: m (total)
+           6 |         294 ( 412)         147 ( 265)          74 ( 192)
+          12 |         234 ( 352)         117 ( 235)          58 ( 176)
+          24 |         114 ( 232)          57 ( 175)          28 ( 146)
+
+The more the worse version errs (e), the fewer extra answers are needed - and the less it resembles the
+real system. 'total' is the number of answers the author labels.

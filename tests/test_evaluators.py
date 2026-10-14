@@ -7,6 +7,7 @@ docs/roadmap/ckpt-0.6-plan.md §3 (anti-pooling-bias semantics).
 import json
 import math
 import re
+from pathlib import Path
 
 import pytest
 
@@ -357,6 +358,234 @@ def test_token_f1_summary_contract_with_langsmith():
     by_key = {p.key: p for p in parsed}
     assert {"token_f1_summary", "word_recall_summary", "token_f1_summary__multi-doc"} <= set(by_key)
     assert by_key["token_f1_summary"].score == 1.0 and "n=1" in by_key["token_f1_summary"].comment
+
+
+# --- embedding cosine (P9; ADR-008 §2, ADR-010 D-15) — offline, with a fake embedder ------------
+
+VOCAB = ["sky", "blue", "green", "grass", "not", "method", "improves", "accuracy", "loop", "fixes"]
+
+
+class FakeEmbed:
+    """Bag-of-words over VOCAB; records every batch it is asked to embed (no network)."""
+
+    def __init__(self):
+        self.calls: list[list[str]] = []
+
+    def __call__(self, texts):
+        self.calls.append(list(texts))
+        return [[float(re.findall(r"[a-z]+", t.lower()).count(w)) for w in VOCAB] for t in texts]
+
+
+def _cos_summary(embed, answers, golds, slices):
+    summary = ev.make_embedding_cosine_summary(embed)
+    return _scores(summary([{"answer": a} for a in answers], [{"answer": g} for g in golds],
+                           [_ex(sl) for sl in slices]))
+
+
+def test_cosine_similarity_basics():
+    assert ev.cosine_similarity([1, 0], [1, 0]) == pytest.approx(1.0)
+    assert ev.cosine_similarity([1, 0], [0, 1]) == pytest.approx(0.0)
+    assert ev.cosine_similarity([1, 0], [-1, 0]) == pytest.approx(-1.0)
+    assert ev.cosine_similarity([2, 2], [1, 1]) == pytest.approx(1.0)  # scale-free
+    assert ev.cosine_similarity([0, 0], [1, 1]) == 0.0 and ev.cosine_similarity([1, 1], [0, 0]) == 0.0
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("[2609.20804v1] The Sky, is BLUE!", "The Sky, is BLUE!"),             # the id AND the bracket that held it
+    ("2609.20804v1 fixes the loop", "fixes the loop"),
+    ("see (2609.12345) and 2609.20474V2.", "see and ."),                    # parentheses too; any case
+    ("claims [2609.20804v1, 2609.20474v1] hold", "claims hold"),            # a holder left with only separators
+    ("keep [a note] and (this one)", "keep [a note] and (this one)"),       # holders with content are untouched
+    ("Line one\n\n- [2609.20804v1] item  two", "Line one\n\n- item two"),  # line breaks kept, space runs collapsed
+    (None, ""),
+])
+def test_ids_and_the_holders_they_leave_empty_are_removed_before_embedding(text, expected):
+    """D-15 as clarified on 2026-10-12: ids go, and so do the brackets/parentheses that held only ids
+    (otherwise a same-content answer scored a cosine of 0.976 on average, 0.931 at worst, instead of 1.0).
+    Case, punctuation, hyphens and line breaks are left alone: an embedding reads natural text."""
+    assert ev.strip_arxiv_ids(text) == expected
+
+
+def test_embedder_receives_text_with_ids_removed_and_nothing_else_changed():
+    fake = FakeEmbed()
+    _cos_summary(fake, ["[2609.20804v1] The Sky, IS blue-ish!"], ["2609.20474v1 The sky is blue."], ["answerable"])
+    sent = {t for call in fake.calls for t in call}
+    assert sent == {"The Sky, IS blue-ish!", "The sky is blue."}  # case, punctuation and hyphen untouched
+
+
+@pytest.mark.parametrize("name", list(ID_SPELLINGS))
+def test_id_spelling_gives_the_embedder_the_same_text(name):
+    """Same content written with a different id spelling must reach the embedder as the SAME text, so the
+    cosine is 1.0 whatever the spelling (the live check measured 0.976 before the holder removal)."""
+    for gold in MULTIDOC_GOLDS:
+        assert ev.strip_arxiv_ids(ID_SPELLINGS[name](gold)) == ev.strip_arxiv_ids(gold), (name, gold[:60])
+
+
+def test_cosine_summary_scope_per_slice_and_values():
+    answers = ["the sky is blue", "grass green", "sky blue", "the sky is blue", "ignored"]
+    golds = ["sky blue", "grass green", "grass green", "sky blue", "x"]
+    slices = ["answerable", "persona", "multi-doc", "unanswerable", "answerable"]
+    # example 3 (`unanswerable`) is out of scope; example 5 is in scope but its answer text is "ignored"
+    scores = _cos_summary(FakeEmbed(), answers, golds, slices)
+    assert scores["embedding_cosine_summary__persona"] == pytest.approx(1.0)
+    assert scores["embedding_cosine_summary__multi-doc"] == pytest.approx(0.0)  # sky blue vs grass green
+    # answerable: ("the sky is blue" vs "sky blue") = 1.0 and ("ignored" vs "x") = 0.0 (zero vectors) -> 0.5
+    assert scores["embedding_cosine_summary__answerable"] == pytest.approx(0.5)
+    assert scores["embedding_cosine_summary"] == pytest.approx((1.0 + 0.0 + 1.0 + 0.0) / 4)
+    assert not any(k.endswith("__unanswerable") for k in scores)
+
+
+def test_cosine_same_content_scores_one_whatever_the_id_spelling():
+    fake = FakeEmbed()
+    gold = "2609.20804v1 fixes the loop"
+    for answer in ["[2609.20804v1] fixes the loop", "[2609.12345] fixes the loop", "fixes the loop"]:
+        assert _cos_summary(fake, [answer], [gold], ["multi-doc"])["embedding_cosine_summary"] == pytest.approx(1.0)
+
+
+def test_cosine_empty_answer_scores_zero_and_is_never_sent_to_the_api():
+    fake = FakeEmbed()
+    scores = _cos_summary(fake, ["", "[2609.20804v1]", "sky blue"], ["sky blue"] * 3, ["answerable"] * 3)
+    assert scores["embedding_cosine_summary"] == pytest.approx(1 / 3)  # only the third answer has any text
+    sent = [t for call in fake.calls for t in call]
+    assert "" not in sent and all(t.strip() for t in sent)  # the endpoint rejects empty input
+
+
+def test_cosine_summary_without_examples_never_guesses_the_slice():
+    summary = ev.make_embedding_cosine_summary(FakeEmbed())
+    assert summary([{"answer": "x"}], [{"answer": "x"}])["results"] == []
+    assert summary([{"answer": "x"}], [{"answer": "x"}], [_ex("format")])["results"] == []
+
+
+def test_cached_embedder_embeds_each_text_once_and_keeps_order():
+    fake = FakeEmbed()
+    cached = ev.CachedEmbedder(fake)
+    first = cached(["sky blue", "grass green", "sky blue"])
+    assert fake.calls == [["sky blue", "grass green"]]  # duplicates collapsed within the batch
+    second = cached(["grass green", "sky blue", "new loop"])
+    assert fake.calls[1] == ["new loop"]  # earlier texts come from the cache
+    assert first[0] == first[2] and second[0] == first[1] and second[1] == first[0]
+    cached(["sky blue"])
+    assert len(fake.calls) == 2  # nothing new to embed -> no call
+
+
+def test_embedder_returning_the_wrong_number_of_vectors_fails_loudly():
+    """zip would silently truncate; a short answer from the API must raise instead of scoring garbage."""
+    short = ev.CachedEmbedder(lambda texts: [[1.0]] * (len(texts) - 1))
+    with pytest.raises(ValueError):
+        short(["sky blue", "grass green"])
+    with pytest.raises(ValueError):
+        ev.cosine_similarity([1.0, 2.0], [1.0])
+    with pytest.raises(ValueError):
+        ev.make_embedding_cosine_summary(lambda texts: [[1.0]])(
+            [{"answer": "sky"}], [{"answer": "blue"}], [_ex("answerable")])
+
+
+def _must_not_be_called(texts):
+    raise AssertionError(f"the embedder was called for {texts}")
+
+
+def test_disk_cache_survives_the_process_and_is_bit_identical(tmp_path):
+    path = tmp_path / "cache.jsonl"
+    first_run = ev.CachedEmbedder(FakeEmbed(), cache_path=path)
+    vectors = first_run(["sky blue", "grass green"])
+    assert path.exists()
+    second_run = ev.CachedEmbedder(_must_not_be_called, cache_path=path)  # a new "process": nothing may be re-embedded
+    assert second_run(["grass green", "sky blue"]) == [vectors[1], vectors[0]]  # exact equality, not approx
+
+
+def test_disk_cache_keeps_float32_precision_identically_in_memory_and_on_disk(tmp_path):
+    path = tmp_path / "cache.jsonl"
+    odd = [0.1234567890123456, -2.718281828459045e-3, 1e-9]
+    kept = ev.CachedEmbedder(lambda texts: [odd for _ in texts], cache_path=path)(["x"])[0]
+    reloaded = ev.CachedEmbedder(_must_not_be_called, cache_path=path)(["x"])[0]
+    assert kept == reloaded and kept != odd and kept == pytest.approx(odd, rel=1e-6)
+
+
+def test_disk_cache_never_mixes_models(tmp_path):
+    path = tmp_path / "cache.jsonl"
+    ev.CachedEmbedder(FakeEmbed(), model="model-a", cache_path=path)(["sky blue"])
+    other = FakeEmbed()
+    ev.CachedEmbedder(other, model="model-b", cache_path=path)(["sky blue"])
+    assert other.calls == [["sky blue"]]  # same text, other model -> embedded again
+
+
+def test_disk_cache_ignores_a_corrupt_or_truncated_line(tmp_path):
+    path = tmp_path / "cache.jsonl"
+    ev.CachedEmbedder(FakeEmbed(), cache_path=path)(["sky blue", "grass green"])
+    good = path.read_text().splitlines()
+    path.write_text("not json at all\n" + good[0] + "\n" + good[1][:40] + "\n")  # junk, one good line, one cut line
+    fake = FakeEmbed()
+    ev.CachedEmbedder(fake, cache_path=path)(["sky blue", "grass green"])
+    assert fake.calls == [["grass green"]]  # only the text whose line was lost is embedded again
+
+
+def test_disk_cache_is_lazy_and_stores_only_hashes(tmp_path):
+    path = tmp_path / "sub" / "dir" / "cache.jsonl"
+    cached = ev.CachedEmbedder(FakeEmbed(), cache_path=path)
+    assert not path.parent.exists()  # building the embedder touches nothing
+    cached(["a confidential answer text"])
+    assert path.exists()
+    assert "confidential" not in path.read_text()  # a hash of the text, never the text
+
+
+def test_no_cache_path_means_nothing_is_written(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    ev.CachedEmbedder(FakeEmbed())(["sky blue"])
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_default_cache_file_is_git_ignored():
+    assert ev.DEFAULT_EMBEDDING_CACHE.name == "answer_embeddings.jsonl"
+    assert ev.DEFAULT_EMBEDDING_CACHE.parent.name == "resources"
+    ignored = (Path(ev.__file__).parent / ".gitignore").read_text().splitlines()
+    assert "resources/answer_embeddings.jsonl" in ignored
+
+
+def test_pinned_model_and_default_instance():
+    assert ev.CORRECTNESS_EMBEDDING_MODEL == "text-embedding-3-small"
+    assert callable(ev.embedding_cosine_summary)  # importing the module made no network call
+
+
+def test_openai_embed_batches_and_restores_input_order(monkeypatch):
+    """The default embedder: batches of <= 256 inputs, the pinned model, vectors back in input order
+    even if the API returns them shuffled (they carry an `index`)."""
+    from types import SimpleNamespace
+
+    requests = []
+
+    class FakeClient:
+        def __init__(self, *a, **k):
+            self.embeddings = SimpleNamespace(create=self._create)
+
+        def _create(self, model, input):
+            requests.append((model, list(input)))
+            data = [SimpleNamespace(index=i, embedding=[float(len(t))]) for i, t in enumerate(input)]
+            return SimpleNamespace(data=list(reversed(data)))  # shuffled on purpose
+
+    import openai
+
+    monkeypatch.setattr(openai, "OpenAI", FakeClient)
+    texts = ["a" * (i + 1) for i in range(300)]
+    vectors = ev.openai_embed(texts)
+    assert [len(r[1]) for r in requests] == [256, 44] and {r[0] for r in requests} == {"text-embedding-3-small"}
+    assert vectors == [[float(i + 1)] for i in range(300)]
+
+
+def test_embedding_cosine_summary_contract_with_langsmith():
+    from types import SimpleNamespace
+
+    from langsmith.evaluation.evaluator import EvaluationResult, _normalize_summary_evaluator
+
+    wrapped = _normalize_summary_evaluator(ev.make_embedding_cosine_summary(FakeEmbed()))
+    runs = [SimpleNamespace(outputs={"answer": "[2609.20804v1] the method improves accuracy"})]
+    examples = [SimpleNamespace(inputs={}, outputs={"answer": "2609.20804v1 the method improves accuracy"},
+                                metadata={"slice": "multi-doc"})]
+    out = wrapped(runs, examples)
+    results = out["results"] if isinstance(out, dict) else out.results
+    by_key = {r.key: r for r in (EvaluationResult(**x) for x in results)}  # raises on any extra key
+    assert set(by_key) == {"embedding_cosine_summary", "embedding_cosine_summary__multi-doc"}
+    assert by_key["embedding_cosine_summary"].score == pytest.approx(1.0)
+    assert "n=1" in by_key["embedding_cosine_summary"].comment and "text-embedding-3-small" in by_key["embedding_cosine_summary"].comment
 
 
 # --- abstained() (P7/D-5: detection by paraphrase, not two exact phrases) ----

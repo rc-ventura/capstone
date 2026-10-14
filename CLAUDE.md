@@ -22,6 +22,7 @@
 | [ADR-008](./docs/adrs/0008-answer-correctness-signals-and-calibration.md) | Answer correctness — free signals first, embedding cosine next, an LLM judge only if the calibration demands it | Accepted | 2026-10-11 |
 | [ADR-009](./docs/adrs/0009-incomplete-gold-and-pool-bias-mini-pooling.md) | Incomplete gold and pool bias — judge the holes (mini-pooling), never treat "unjudged" as "irrelevant" | Accepted | 2026-10-11 |
 | [ADR-010](./docs/adrs/0010-text-normalization-for-lexical-correctness-signals.md) | Text normalization for the lexical correctness signals — SQuAD-style with punctuation as a space, no stopword list, arXiv ids removed everywhere | Accepted | 2026-10-11 |
+| [ADR-011](./docs/adrs/0011-calibration-design-labels-canaries-and-cut-line.md) | Calibration design — what "correct" means, where the labeled answers come from, how the canaries are built, how the cut line is chosen | Accepted | 2026-10-12 |
 
 <!-- OPENWIKI:START -->
 

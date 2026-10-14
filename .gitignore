@@ -5,3 +5,4 @@ __pycache__/
 .DS_Store
 resources/*.parquet
 results/*.csv
+resources/answer_embeddings.jsonl
